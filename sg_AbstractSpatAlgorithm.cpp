@@ -52,6 +52,11 @@ void AbstractSpatAlgorithm::fixDirectOutsIntoPlace(SourcesData const & sources,
                                                    SpeakerSetup const & speakerSetup,
                                                    SpatMode const & projectSpatMode) noexcept
 {
+#if JUCE_DEBUG
+    juce::UnitTestRunner testRunner;
+    testRunner.runAllTests();
+#endif
+
     JUCE_ASSERT_MESSAGE_THREAD;
 
     auto const getFakeSourceData = [&](SourceData const & source, SpeakerData const & speaker) -> SourceData {
@@ -126,5 +131,38 @@ std::unique_ptr<AbstractSpatAlgorithm> AbstractSpatAlgorithm::make(SpeakerSetup 
     jassertfalse;
     return nullptr;
 }
+
+
+// Unit test for NumberRangeInputFilter
+class AbstractSpatAlgorithmTest : public juce::UnitTest
+{
+public:
+    AbstractSpatAlgorithmTest() : juce::UnitTest("AbstractSpatAlgorithmTest") {}
+
+    void runTest() override
+    {
+        SpatGrisData mData;
+
+        auto newSpatAlgorithm{ AbstractSpatAlgorithm::make(mData.speakerSetup,
+                                                           mData.project.spatMode,
+                                                           mData.appData.stereoMode,
+                                                           mData.project.sources,
+                                                           mData.appData.audioSettings.sampleRate,
+                                                           mData.appData.audioSettings.bufferSize) };
+
+        beginTest("THIS IS THE FIRST TEST BRO");
+
+        {
+            expect(false);
+            //expectEquals(editor.getText().getIntValue(), 12);
+        }
+    }
+};
+
+#if JUCE_DEBUG
+// This will automatically create an instance of the test class and add it to the list of tests to be run.
+static AbstractSpatAlgorithmTest abstractSpatAlgorithmTest;
+#endif
+
 
 } // namespace gris
