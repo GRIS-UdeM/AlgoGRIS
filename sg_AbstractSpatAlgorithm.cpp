@@ -141,19 +141,30 @@ public:
 
     void runTest() override
     {
-        SpatGrisData mData;
+        //NOW HERE: fill this with valid data
+        SpatGrisData d;
 
-        auto newSpatAlgorithm{ AbstractSpatAlgorithm::make(mData.speakerSetup,
-                                                           mData.project.spatMode,
-                                                           mData.appData.stereoMode,
-                                                           mData.project.sources,
-                                                           mData.appData.audioSettings.sampleRate,
-                                                           mData.appData.audioSettings.bufferSize) };
-
-        beginTest("THIS IS THE FIRST TEST BRO");
+        beginTest("VBAP test");
 
         {
-            expect(false);
+            d.project.spatMode = SpatMode::vbap;
+            auto vbapAlgorithm = AbstractSpatAlgorithm::make(d.speakerSetup,
+                                                             d.project.spatMode,
+                                                             d.appData.stereoMode,
+                                                             d.project.sources,
+                                                             d.appData.audioSettings.sampleRate,
+                                                             d.appData.audioSettings.bufferSize);
+
+            //and init all of this too
+            AudioConfig config;
+            SourceAudioBuffer sourceBuffer;
+            SpeakerAudioBuffer speakerBuffer;
+            juce::AudioBuffer<float> stereoBuffer;
+            SourcePeaks sourcePeaks;
+            vbapAlgorithm->process(config, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks, nullptr);
+
+            //here we expect things not to crash and be fast lol
+            //expect(false);
             //expectEquals(editor.getText().getIntValue(), 12);
         }
     }
