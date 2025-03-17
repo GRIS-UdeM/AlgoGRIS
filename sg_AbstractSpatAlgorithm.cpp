@@ -141,32 +141,48 @@ public:
 
     void runTest() override
     {
-        //NOW HERE: fill this with valid data
-        SpatGrisData d;
+        auto const defaultProject { ProjectData::fromXml(*parseXML(DEFAULT_PROJECT_FILE)) };
+        auto const defaultSpeakerSetup{ SpeakerSetup::fromXml(*parseXML(DEFAULT_SPEAKER_SETUP_FILE)) };
+        auto const binauralSpeakerSetup{ SpeakerSetup::fromXml(*parseXML(BINAURAL_SPEAKER_SETUP_FILE)) };
+
+        AudioConfig config;
+        SourceAudioBuffer sourceBuffer;
+        SpeakerAudioBuffer speakerBuffer;
+        juce::AudioBuffer<float> stereoBuffer;
+        SourcePeaks sourcePeaks;
 
         beginTest("VBAP test");
-
         {
-            d.project.spatMode = SpatMode::vbap;
-            auto vbapAlgorithm = AbstractSpatAlgorithm::make(d.speakerSetup,
-                                                             d.project.spatMode,
-                                                             d.appData.stereoMode,
-                                                             d.project.sources,
-                                                             d.appData.audioSettings.sampleRate,
-                                                             d.appData.audioSettings.bufferSize);
+            auto vbapAlgorithm = AbstractSpatAlgorithm::make(*defaultSpeakerSetup,
+                                                             SpatMode::vbap,
+                                                             {},
+                                                             defaultProject->sources,
+                                                             DEFAULT_SAMPLE_RATE,
+                                                             DEFAULT_BUFFER_SIZE);
 
-            //and init all of this too
-            AudioConfig config;
-            SourceAudioBuffer sourceBuffer;
-            SpeakerAudioBuffer speakerBuffer;
-            juce::AudioBuffer<float> stereoBuffer;
-            SourcePeaks sourcePeaks;
             vbapAlgorithm->process(config, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks, nullptr);
 
             //here we expect things not to crash and be fast lol
             //expect(false);
             //expectEquals(editor.getText().getIntValue(), 12);
         }
+
+        beginTest("Binaural test");
+        {
+            auto hrtfAlgorithm = AbstractSpatAlgorithm::make(*binauralSpeakerSetup,
+                                                             SpatMode::invalid,
+                                                             StereoMode::hrtf,
+                                                             defaultProject->sources,
+                                                             DEFAULT_SAMPLE_RATE,
+                                                             DEFAULT_BUFFER_SIZE);
+
+            hrtfAlgorithm->process(config, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks, nullptr);
+
+            //here we expect things not to crash and be fast lol
+            //expect(false);
+            //expectEquals(editor.getText().getIntValue(), 12);
+        }
+
     }
 };
 
