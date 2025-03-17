@@ -141,48 +141,96 @@ public:
 
     void runTest() override
     {
-        auto const defaultProject { ProjectData::fromXml(*parseXML(DEFAULT_PROJECT_FILE)) };
-        auto const defaultSpeakerSetup{ SpeakerSetup::fromXml(*parseXML(DEFAULT_SPEAKER_SETUP_FILE)) };
-        auto const binauralSpeakerSetup{ SpeakerSetup::fromXml(*parseXML(BINAURAL_SPEAKER_SETUP_FILE)) };
-
-        AudioConfig config;
-        SourceAudioBuffer sourceBuffer;
-        SpeakerAudioBuffer speakerBuffer;
-        juce::AudioBuffer<float> stereoBuffer;
-        SourcePeaks sourcePeaks;
-
+#if 1
         beginTest("VBAP test");
         {
-            auto vbapAlgorithm = AbstractSpatAlgorithm::make(*defaultSpeakerSetup,
-                                                             SpatMode::vbap,
-                                                             {},
-                                                             defaultProject->sources,
-                                                             DEFAULT_SAMPLE_RATE,
-                                                             DEFAULT_BUFFER_SIZE);
+            //we need to construct one of these for each test because the only way to get
+            //an audioConfig for the process call is through SpatGrisData::toAudioConfig().
+            SpatGrisData vbapData;
+            vbapData.speakerSetup = *SpeakerSetup::fromXml(*parseXML(DEFAULT_SPEAKER_SETUP_FILE));
+            vbapData.project = *ProjectData::fromXml(*parseXML(DEFAULT_PROJECT_FILE));
+            vbapData.project.spatMode = SpatMode::vbap;
+            vbapData.appData.stereoMode = {};
 
-            vbapAlgorithm->process(config, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks, nullptr);
+            auto vbapAlgorithm{ AbstractSpatAlgorithm::make(vbapData.speakerSetup,
+                                                            vbapData.project.spatMode,
+                                                            vbapData.appData.stereoMode,
+                                                            vbapData.project.sources,
+                                                            vbapData.appData.audioSettings.sampleRate,
+                                                            vbapData.appData.audioSettings.bufferSize) };
+
+
+            auto const audioConfig {vbapData.toAudioConfig()};
+
+            //create and init souce buffer
+            SourceAudioBuffer sourceBuffer;
+            juce::Array<source_index_t> sources {MAX_NUM_SOURCES};
+            for (auto i = 0; i < sources.size(); ++i)
+                sources.set(i, source_index_t{i});
+            //NOW HERE -- this is not valid, something about the keys isn't properly initialized
+            sourceBuffer.init(sources);
+
+            //create and init speaker buffer
+            SpeakerAudioBuffer speakerBuffer;
+            juce::Array<output_patch_t> speakers {MAX_NUM_SPEAKERS};
+            for (auto i = 0; i < speakers.size(); ++i)
+                speakers.set(i, output_patch_t{i});
+            speakerBuffer.init(speakers);
+
+            juce::AudioBuffer<float> stereoBuffer;
+
+            SourcePeaks sourcePeaks;
+
+
+            vbapAlgorithm->process(*audioConfig, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks, nullptr);
 
             //here we expect things not to crash and be fast lol
             //expect(false);
             //expectEquals(editor.getText().getIntValue(), 12);
         }
 
-        beginTest("Binaural test");
+        beginTest("HRTF test");
         {
-            auto hrtfAlgorithm = AbstractSpatAlgorithm::make(*binauralSpeakerSetup,
-                                                             SpatMode::invalid,
-                                                             StereoMode::hrtf,
-                                                             defaultProject->sources,
-                                                             DEFAULT_SAMPLE_RATE,
-                                                             DEFAULT_BUFFER_SIZE);
+            SpatGrisData hrtfData;
 
-            hrtfAlgorithm->process(config, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks, nullptr);
+            hrtfData.speakerSetup = *SpeakerSetup::fromXml(*parseXML(BINAURAL_SPEAKER_SETUP_FILE));
+            hrtfData.project = *ProjectData::fromXml(*parseXML(DEFAULT_PROJECT_FILE));
+            hrtfData.project.spatMode = SpatMode::vbap;
+            hrtfData.appData.stereoMode = StereoMode::hrtf;
+
+            auto hrtfAlgorithm{ AbstractSpatAlgorithm::make(hrtfData.speakerSetup,
+                                                            hrtfData.project.spatMode,
+                                                            hrtfData.appData.stereoMode,
+                                                            hrtfData.project.sources,
+                                                            hrtfData.appData.audioSettings.sampleRate,
+                                                            hrtfData.appData.audioSettings.bufferSize) };
+
+            auto const audioConfig {hrtfData.toAudioConfig()};
+
+            //create and init souce buffer
+            SourceAudioBuffer sourceBuffer;
+            juce::Array<source_index_t> sources {MAX_NUM_SOURCES};
+            for (auto i = 0; i < sources.size(); ++i)
+                sources.set(i, source_index_t{i});
+            sourceBuffer.init(sources);
+
+            //create and init speaker buffer
+            SpeakerAudioBuffer speakerBuffer;
+            juce::Array<output_patch_t> speakers {MAX_NUM_SPEAKERS};
+            for (auto i = 0; i < speakers.size(); ++i)
+                speakers.set(i, output_patch_t{i});
+            speakerBuffer.init(speakers);
+
+            juce::AudioBuffer<float> stereoBuffer;
+            SourcePeaks sourcePeaks;
+
+            hrtfAlgorithm->process(*audioConfig, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks, nullptr);
 
             //here we expect things not to crash and be fast lol
             //expect(false);
             //expectEquals(editor.getText().getIntValue(), 12);
         }
-
+#endif
     }
 };
 

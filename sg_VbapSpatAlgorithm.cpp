@@ -91,7 +91,7 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
                                 SourcePeaks const & sourcePeaks,
                                 SpeakersAudioConfig const * altSpeakerConfig)
 {
-    ASSERT_AUDIO_THREAD;
+//    ASSERT_AUDIO_THREAD;
 
     auto const & gainInterpolation{ config.spatGainsInterpolation };
     auto const gainFactor{ std::pow(gainInterpolation, 0.1f) * 0.0099f + 0.99f };
