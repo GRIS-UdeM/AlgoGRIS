@@ -135,22 +135,22 @@ public:
     void runTest() override
     {
 #if 1
-        // create and init souce buffer
+        //init souce buffer
         SourceAudioBuffer sourceBuffer;
         juce::Array<source_index_t> sources;
         for (int i = 1; i <= MAX_NUM_SOURCES; ++i)
             sources.add(source_index_t{ i });
         sourceBuffer.init(sources);
 
-        // create and init speaker buffer
+        //init speaker buffer
         SpeakerAudioBuffer speakerBuffer;
         juce::Array<output_patch_t> speakers;
         for (int i = 1; i <= MAX_NUM_SPEAKERS; ++i)
             speakers.add(output_patch_t{ i });
         speakerBuffer.init(speakers);
 
+        //init stereo buffer (for stereo reduction) and source peak level values
         juce::AudioBuffer<float> stereoBuffer{ 2, DEFAULT_BUFFER_SIZE };
-
         SourcePeaks sourcePeaks;
 
         beginTest("VBAP test");
