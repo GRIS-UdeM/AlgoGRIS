@@ -135,15 +135,33 @@ public:
     void runTest() override
     {
 #if 1
+        // create and init souce buffer
+        SourceAudioBuffer sourceBuffer;
+        juce::Array<source_index_t> sources;
+        for (int i = 1; i <= MAX_NUM_SOURCES; ++i)
+            sources.add(source_index_t{ i });
+        sourceBuffer.init(sources);
+
+        // create and init speaker buffer
+        SpeakerAudioBuffer speakerBuffer;
+        juce::Array<output_patch_t> speakers;
+        for (int i = 1; i <= MAX_NUM_SPEAKERS; ++i)
+            speakers.add(output_patch_t{ i });
+        speakerBuffer.init(speakers);
+
+        juce::AudioBuffer<float> stereoBuffer{ 2, DEFAULT_BUFFER_SIZE };
+
+        SourcePeaks sourcePeaks;
+
         beginTest("VBAP test");
         {
-            //we need to construct one of these for each test because the only way to get
-            //an audioConfig for the process call is through SpatGrisData::toAudioConfig().
+            //init project data and audio config
             SpatGrisData vbapData;
             vbapData.speakerSetup = *SpeakerSetup::fromXml(*parseXML(DEFAULT_SPEAKER_SETUP_FILE));
             vbapData.project = *ProjectData::fromXml(*parseXML(DEFAULT_PROJECT_FILE));
             vbapData.project.spatMode = SpatMode::vbap;
             vbapData.appData.stereoMode = {};
+            auto const vbapConfig{ vbapData.toAudioConfig() };
 
             auto vbapAlgorithm{ AbstractSpatAlgorithm::make(vbapData.speakerSetup,
                                                             vbapData.project.spatMode,
@@ -152,27 +170,7 @@ public:
                                                             vbapData.appData.audioSettings.sampleRate,
                                                             vbapData.appData.audioSettings.bufferSize) };
 
-            auto const audioConfig {vbapData.toAudioConfig()};
-
-            //create and init souce buffer
-            SourceAudioBuffer sourceBuffer;
-            juce::Array<source_index_t> sources;
-            for (int i = 1; i <= MAX_NUM_SOURCES; ++i)
-                sources.add(source_index_t{ i });
-            sourceBuffer.init(sources);
-
-            //create and init speaker buffer
-            SpeakerAudioBuffer speakerBuffer;
-            juce::Array<output_patch_t> speakers;
-            for (int i = 1; i <= MAX_NUM_SPEAKERS; ++i)
-                speakers.add(output_patch_t{ i });
-            speakerBuffer.init(speakers);
-
-            juce::AudioBuffer<float> stereoBuffer {2, DEFAULT_BUFFER_SIZE};
-
-            SourcePeaks sourcePeaks;
-
-            vbapAlgorithm->process(*audioConfig, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks, nullptr);
+            vbapAlgorithm->process(*vbapConfig, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks, nullptr);
 
             //here we expect things not to crash and be fast lol
             //expect(false);
@@ -187,6 +185,7 @@ public:
             hrtfData.project = *ProjectData::fromXml(*parseXML(DEFAULT_PROJECT_FILE));
             hrtfData.project.spatMode = SpatMode::vbap;
             hrtfData.appData.stereoMode = StereoMode::hrtf;
+            auto const hrtfConfig{ hrtfData.toAudioConfig() };
 
             auto hrtfAlgorithm{ AbstractSpatAlgorithm::make(hrtfData.speakerSetup,
                                                             hrtfData.project.spatMode,
@@ -195,26 +194,7 @@ public:
                                                             hrtfData.appData.audioSettings.sampleRate,
                                                             hrtfData.appData.audioSettings.bufferSize) };
 
-            auto const audioConfig {hrtfData.toAudioConfig()};
-
-            // create and init souce buffer
-            SourceAudioBuffer sourceBuffer;
-            juce::Array<source_index_t> sources;
-            for (int i = 1; i <= MAX_NUM_SOURCES; ++i)
-                sources.add(source_index_t{ i });
-            sourceBuffer.init(sources);
-
-            // create and init speaker buffer
-            SpeakerAudioBuffer speakerBuffer;
-            juce::Array<output_patch_t> speakers;
-            for (int i = 1; i <= MAX_NUM_SPEAKERS; ++i)
-                speakers.add(output_patch_t{ i });
-            speakerBuffer.init(speakers);
-
-            juce::AudioBuffer<float> stereoBuffer{ 2, DEFAULT_BUFFER_SIZE };
-            SourcePeaks sourcePeaks;
-
-            hrtfAlgorithm->process(*audioConfig, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks, nullptr);
+            hrtfAlgorithm->process(*hrtfConfig, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks, nullptr);
 
             //here we expect things not to crash and be fast lol
             //expect(false);
