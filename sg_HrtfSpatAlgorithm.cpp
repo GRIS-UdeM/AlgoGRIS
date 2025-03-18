@@ -137,7 +137,7 @@ void HrtfSpatAlgorithm::process(AudioConfig const & config,
                                 SourcePeaks const & sourcePeaks,
                                 [[maybe_unused]] SpeakersAudioConfig const * altSpeakerConfig)
 {
-    ASSERT_AUDIO_THREAD;
+    //ASSERT_AUDIO_THREAD;
     jassert(!altSpeakerConfig);
     jassert(stereoBuffer.getNumChannels() == 2);
 

@@ -52,11 +52,6 @@ void AbstractSpatAlgorithm::fixDirectOutsIntoPlace(SourcesData const & sources,
                                                    SpeakerSetup const & speakerSetup,
                                                    SpatMode const & projectSpatMode) noexcept
 {
-#if JUCE_DEBUG
-    juce::UnitTestRunner testRunner;
-    testRunner.runAllTests();
-#endif
-
     JUCE_ASSERT_MESSAGE_THREAD;
 
     auto const getFakeSourceData = [&](SourceData const & source, SpeakerData const & speaker) -> SourceData {
@@ -131,8 +126,6 @@ std::unique_ptr<AbstractSpatAlgorithm> AbstractSpatAlgorithm::make(SpeakerSetup 
     jassertfalse;
     return nullptr;
 }
-
-
 // Unit test for NumberRangeInputFilter
 class AbstractSpatAlgorithmTest : public juce::UnitTest
 {
@@ -159,28 +152,25 @@ public:
                                                             vbapData.appData.audioSettings.sampleRate,
                                                             vbapData.appData.audioSettings.bufferSize) };
 
-
             auto const audioConfig {vbapData.toAudioConfig()};
 
             //create and init souce buffer
             SourceAudioBuffer sourceBuffer;
-            juce::Array<source_index_t> sources {MAX_NUM_SOURCES};
-            for (auto i = 0; i < sources.size(); ++i)
-                sources.set(i, source_index_t{i});
-            //NOW HERE -- this is not valid, something about the keys isn't properly initialized
+            juce::Array<source_index_t> sources;
+            for (int i = 1; i <= MAX_NUM_SOURCES; ++i)
+                sources.add(source_index_t{ i });
             sourceBuffer.init(sources);
 
             //create and init speaker buffer
             SpeakerAudioBuffer speakerBuffer;
-            juce::Array<output_patch_t> speakers {MAX_NUM_SPEAKERS};
-            for (auto i = 0; i < speakers.size(); ++i)
-                speakers.set(i, output_patch_t{i});
+            juce::Array<output_patch_t> speakers;
+            for (int i = 1; i <= MAX_NUM_SPEAKERS; ++i)
+                speakers.add(output_patch_t{ i });
             speakerBuffer.init(speakers);
 
-            juce::AudioBuffer<float> stereoBuffer;
+            juce::AudioBuffer<float> stereoBuffer {2, DEFAULT_BUFFER_SIZE};
 
             SourcePeaks sourcePeaks;
-
 
             vbapAlgorithm->process(*audioConfig, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks, nullptr);
 
@@ -207,21 +197,21 @@ public:
 
             auto const audioConfig {hrtfData.toAudioConfig()};
 
-            //create and init souce buffer
+            // create and init souce buffer
             SourceAudioBuffer sourceBuffer;
-            juce::Array<source_index_t> sources {MAX_NUM_SOURCES};
-            for (auto i = 0; i < sources.size(); ++i)
-                sources.set(i, source_index_t{i});
+            juce::Array<source_index_t> sources;
+            for (int i = 1; i <= MAX_NUM_SOURCES; ++i)
+                sources.add(source_index_t{ i });
             sourceBuffer.init(sources);
 
-            //create and init speaker buffer
+            // create and init speaker buffer
             SpeakerAudioBuffer speakerBuffer;
-            juce::Array<output_patch_t> speakers {MAX_NUM_SPEAKERS};
-            for (auto i = 0; i < speakers.size(); ++i)
-                speakers.set(i, output_patch_t{i});
+            juce::Array<output_patch_t> speakers;
+            for (int i = 1; i <= MAX_NUM_SPEAKERS; ++i)
+                speakers.add(output_patch_t{ i });
             speakerBuffer.init(speakers);
 
-            juce::AudioBuffer<float> stereoBuffer;
+            juce::AudioBuffer<float> stereoBuffer{ 2, DEFAULT_BUFFER_SIZE };
             SourcePeaks sourcePeaks;
 
             hrtfAlgorithm->process(*audioConfig, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks, nullptr);
@@ -238,6 +228,5 @@ public:
 // This will automatically create an instance of the test class and add it to the list of tests to be run.
 static AbstractSpatAlgorithmTest abstractSpatAlgorithmTest;
 #endif
-
 
 } // namespace gris
