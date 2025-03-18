@@ -118,7 +118,8 @@ using SpeakersAudioConfig = StaticMap<output_patch_t, SpeakerAudioConfig, MAX_NU
 
 //==============================================================================
 
-/** This structure is simply a serialized copy of the ProjectData, done on a timer in MainContentComponent::refreshAudioProcessor();
+/** This structure is used as a cached copy of the ProjectData, done on a timer in
+ * MainContentComponent::refreshAudioProcessor().
  */
 struct AudioConfig {
     SpatMode spatMode{};
