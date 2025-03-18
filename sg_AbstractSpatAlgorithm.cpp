@@ -31,6 +31,89 @@
 
 namespace gris
 {
+// Unit test for NumberRangeInputFilter
+class AbstractSpatAlgorithmTest : public juce::UnitTest
+{
+    SourceAudioBuffer sourceBuffer;
+    SpeakerAudioBuffer speakerBuffer;
+    juce::AudioBuffer<float> stereoBuffer{ 2, DEFAULT_BUFFER_SIZE };
+    SourcePeaks sourcePeaks;
+
+public:
+    int constexpr static testDurationSeconds{ 5 };
+    int constexpr static numLoops{ static_cast<int>(DEFAULT_SAMPLE_RATE * testDurationSeconds / DEFAULT_BUFFER_SIZE) };
+
+    bool static isRunning;
+
+    AbstractSpatAlgorithmTest() : juce::UnitTest("AbstractSpatAlgorithmTest") {}
+
+    void initialise() override
+    {
+        // init souce buffer
+        juce::Array<source_index_t> sources;
+        for (int i = 1; i <= MAX_NUM_SOURCES; ++i)
+            sources.add(source_index_t{ i });
+        sourceBuffer.init(sources);
+
+        // init speaker buffer
+        juce::Array<output_patch_t> speakers;
+        for (int i = 1; i <= MAX_NUM_SPEAKERS; ++i)
+            speakers.add(output_patch_t{ i });
+        speakerBuffer.init(speakers);
+
+        isRunning = true;
+    }
+
+    void runTest() override
+    {
+        beginTest("VBAP test");
+        {
+            // init project data and audio config
+            SpatGrisData vbapData;
+            vbapData.speakerSetup = *SpeakerSetup::fromXml(*parseXML(DEFAULT_SPEAKER_SETUP_FILE));
+            vbapData.project = *ProjectData::fromXml(*parseXML(DEFAULT_PROJECT_FILE));
+            vbapData.project.spatMode = SpatMode::vbap;
+            vbapData.appData.stereoMode = {};
+            auto const vbapConfig{ vbapData.toAudioConfig() };
+
+            auto vbapAlgorithm{ AbstractSpatAlgorithm::make(vbapData.speakerSetup,
+                                                            vbapData.project.spatMode,
+                                                            vbapData.appData.stereoMode,
+                                                            vbapData.project.sources,
+                                                            vbapData.appData.audioSettings.sampleRate,
+                                                            vbapData.appData.audioSettings.bufferSize) };
+
+            for (int i = 0; i < numLoops; ++i)
+                vbapAlgorithm->process(*vbapConfig, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks, nullptr);
+        }
+
+        beginTest("HRTF test");
+        {
+            SpatGrisData hrtfData;
+
+            hrtfData.speakerSetup = *SpeakerSetup::fromXml(*parseXML(BINAURAL_SPEAKER_SETUP_FILE));
+            hrtfData.project = *ProjectData::fromXml(*parseXML(DEFAULT_PROJECT_FILE));
+            hrtfData.project.spatMode = SpatMode::vbap;
+            hrtfData.appData.stereoMode = StereoMode::hrtf;
+            auto const hrtfConfig{ hrtfData.toAudioConfig() };
+
+            auto hrtfAlgorithm{ AbstractSpatAlgorithm::make(hrtfData.speakerSetup,
+                                                            hrtfData.project.spatMode,
+                                                            hrtfData.appData.stereoMode,
+                                                            hrtfData.project.sources,
+                                                            hrtfData.appData.audioSettings.sampleRate,
+                                                            hrtfData.appData.audioSettings.bufferSize) };
+
+            for (int i = 0; i < numLoops; ++i)
+                hrtfAlgorithm->process(*hrtfConfig, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks, nullptr);
+        }
+    }
+
+    void shutdown() override { isRunning = false; }
+};
+
+bool AbstractSpatAlgorithmTest::isRunning = false;
+
 //==============================================================================
 bool isOscThread()
 {
@@ -44,7 +127,8 @@ bool isOscThread()
 //==============================================================================
 bool isProbablyAudioThread()
 {
-    return !isOscThread() && !juce::MessageManager::getInstance()->isThisTheMessageThread();
+    return (! isOscThread() && !juce::MessageManager::getInstance()->isThisTheMessageThread())
+           || AbstractSpatAlgorithmTest::isRunning;
 }
 
 //==============================================================================
@@ -126,83 +210,6 @@ std::unique_ptr<AbstractSpatAlgorithm> AbstractSpatAlgorithm::make(SpeakerSetup 
     jassertfalse;
     return nullptr;
 }
-// Unit test for NumberRangeInputFilter
-class AbstractSpatAlgorithmTest : public juce::UnitTest
-{
-public:
-    AbstractSpatAlgorithmTest() : juce::UnitTest("AbstractSpatAlgorithmTest") {}
-
-    void runTest() override
-    {
-#if 1
-        //init souce buffer
-        SourceAudioBuffer sourceBuffer;
-        juce::Array<source_index_t> sources;
-        for (int i = 1; i <= MAX_NUM_SOURCES; ++i)
-            sources.add(source_index_t{ i });
-        sourceBuffer.init(sources);
-
-        //init speaker buffer
-        SpeakerAudioBuffer speakerBuffer;
-        juce::Array<output_patch_t> speakers;
-        for (int i = 1; i <= MAX_NUM_SPEAKERS; ++i)
-            speakers.add(output_patch_t{ i });
-        speakerBuffer.init(speakers);
-
-        //init stereo buffer (for stereo reduction) and source peak level values
-        juce::AudioBuffer<float> stereoBuffer{ 2, DEFAULT_BUFFER_SIZE };
-        SourcePeaks sourcePeaks;
-
-        beginTest("VBAP test");
-        {
-            //init project data and audio config
-            SpatGrisData vbapData;
-            vbapData.speakerSetup = *SpeakerSetup::fromXml(*parseXML(DEFAULT_SPEAKER_SETUP_FILE));
-            vbapData.project = *ProjectData::fromXml(*parseXML(DEFAULT_PROJECT_FILE));
-            vbapData.project.spatMode = SpatMode::vbap;
-            vbapData.appData.stereoMode = {};
-            auto const vbapConfig{ vbapData.toAudioConfig() };
-
-            auto vbapAlgorithm{ AbstractSpatAlgorithm::make(vbapData.speakerSetup,
-                                                            vbapData.project.spatMode,
-                                                            vbapData.appData.stereoMode,
-                                                            vbapData.project.sources,
-                                                            vbapData.appData.audioSettings.sampleRate,
-                                                            vbapData.appData.audioSettings.bufferSize) };
-
-            vbapAlgorithm->process(*vbapConfig, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks, nullptr);
-
-            //here we expect things not to crash and be fast lol
-            //expect(false);
-            //expectEquals(editor.getText().getIntValue(), 12);
-        }
-
-        beginTest("HRTF test");
-        {
-            SpatGrisData hrtfData;
-
-            hrtfData.speakerSetup = *SpeakerSetup::fromXml(*parseXML(BINAURAL_SPEAKER_SETUP_FILE));
-            hrtfData.project = *ProjectData::fromXml(*parseXML(DEFAULT_PROJECT_FILE));
-            hrtfData.project.spatMode = SpatMode::vbap;
-            hrtfData.appData.stereoMode = StereoMode::hrtf;
-            auto const hrtfConfig{ hrtfData.toAudioConfig() };
-
-            auto hrtfAlgorithm{ AbstractSpatAlgorithm::make(hrtfData.speakerSetup,
-                                                            hrtfData.project.spatMode,
-                                                            hrtfData.appData.stereoMode,
-                                                            hrtfData.project.sources,
-                                                            hrtfData.appData.audioSettings.sampleRate,
-                                                            hrtfData.appData.audioSettings.bufferSize) };
-
-            hrtfAlgorithm->process(*hrtfConfig, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks, nullptr);
-
-            //here we expect things not to crash and be fast lol
-            //expect(false);
-            //expectEquals(editor.getText().getIntValue(), 12);
-        }
-#endif
-    }
-};
 
 #if JUCE_DEBUG
 // This will automatically create an instance of the test class and add it to the list of tests to be run.
