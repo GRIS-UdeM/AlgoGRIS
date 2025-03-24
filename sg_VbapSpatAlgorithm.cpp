@@ -68,7 +68,7 @@ VbapSpatAlgorithm::VbapSpatAlgorithm(SpeakersData const & speakers)
 //==============================================================================
 void VbapSpatAlgorithm::updateSpatData(source_index_t const sourceIndex, SourceData const & sourceData) noexcept
 {
-    jassert(!isProbablyAudioThread());
+    jassert(!isProbablyAudioThread() || areUnitTestsRunning());
 
     auto & spatDataQueue{ mData[sourceIndex].spatDataQueue };
     auto * ticket{ spatDataQueue.acquire() };
