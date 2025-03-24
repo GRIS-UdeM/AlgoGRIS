@@ -45,7 +45,6 @@ void fillSourceBufferWithNoise(SourceAudioBuffer & buffer, AudioConfig& config)
                     buffer[source.key].getWritePointer(0)[sample] = dist(gen);
 }
 
-// Unit test for NumberRangeInputFilter
 class AbstractSpatAlgorithmTest : public juce::UnitTest
 {
     float constexpr static testDurationSeconds{ .1f };
