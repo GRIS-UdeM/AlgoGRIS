@@ -79,8 +79,8 @@ public:
         for (auto const & source : config.sourcesAudioConfig) {
             for (int sample = 0; sample < buffer.getNumSamples(); ++sample) {
                 float value = buffer[source.key].getReadPointer(0)[sample];
-                expect(std::isfinite(value), "Output contains NaN or Inf values!");
-                //expect(value >= -1.0f && value <= 1.0f, "Output exceeds valid range!");
+                expect(std::isfinite(value), "buffer contains NaN or Inf values!");
+                expect(value >= -1.0f && value <= 1.0f, "Value exceeds valid range!");
             }
         }
     }
