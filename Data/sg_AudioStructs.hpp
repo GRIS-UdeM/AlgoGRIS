@@ -117,6 +117,10 @@ using SourcesAudioConfig = StaticMap<source_index_t, SourceAudioConfig, MAX_NUM_
 using SpeakersAudioConfig = StaticMap<output_patch_t, SpeakerAudioConfig, MAX_NUM_SPEAKERS>;
 
 //==============================================================================
+
+/** This structure is used as a cached copy of the ProjectData, done on a timer in
+ * MainContentComponent::refreshAudioProcessor().
+ */
 struct AudioConfig {
     SpatMode spatMode{};
     bool isStereo{};

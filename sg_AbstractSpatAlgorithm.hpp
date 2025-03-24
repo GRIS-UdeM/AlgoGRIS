@@ -28,12 +28,16 @@ namespace gris
 //==============================================================================
 /** @return true if executed from the OSC thread. */
 bool isOscThread();
+
 /** @return true if executed neither from the OSC thread nor from the message thread. */
 bool isProbablyAudioThread();
 
+/** @return true if the unit tests are running. */
+bool areUnitTestsRunning();
+
 //==============================================================================
 #define ASSERT_OSC_THREAD jassert(isOscThread())
-#define ASSERT_AUDIO_THREAD jassert(isProbablyAudioThread())
+#define ASSERT_AUDIO_THREAD jassert(isProbablyAudioThread() || areUnitTestsRunning())
 
 //==============================================================================
 /** Base class for a spatialization algorithm. */
