@@ -28,9 +28,23 @@
 #ifdef USE_DOPPLER
     #include "sg_DopplerSpatAlgorithm.hpp"
 #endif
+#include <random>
 
 namespace gris
 {
+void fillSourceBufferWithNoise(SourceAudioBuffer & buffer, AudioConfig& config)
+{
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_real_distribution<float> dist(-1.0f, 1.0f);
+
+    for (auto const & source : config.sourcesAudioConfig)
+        for (auto const & speaker : config.speakersAudioConfig)
+            if (!source.value.isMuted && !speaker.value.isMuted)
+                for (int sample = 0; sample < buffer.getNumSamples(); ++sample)
+                    buffer[source.key].getWritePointer(0)[sample] = dist(gen);
+}
+
 // Unit test for NumberRangeInputFilter
 class AbstractSpatAlgorithmTest : public juce::UnitTest
 {
@@ -47,15 +61,26 @@ public:
 
     AbstractSpatAlgorithmTest() : juce::UnitTest("AbstractSpatAlgorithmTest") {}
 
+    void checkSpeakerBufferValidity(SpeakerAudioBuffer & buffer, AudioConfig & config)
+    {
+        for (auto const & speaker : config.speakersAudioConfig) {
+            for (int sample = 0; sample < buffer.getNumSamples(); ++sample) {
+                float value = buffer[speaker.key].getReadPointer(0)[sample];
+                expect(std::isfinite(value), "Output contains NaN or Inf values!");
+                expect(value >= -1.0f && value <= 1.0f, "Output exceeds valid range!");
+            }
+        }
+    }
+
     void initialise() override
     {
-        // init souce buffer
+        // init source buffer with MAX_NUM_SOURCES sources
         juce::Array<source_index_t> sources;
         for (int i = 1; i <= MAX_NUM_SOURCES; ++i)
             sources.add(source_index_t{ i });
         sourceBuffer.init(sources);
 
-        // init speaker buffer
+        // init speaker buffer with MAX_NUM_SPEAKERS speakers
         juce::Array<output_patch_t> speakers;
         for (int i = 1; i <= MAX_NUM_SPEAKERS; ++i)
             speakers.add(output_patch_t{ i });
@@ -70,11 +95,16 @@ public:
         {
             // init project data and audio config
             SpatGrisData vbapData;
+
             vbapData.speakerSetup = *SpeakerSetup::fromXml(*parseXML(DEFAULT_SPEAKER_SETUP_FILE));
             vbapData.project = *ProjectData::fromXml(*parseXML(DEFAULT_PROJECT_FILE));
             vbapData.project.spatMode = SpatMode::vbap;
             vbapData.appData.stereoMode = {};
+
+            // the default project and speaker setups have 18 sources and 18 speakers
             auto const vbapConfig{ vbapData.toAudioConfig() };
+            //DBG("number of sources: " << vbapConfig->sourcesAudioConfig.size());
+            //DBG("number of speakers: " << vbapConfig->speakersAudioConfig.size());
 
             auto vbapAlgorithm{ AbstractSpatAlgorithm::make(vbapData.speakerSetup,
                                                             vbapData.project.spatMode,
@@ -83,8 +113,11 @@ public:
                                                             vbapData.appData.audioSettings.sampleRate,
                                                             vbapData.appData.audioSettings.bufferSize) };
 
-            for (int i = 0; i < numLoops; ++i)
+            for (int i = 0; i < numLoops; ++i) {
+                fillSourceBufferWithNoise(sourceBuffer, *vbapConfig);
                 vbapAlgorithm->process(*vbapConfig, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks, nullptr);
+                checkSpeakerBufferValidity(speakerBuffer, *vbapConfig);
+            }
         }
 
         beginTest("HRTF test");
@@ -95,7 +128,10 @@ public:
             hrtfData.project = *ProjectData::fromXml(*parseXML(DEFAULT_PROJECT_FILE));
             hrtfData.project.spatMode = SpatMode::vbap;
             hrtfData.appData.stereoMode = StereoMode::hrtf;
+
             auto const hrtfConfig{ hrtfData.toAudioConfig() };
+            //DBG("number of sources: " << hrtfConfig->sourcesAudioConfig.size());
+            //DBG("number of speakers: " << hrtfConfig->speakersAudioConfig.size());
 
             auto hrtfAlgorithm{ AbstractSpatAlgorithm::make(hrtfData.speakerSetup,
                                                             hrtfData.project.spatMode,
@@ -104,8 +140,11 @@ public:
                                                             hrtfData.appData.audioSettings.sampleRate,
                                                             hrtfData.appData.audioSettings.bufferSize) };
 
-            for (int i = 0; i < numLoops; ++i)
+            for (int i = 0; i < numLoops; ++i) {
+                fillSourceBufferWithNoise(sourceBuffer, *hrtfConfig);
                 hrtfAlgorithm->process(*hrtfConfig, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks, nullptr);
+                checkSpeakerBufferValidity(speakerBuffer, *hrtfConfig);
+            }
         }
     }
 
