@@ -23,6 +23,8 @@
 #include "Containers/sg_TaggedAudioBuffer.hpp"
 #include "Data/sg_Triplet.hpp"
 
+#define RUN_UNIT_TEST 0
+
 namespace gris
 {
 //==============================================================================

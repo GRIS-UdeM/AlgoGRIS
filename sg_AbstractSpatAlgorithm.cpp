@@ -308,7 +308,7 @@ std::unique_ptr<AbstractSpatAlgorithm> AbstractSpatAlgorithm::make(SpeakerSetup 
     return nullptr;
 }
 
-#if JUCE_DEBUG
+#if JUCE_DEBUG && RUN_UNIT_TEST
 // This will automatically create an instance of the test class and add it to the list of tests to be run.
 static AbstractSpatAlgorithmTest abstractSpatAlgorithmTest;
 #endif
