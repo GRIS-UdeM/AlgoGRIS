@@ -60,10 +60,7 @@ void MbapAttenuationConfig::process(float * data,
                                     float const distance,
                                     MbapSourceAttenuationState & state) const
 {
-    static constexpr auto NORMAL_DISTANCE = 1.0f;
-    static constexpr auto EXTRA_DISTANCE = MBAP_EXTENDED_RADIUS - NORMAL_DISTANCE;
-
-    auto const attenuationRatio{ std::clamp((distance - NORMAL_DISTANCE) / EXTRA_DISTANCE, 0.0f, 1.0f) };
+    auto const attenuationRatio{ std::clamp((distance - NORMAL_RADIUS) / EXTRA_DISTANCE, 0.0f, 1.0f) };
     auto const targetGain{ 1.0f - attenuationRatio * (1.0f - linearGain) };
     auto const targetCoefficient{ attenuationRatio * lowpassCoefficient };
 
