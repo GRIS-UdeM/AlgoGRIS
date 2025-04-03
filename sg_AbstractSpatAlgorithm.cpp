@@ -101,6 +101,7 @@ public:
         sourceBuffers.setNumSamples(bufferSize);
         speakerBuffers.setNumSamples(bufferSize);
         stereoBuffer.setSize(2, bufferSize);
+        stereoBuffer.clear();
     }
 
     void initialise() override { isRunning = true; }
