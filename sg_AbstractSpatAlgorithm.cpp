@@ -84,7 +84,7 @@ public:
         }
     }
 
-    void initBuffers (int bufferSize)
+    void initBuffers (int bufferSize, const SpatGrisData& data)
     {
         // init source buffer with MAX_NUM_SOURCES sources
         juce::Array<source_index_t> sources;
@@ -98,10 +98,35 @@ public:
             speakers.add(output_patch_t{ i });
         speakerBuffers.init(speakers);
 
+        //set proper buffer sizes
         sourceBuffers.setNumSamples(bufferSize);
         speakerBuffers.setNumSamples(bufferSize);
         stereoBuffer.setSize(2, bufferSize);
         stereoBuffer.clear();
+
+        //fill source buffers with pink noise
+        StaticVector<output_patch_t, MAX_NUM_SPEAKERS> activeChannels{};
+        for (int i = 1; i < 19; ++i)
+            activeChannels.push_back({i});
+        auto temp { sourceBuffers.getArrayOfWritePointers(activeChannels) };
+
+        fillWithPinkNoise(data.data(), numSamples, narrow<int>(data.size()), *mAudioData.config->pinkNoiseGain);
+
+        //update peaks
+//        processInputPeaks(sourceBuffers, sourcePeaks);
+
+        //from AudioProcessor::processInputPeaks(SourceAudioBuffer & inputBuffer, SourcePeaks & peaks) const noexcept
+            for (auto const channel : sourceBuffers) {
+                auto const & config{ mAudioData.config->sourcesAudioConfig[channel.key] };
+                auto const & buffer{ *channel.value };
+                auto const peak{ config.isMuted ? 0.0f : buffer.getMagnitude(0, inputBuffer.getNumSamples()) };
+
+                sourcePeaks[channel.key] = peak;
+            }
+
+
+
+
     }
 
     void initialise() override { isRunning = true; }
@@ -146,7 +171,7 @@ public:
 
             for (int bufferSize : bufferSizes) {
                 vbapData.appData.audioSettings.bufferSize = bufferSize;
-                initBuffers(bufferSize);
+                initBuffers(bufferSize, vbapData);
 
                 auto vbapAlgo{ AbstractSpatAlgorithm::make(vbapData.speakerSetup,
                                                            vbapData.project.spatMode,
