@@ -50,8 +50,8 @@ class AbstractSpatAlgorithmTest : public juce::UnitTest
     float constexpr static testDurationSeconds{ .1f };
     std::vector<int> const bufferSizes{ 1, 512, 1024, SourceAudioBuffer::MAX_NUM_SAMPLES };
 
-    SourceAudioBuffer sourceBuffer;
-    SpeakerAudioBuffer speakerBuffer;
+    SourceAudioBuffer sourceBuffers;
+    SpeakerAudioBuffer speakerBuffers;
     juce::AudioBuffer<float> stereoBuffer;
     SourcePeaks sourcePeaks;
 
@@ -90,16 +90,16 @@ public:
         juce::Array<source_index_t> sources;
         for (int i = 1; i <= MAX_NUM_SOURCES; ++i)
             sources.add(source_index_t{ i });
-        sourceBuffer.init(sources);
+        sourceBuffers.init(sources);
 
         // init speaker buffer with MAX_NUM_SPEAKERS speakers
         juce::Array<output_patch_t> speakers;
         for (int i = 1; i <= MAX_NUM_SPEAKERS; ++i)
             speakers.add(output_patch_t{ i });
-        speakerBuffer.init(speakers);
+        speakerBuffers.init(speakers);
 
-        sourceBuffer.setNumSamples(bufferSize);
-        speakerBuffer.setNumSamples(bufferSize);
+        sourceBuffers.setNumSamples(bufferSize);
+        speakerBuffers.setNumSamples(bufferSize);
         stereoBuffer.setSize(2, bufferSize);
     }
 
@@ -108,7 +108,7 @@ public:
     void updateSourcePeaks(AudioConfig& config)
     {
         for (auto const & source : config.sourcesAudioConfig) {
-            auto const peak{ sourceBuffer[source.key].getMagnitude(0, sourceBuffer.getNumSamples()) };
+            auto const peak{ sourceBuffers[source.key].getMagnitude(0, sourceBuffers.getNumSamples()) };
             sourcePeaks[source.key] = peak;
         }
     }
@@ -158,12 +158,12 @@ public:
 
                 auto const numLoops{ static_cast<int>(DEFAULT_SAMPLE_RATE * testDurationSeconds / bufferSize) };
                 for (int i = 0; i < numLoops; ++i) {
-                    fillSourceBufferWithNoise(sourceBuffer, *vbapConfig);
+                    fillSourceBufferWithNoise(sourceBuffers, *vbapConfig);
                     updateSourcePeaks(*vbapConfig);
 
-                    checkSourceBufferValidity(sourceBuffer, *vbapConfig);
-                    vbapAlgo->process(*vbapConfig, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks, nullptr);
-                    checkSpeakerBufferValidity(speakerBuffer, *vbapConfig);
+                    checkSourceBufferValidity(sourceBuffers, *vbapConfig);
+                    vbapAlgo->process(*vbapConfig, sourceBuffers, speakerBuffers, stereoBuffer, sourcePeaks, nullptr);
+                    checkSpeakerBufferValidity(speakerBuffers, *vbapConfig);
                 }
             }
         }
@@ -191,12 +191,12 @@ public:
 
                 auto const numLoops{ static_cast<int>(DEFAULT_SAMPLE_RATE * testDurationSeconds / bufferSize) };
                 for (int i = 0; i < numLoops; ++i) {
-                    fillSourceBufferWithNoise(sourceBuffer, *hrtfConfig);
+                    fillSourceBufferWithNoise(sourceBuffers, *hrtfConfig);
                     updateSourcePeaks(*hrtfConfig);
 
-                    checkSourceBufferValidity(sourceBuffer, *hrtfConfig);
-                    hrtfAlgo->process(*hrtfConfig, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks, nullptr);
-                    checkSpeakerBufferValidity(speakerBuffer, *hrtfConfig);
+                    checkSourceBufferValidity(sourceBuffers, *hrtfConfig);
+                    hrtfAlgo->process(*hrtfConfig, sourceBuffers, speakerBuffers, stereoBuffer, sourcePeaks, nullptr);
+                    checkSpeakerBufferValidity(speakerBuffers, *hrtfConfig);
                 }
             }
         }
