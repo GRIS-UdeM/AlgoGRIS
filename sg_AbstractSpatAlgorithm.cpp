@@ -66,9 +66,7 @@ public:
             for (int sample = 0; sample < buffer.getNumSamples(); ++sample) {
                 float value = buffer[speaker.key].getReadPointer(0)[sample];
                 expect(std::isfinite(value), "Output contains NaN or Inf values!");
-                // TODO: the output is not in the expected range. Need to go through the whole process chain to
-                // understand; presumably we're missing some kind of spatialization data or initialization.
-                // expect(value >= -1.0f && value <= 1.0f, "Output exceeds valid range!");
+                expect(value >= -1.0f && value <= 1.0f, "Output exceeds valid range!");
             }
         }
     }
@@ -140,8 +138,8 @@ public:
 
             // the default project and speaker setups have 18 sources and 18 speakers
             auto const vbapConfig{ vbapData.toAudioConfig() };
-            // DBG("number of sources: " << vbapConfig->sourcesAudioConfig.size());
-            // DBG("number of speakers: " << vbapConfig->speakersAudioConfig.size());
+            DBG("number of sources: " << vbapConfig->sourcesAudioConfig.size());
+            DBG("number of speakers: " << vbapConfig->speakersAudioConfig.size());
 
             for (int bufferSize : bufferSizes) {
                 vbapData.appData.audioSettings.bufferSize = bufferSize;
