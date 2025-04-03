@@ -63,10 +63,11 @@ public:
     void checkSpeakerBufferValidity(SpeakerAudioBuffer & buffer, AudioConfig & config)
     {
         for (auto const & speaker : config.speakersAudioConfig) {
+            const auto speakerBuffer { buffer[speaker.key].getReadPointer(0) };
             for (int sample = 0; sample < buffer.getNumSamples(); ++sample) {
-                float value = buffer[speaker.key].getReadPointer(0)[sample];
-                expect(std::isfinite(value), "Output contains NaN or Inf values!");
-                expect(value >= -1.0f && value <= 1.0f, "Output exceeds valid range!");
+                const auto speakerSample = speakerBuffer[sample];
+                expect(std::isfinite(speakerSample), "Output contains NaN or Inf values!");
+                expect(speakerSample >= -1.0f && speakerSample <= 1.0f, "Output exceeds valid range!");
             }
         }
     }
@@ -74,20 +75,17 @@ public:
     void checkSourceBufferValidity(SourceAudioBuffer & buffer, AudioConfig & config)
     {
         for (auto const & source : config.sourcesAudioConfig) {
+            const auto sourceBuffer { buffer[source.key].getReadPointer(0) };
             for (int sample = 0; sample < buffer.getNumSamples(); ++sample) {
-                float value = buffer[source.key].getReadPointer(0)[sample];
-                expect(std::isfinite(value), "buffer contains NaN or Inf values!");
-                expect(value >= -1.0f && value <= 1.0f, "Value exceeds valid range!");
+                const auto sourceSample = sourceBuffer[sample];
+                expect(std::isfinite(sourceSample), "buffer contains NaN or Inf values!");
+                expect(sourceSample >= -1.0f && sourceSample <= 1.0f, "Value exceeds valid range!");
             }
         }
     }
 
     void initBuffers (int bufferSize)
     {
-        sourceBuffer.setNumSamples(bufferSize);
-        speakerBuffer.setNumSamples(bufferSize);
-        stereoBuffer.setSize(2, bufferSize);
-
         // init source buffer with MAX_NUM_SOURCES sources
         juce::Array<source_index_t> sources;
         for (int i = 1; i <= MAX_NUM_SOURCES; ++i)
@@ -99,6 +97,10 @@ public:
         for (int i = 1; i <= MAX_NUM_SPEAKERS; ++i)
             speakers.add(output_patch_t{ i });
         speakerBuffer.init(speakers);
+
+        sourceBuffer.setNumSamples(bufferSize);
+        speakerBuffer.setNumSamples(bufferSize);
+        stereoBuffer.setSize(2, bufferSize);
     }
 
     void initialise() override { isRunning = true; }
@@ -138,8 +140,8 @@ public:
 
             // the default project and speaker setups have 18 sources and 18 speakers
             auto const vbapConfig{ vbapData.toAudioConfig() };
-            DBG("number of sources: " << vbapConfig->sourcesAudioConfig.size());
-            DBG("number of speakers: " << vbapConfig->speakersAudioConfig.size());
+            //DBG("number of sources: " << vbapConfig->sourcesAudioConfig.size());
+            //DBG("number of speakers: " << vbapConfig->speakersAudioConfig.size());
 
             for (int bufferSize : bufferSizes) {
                 vbapData.appData.audioSettings.bufferSize = bufferSize;

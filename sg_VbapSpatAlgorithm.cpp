@@ -132,11 +132,15 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
                 // no interpolation
                 currentGain = targetGain;
                 if (currentGain >= SMALL_GAIN) {
+                    //TODO VB: or here
+                    jassertfalse;
                     juce::FloatVectorOperations::addWithMultiply(outputSamples, inputSamples, currentGain, numSamples);
                 }
                 continue;
             }
 
+            //TOOO VB we never make it here
+            jassertfalse;
             // interpolation necessary
             if (gainInterpolation == 0.0f) {
                 // linear interpolation over buffer size
