@@ -128,7 +128,7 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
             auto const gainDiff{ targetGain - currentGain };
             auto const gainSlope{ gainDiff / narrow<float>(numSamples) };
 
-            if (gainSlope == 0.0f || std::abs(gainDiff) < SMALL_GAIN) {
+            if (juce::approximatelyEqual(gainSlope, 0.f) || std::abs(gainDiff) < SMALL_GAIN) {
                 // no interpolation
                 currentGain = targetGain;
                 if (currentGain >= SMALL_GAIN) {
@@ -142,7 +142,7 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
             //TOOO VB we never make it here
             jassertfalse;
             // interpolation necessary
-            if (gainInterpolation == 0.0f) {
+            if (juce::approximatelyEqual (gainInterpolation, 0.f)) {
                 // linear interpolation over buffer size
                 for (int sampleIndex{}; sampleIndex < numSamples; ++sampleIndex) {
                     currentGain += gainSlope;
