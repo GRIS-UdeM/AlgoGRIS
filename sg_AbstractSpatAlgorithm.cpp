@@ -34,19 +34,6 @@
 
 namespace gris
 {
-void fillSourceBufferWithNoise(SourceAudioBuffer & buffer, AudioConfig& config)
-{
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_real_distribution<float> dist(-1.0f, 1.0f);
-
-    for (auto const & source : config.sourcesAudioConfig)
-        for (auto const & speaker : config.speakersAudioConfig)
-            if (!source.value.isMuted && !speaker.value.isMuted)
-                for (int sample = 0; sample < buffer.getNumSamples(); ++sample)
-                    buffer[source.key].getWritePointer(0)[sample] = dist(gen);
-}
-
 class AbstractSpatAlgorithmTest : public juce::UnitTest
 {
     float constexpr static testDurationSeconds{ .1f };
@@ -62,74 +49,74 @@ public:
 
     AbstractSpatAlgorithmTest() : juce::UnitTest("AbstractSpatAlgorithmTest") {}
 
-    void checkSpeakerBufferValidity(SpeakerAudioBuffer & buffer, AudioConfig & config)
-    {
-        for (auto const & speaker : config.speakersAudioConfig) {
-            const auto speakerBuffer { buffer[speaker.key].getReadPointer(0) };
-            for (int sample = 0; sample < buffer.getNumSamples(); ++sample) {
-                const auto speakerSample = speakerBuffer[sample];
-                expect(std::isfinite(speakerSample), "Output contains NaN or Inf values!");
-                expect(speakerSample >= -1.0f && speakerSample <= 1.0f, "Output exceeds valid range!");
-            }
-        }
-    }
-
-    void checkSourceBufferValidity(SourceAudioBuffer & buffer, AudioConfig & config)
-    {
-        for (auto const & source : config.sourcesAudioConfig) {
-            const auto sourceBuffer { buffer[source.key].getReadPointer(0) };
-            for (int sample = 0; sample < buffer.getNumSamples(); ++sample) {
-                const auto sourceSample = sourceBuffer[sample];
-                expect(std::isfinite(sourceSample), "buffer contains NaN or Inf values!");
-                expect(sourceSample >= -1.0f && sourceSample <= 1.0f, "Value exceeds valid range!");
-            }
-        }
-    }
-
-    void initBuffers (int bufferSize, const SpatGrisData& /*data*/)
-    {
-        // init source buffer with MAX_NUM_SOURCES sources
-        juce::Array<source_index_t> sources;
-        for (int i = 1; i <= MAX_NUM_SOURCES; ++i)
-            sources.add(source_index_t{ i });
-        sourceBuffers.init(sources);
-
-        // init speaker buffer with MAX_NUM_SPEAKERS speakers
-        juce::Array<output_patch_t> speakers;
-        for (int i = 1; i <= MAX_NUM_SPEAKERS; ++i)
-            speakers.add(output_patch_t{ i });
-        speakerBuffers.init(speakers);
-
-        //set proper buffer sizes
-        sourceBuffers.setNumSamples(bufferSize);
-        speakerBuffers.setNumSamples(bufferSize);
-        stereoBuffer.setSize(2, bufferSize);
-        stereoBuffer.clear();
-
-        // fill source buffers with pink noise
-        StaticVector<source_index_t, MAX_NUM_SOURCES> activeChannels{};
-        // TODO VB: what's the proper way here to deal with this 1 bullshit?
-        for (int i = 1; i <= MAX_NUM_SOURCES; ++i)
-            activeChannels.push_back(source_index_t{ i });
-        auto temp{ sourceBuffers.getArrayOfWritePointers(activeChannels) };
-        fillWithPinkNoise(temp.data(), bufferSize, sourceBuffers.size(), 1.f);
-
-        // update peaks, from AudioProcessor::processInputPeaks()
-        for (auto const channel : sourceBuffers) {
-            auto const & buffer{ *channel.value };
-            auto const peak{ buffer.getMagnitude(0, bufferSize) };
-            sourcePeaks[channel.key] = peak;
-        }
-    }
-
     void initialise() override { isRunning = true; }
 
-    void updateSourcePeaks(AudioConfig& config)
+    void checkSourceBufferValidity(const SourceAudioBuffer & buffer)
     {
-        for (auto const & source : config.sourcesAudioConfig) {
-            auto const peak{ sourceBuffers[source.key].getMagnitude(0, sourceBuffers.getNumSamples()) };
-            sourcePeaks[source.key] = peak;
+        for (auto const & source : buffer) {
+            juce::String output = "Source " + juce::String(source.key.get()) + ": ";
+            auto const * sourceBuffer = source.value->getReadPointer(0);
+
+            for (int sampleNumber = 0; sampleNumber < buffer.getNumSamples(); ++sampleNumber) {
+                const auto sampleValue = sourceBuffer[sampleNumber];
+
+                output += "Sample " + juce::String(sampleNumber) + ": " + juce::String(sampleValue) + " ";
+                expect(std::isfinite(sampleValue), "Output contains NaN or Inf values!");
+                expect(sampleValue >= -1.0f && sampleValue <= 1.0f, "Output exceeds valid range!");
+            }
+
+            DBG(output);
         }
+    }
+
+    void checkSpeakerBufferValidity(const SpeakerAudioBuffer & buffer)
+    {
+        for (auto const & speaker : buffer)
+        {
+            juce::String output = "Speaker " + juce::String(speaker.key.get()) + ": ";
+            auto const * speakerBuffer = speaker.value->getReadPointer(0);
+
+            for (int sampleNumber = 0; sampleNumber < buffer.getNumSamples(); ++sampleNumber)
+            {
+                const auto sampleValue = speakerBuffer[sampleNumber];
+
+                output += "Sample " + juce::String(sampleNumber) + ": " + juce::String(sampleValue) + " ";
+                expect(std::isfinite(sampleValue), "Output contains NaN or Inf values!");
+                expect(sampleValue >= -1.0f && sampleValue <= 1.0f,  "Output " + juce::String (sampleValue) + " exceeds valid range!");
+            }
+
+            DBG(output);
+        }
+    }
+
+    void initBuffers(const int bufferSize, const size_t numSources, const size_t numSpeakers)
+    {
+        //construct the arrays of indices, because why use ints
+        juce::Array<source_index_t> sourcesIndices;
+        for (int i = 1; i <= numSources; ++i)
+            sourcesIndices.add(source_index_t{ i });
+
+        juce::Array<output_patch_t> speakerIndices;
+        for (int i = 1; i <= numSpeakers; ++i)
+            speakerIndices.add(output_patch_t{ i });
+
+        // init source buffers,  fill 'em with pink noise, and calculate the peaks
+        sourceBuffers.init(sourcesIndices);
+        sourceBuffers.setNumSamples(bufferSize);
+
+        //TODO VB: this should probably be done on each loop?
+        for (auto source : sourcesIndices) {
+            fillWithPinkNoise(sourceBuffers[source].getArrayOfWritePointers(), bufferSize, 1, 1.f);
+            sourcePeaks[source] = sourceBuffers[source].getMagnitude(0, bufferSize);
+        }
+
+        // init speaker buffers
+        speakerBuffers.init(speakerIndices);
+        speakerBuffers.setNumSamples(bufferSize);
+
+        // init stereo buffer
+        stereoBuffer.setSize(2, bufferSize);
+        stereoBuffer.clear();
     }
 
     void updateSourceData(AbstractSpatAlgorithm * algo, SpatGrisData & data)
@@ -157,14 +144,15 @@ public:
             vbapData.project.spatMode = SpatMode::vbap;
             vbapData.appData.stereoMode = {};
 
-            // the default project and speaker setups have 18 sources and 18 speakers
-            auto const vbapConfig{ vbapData.toAudioConfig() };
-            //DBG("number of sources: " << vbapConfig->sourcesAudioConfig.size());
-            //DBG("number of speakers: " << vbapConfig->speakersAudioConfig.size());
+            // the default project and speaker setups have 18 sources and 18 speakers, so we should only be using these
+            const auto vbapConfig{ vbapData.toAudioConfig() };
+            const auto numSources{ vbapConfig->sourcesAudioConfig.size() };
+            const auto numSpeakers{ vbapConfig->speakersAudioConfig.size() };
 
             for (int bufferSize : bufferSizes) {
                 vbapData.appData.audioSettings.bufferSize = bufferSize;
-                initBuffers(bufferSize, vbapData);
+
+                initBuffers(bufferSize, numSources, numSpeakers);
 
                 auto vbapAlgo{ AbstractSpatAlgorithm::make(vbapData.speakerSetup,
                                                            vbapData.project.spatMode,
@@ -177,22 +165,12 @@ public:
 
                 auto const numLoops{ static_cast<int>(DEFAULT_SAMPLE_RATE * testDurationSeconds / bufferSize) };
                 for (int i = 0; i < numLoops; ++i) {
-                    fillSourceBufferWithNoise(sourceBuffers, *vbapConfig);
-                    auto printSamples = [&]() {
-                        for (auto const & source : sourceBuffers) {
-                            auto const * sourceBuffer = source.value->getReadPointer(0);
-                            DBG("Source " << source.key.get() << ":");
-                            for (int sample = 0; sample < sourceBuffers.getNumSamples(); ++sample) {
-                                DBG("Sample " << sample << ": " << sourceBuffer[sample]);
-                            }
-                        }
-                    };
-                    printSamples();
-                    updateSourcePeaks(*vbapConfig);
 
-                    checkSourceBufferValidity(sourceBuffers, *vbapConfig);
+                    checkSourceBufferValidity(sourceBuffers);
+
                     vbapAlgo->process(*vbapConfig, sourceBuffers, speakerBuffers, stereoBuffer, sourcePeaks, nullptr);
-                    checkSpeakerBufferValidity(speakerBuffers, *vbapConfig);
+
+                    checkSpeakerBufferValidity(speakerBuffers);
                 }
             }
         }
@@ -205,10 +183,12 @@ public:
             hrtfData.project.spatMode = SpatMode::vbap;
             hrtfData.appData.stereoMode = StereoMode::hrtf;
             auto const hrtfConfig{ hrtfData.toAudioConfig() };
+            const auto numSources{ hrtfConfig->sourcesAudioConfig.size() };
+            const auto numSpeakers{ hrtfConfig->speakersAudioConfig.size() };
 
             for (int bufferSize : bufferSizes) {
                 hrtfData.appData.audioSettings.bufferSize = bufferSize;
-                initBuffers(bufferSize, hrtfData);
+                initBuffers(bufferSize, numSources, numSpeakers);
 
                 auto hrtfAlgo{ AbstractSpatAlgorithm::make(hrtfData.speakerSetup,
                                                            hrtfData.project.spatMode,
@@ -220,12 +200,9 @@ public:
 
                 auto const numLoops{ static_cast<int>(DEFAULT_SAMPLE_RATE * testDurationSeconds / bufferSize) };
                 for (int i = 0; i < numLoops; ++i) {
-                    fillSourceBufferWithNoise(sourceBuffers, *hrtfConfig);
-                    updateSourcePeaks(*hrtfConfig);
-
-                    checkSourceBufferValidity(sourceBuffers, *hrtfConfig);
+                    checkSourceBufferValidity(sourceBuffers);
                     hrtfAlgo->process(*hrtfConfig, sourceBuffers, speakerBuffers, stereoBuffer, sourcePeaks, nullptr);
-                    checkSpeakerBufferValidity(speakerBuffers, *hrtfConfig);
+                    checkSpeakerBufferValidity(speakerBuffers);
                 }
             }
         }
