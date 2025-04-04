@@ -73,7 +73,7 @@ constexpr PolarVector::PolarVector(radians_t const newAzimuth,
 //==============================================================================
 constexpr bool PolarVector::operator==(PolarVector const & other) const noexcept
 {
-    return azimuth == other.azimuth && elevation == other.elevation && length == other.length;
+    return azimuth == other.azimuth && elevation == other.elevation && juce::approximatelyEqual (length, other.length);
 }
 
 //==============================================================================

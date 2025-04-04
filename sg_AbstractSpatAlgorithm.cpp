@@ -103,7 +103,7 @@ public:
         speakerBuffers.setNumSamples(bufferSize);
         stereoBuffer.setSize(2, bufferSize);
         stereoBuffer.clear();
-
+#if 0
         //fill source buffers with pink noise
         StaticVector<output_patch_t, MAX_NUM_SPEAKERS> activeChannels{};
         for (int i = 1; i < 19; ++i)
@@ -123,10 +123,7 @@ public:
 
                 sourcePeaks[channel.key] = peak;
             }
-
-
-
-
+#endif
     }
 
     void initialise() override { isRunning = true; }
@@ -205,7 +202,7 @@ public:
 
             for (int bufferSize : bufferSizes) {
                 hrtfData.appData.audioSettings.bufferSize = bufferSize;
-                initBuffers(bufferSize);
+                initBuffers(bufferSize, hrtfData);
 
                 auto hrtfAlgo{ AbstractSpatAlgorithm::make(hrtfData.speakerSetup,
                                                            hrtfData.project.spatMode,

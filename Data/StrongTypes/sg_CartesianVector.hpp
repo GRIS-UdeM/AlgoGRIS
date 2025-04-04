@@ -101,7 +101,9 @@ constexpr CartesianVector::CartesianVector(float const newX, float const newY, f
 //==============================================================================
 constexpr bool CartesianVector::operator==(CartesianVector const & other) const noexcept
 {
-    return x == other.x && y == other.y && z == other.z;
+    return juce::approximatelyEqual(x, other.x)
+        && juce::approximatelyEqual(y, other.y)
+        && juce::approximatelyEqual(z, other.z);
 }
 
 //==============================================================================
@@ -214,7 +216,7 @@ template<typename T>
 static constexpr T sqrtNewtonRaphson(T const x, T const current, T const previous)
 {
     static_assert(std::is_floating_point_v<T>, "only works with floating point values");
-    return current == previous ? current : sqrtNewtonRaphson(x, static_cast<T>(0.5) * (current + x / current), current);
+    return juce::approximatelyEqual (current, previous) ? current : sqrtNewtonRaphson(x, static_cast<T>(0.5) * (current + x / current), current);
 }
 
 //==============================================================================
