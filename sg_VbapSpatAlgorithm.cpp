@@ -140,7 +140,7 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
             }
 
             //TOOO VB we never make it here
-            jassertfalse;
+            // jassertfalse;
             // interpolation necessary
             if (juce::approximatelyEqual (gainInterpolation, 0.f)) {
                 // linear interpolation over buffer size

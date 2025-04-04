@@ -19,6 +19,8 @@
 
 #include "sg_AbstractSpatAlgorithm.hpp"
 
+//TODO VB: need to move to algogris
+#include "../../Source/sg_PinkNoiseGenerator.hpp"
 #include "sg_HrtfSpatAlgorithm.hpp"
 #include "sg_HybridSpatAlgorithm.hpp"
 #include "sg_MbapSpatAlgorithm.hpp"
@@ -103,15 +105,21 @@ public:
         speakerBuffers.setNumSamples(bufferSize);
         stereoBuffer.setSize(2, bufferSize);
         stereoBuffer.clear();
-#if 0
+
         //fill source buffers with pink noise
-        StaticVector<output_patch_t, MAX_NUM_SPEAKERS> activeChannels{};
-        for (int i = 1; i < 19; ++i)
-            activeChannels.push_back({i});
+        StaticVector<source_index_t, MAX_NUM_SOURCES> activeChannels{};
+        //TODO VB: what's the proper way here to deal with this 1 bullshit?
+        for (int i = 1; i <= MAX_NUM_SOURCES; ++i)
+            activeChannels.push_back ( source_index_t{i});
         auto temp { sourceBuffers.getArrayOfWritePointers(activeChannels) };
 
-        fillWithPinkNoise(data.data(), numSamples, narrow<int>(data.size()), *mAudioData.config->pinkNoiseGain);
+        // StaticVector<output_patch_t, MAX_NUM_SPEAKERS> activeChannels{};
+        // for (auto const & channel : mAudioData.config->speakersAudioConfig) {
+        //     activeChannels.push_back(channel.key);
+        // }
 
+        fillWithPinkNoise(temp.data(), bufferSize, sourceBuffers.size(), 1.f);
+#if 0
         //update peaks
 //        processInputPeaks(sourceBuffers, sourcePeaks);
 
