@@ -86,7 +86,7 @@ public:
         }
     }
 
-    void initBuffers (int bufferSize, const SpatGrisData& data)
+    void initBuffers (int bufferSize, const SpatGrisData& /*data*/)
     {
         // init source buffer with MAX_NUM_SOURCES sources
         juce::Array<source_index_t> sources;
@@ -106,32 +106,20 @@ public:
         stereoBuffer.setSize(2, bufferSize);
         stereoBuffer.clear();
 
-        //fill source buffers with pink noise
+        // fill source buffers with pink noise
         StaticVector<source_index_t, MAX_NUM_SOURCES> activeChannels{};
-        //TODO VB: what's the proper way here to deal with this 1 bullshit?
+        // TODO VB: what's the proper way here to deal with this 1 bullshit?
         for (int i = 1; i <= MAX_NUM_SOURCES; ++i)
-            activeChannels.push_back ( source_index_t{i});
-        auto temp { sourceBuffers.getArrayOfWritePointers(activeChannels) };
-
-        // StaticVector<output_patch_t, MAX_NUM_SPEAKERS> activeChannels{};
-        // for (auto const & channel : mAudioData.config->speakersAudioConfig) {
-        //     activeChannels.push_back(channel.key);
-        // }
-
+            activeChannels.push_back(source_index_t{ i });
+        auto temp{ sourceBuffers.getArrayOfWritePointers(activeChannels) };
         fillWithPinkNoise(temp.data(), bufferSize, sourceBuffers.size(), 1.f);
-#if 0
-        //update peaks
-//        processInputPeaks(sourceBuffers, sourcePeaks);
 
-        //from AudioProcessor::processInputPeaks(SourceAudioBuffer & inputBuffer, SourcePeaks & peaks) const noexcept
-            for (auto const channel : sourceBuffers) {
-                auto const & config{ mAudioData.config->sourcesAudioConfig[channel.key] };
-                auto const & buffer{ *channel.value };
-                auto const peak{ config.isMuted ? 0.0f : buffer.getMagnitude(0, inputBuffer.getNumSamples()) };
-
-                sourcePeaks[channel.key] = peak;
-            }
-#endif
+        // update peaks, from AudioProcessor::processInputPeaks()
+        for (auto const channel : sourceBuffers) {
+            auto const & buffer{ *channel.value };
+            auto const peak{ buffer.getMagnitude(0, bufferSize) };
+            sourcePeaks[channel.key] = peak;
+        }
     }
 
     void initialise() override { isRunning = true; }
@@ -190,6 +178,16 @@ public:
                 auto const numLoops{ static_cast<int>(DEFAULT_SAMPLE_RATE * testDurationSeconds / bufferSize) };
                 for (int i = 0; i < numLoops; ++i) {
                     fillSourceBufferWithNoise(sourceBuffers, *vbapConfig);
+                    auto printSamples = [&]() {
+                        for (auto const & source : sourceBuffers) {
+                            auto const * sourceBuffer = source.value->getReadPointer(0);
+                            DBG("Source " << source.key.get() << ":");
+                            for (int sample = 0; sample < sourceBuffers.getNumSamples(); ++sample) {
+                                DBG("Sample " << sample << ": " << sourceBuffer[sample]);
+                            }
+                        }
+                    };
+                    printSamples();
                     updateSourcePeaks(*vbapConfig);
 
                     checkSourceBufferValidity(sourceBuffers, *vbapConfig);
