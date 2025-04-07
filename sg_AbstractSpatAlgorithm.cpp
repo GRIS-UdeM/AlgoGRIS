@@ -65,7 +65,7 @@ public:
                 expect(sampleValue >= -1.0f && sampleValue <= 1.0f, "Output exceeds valid range!");
             }
 
-            DBG(output);
+            //DBG(output);
         }
     }
 
@@ -85,7 +85,7 @@ public:
                 expect(sampleValue >= -1.0f && sampleValue <= 1.0f,  "Output " + juce::String (sampleValue) + " exceeds valid range!");
             }
 
-            DBG(output);
+            //DBG(output);
         }
     }
 
@@ -121,10 +121,21 @@ public:
 
     void updateSourceData(AbstractSpatAlgorithm * algo, SpatGrisData & data)
     {
-        for (auto & speaker : SpeakerSetup::fromXml(*parseXML(DEFAULT_SPEAKER_SETUP_FILE))->speakers) {
+        const auto speakerXml = parseXML(DEFAULT_SPEAKER_SETUP_FILE);
+        DBG("Speaker setup: " + speakerXml->toString());
+
+        const auto speakerSetup = SpeakerSetup::fromXml(*speakerXml);
+
+
+        for (auto & speaker : speakerSetup->speakers) {
+
+            // THIS POSITION IS BAD
+            DBG(speaker.value->position.toString());
+
             // update sources data from speakers position of speaker setup
             source_index_t const sourceIndex{ speaker.key.get() };
             auto source = data.project.sources.getNode(sourceIndex);
+
             source.value->position = speaker.value->position;
             source.value->azimuthSpan = 0.0f;
             source.value->zenithSpan = 0.0f;
@@ -140,6 +151,11 @@ public:
             // init project data and audio config
             SpatGrisData vbapData;
             vbapData.speakerSetup = *SpeakerSetup::fromXml(*parseXML(DEFAULT_SPEAKER_SETUP_FILE));
+
+            for (const auto & speaker : vbapData.speakerSetup.speakers) {
+                DBG("Speaker " + juce::String(speaker.key.get()) + ": " + speaker.value->position.toString());
+            }
+
             vbapData.project = *ProjectData::fromXml(*parseXML(DEFAULT_PROJECT_FILE));
             vbapData.project.spatMode = SpatMode::vbap;
             vbapData.appData.stereoMode = {};
@@ -165,7 +181,7 @@ public:
 
                 auto const numLoops{ static_cast<int>(DEFAULT_SAMPLE_RATE * testDurationSeconds / bufferSize) };
                 for (int i = 0; i < numLoops; ++i) {
-
+                    DBG("loop: " + juce::String(i));
                     checkSourceBufferValidity(sourceBuffers);
 
                     vbapAlgo->process(*vbapConfig, sourceBuffers, speakerBuffers, stereoBuffer, sourcePeaks, nullptr);

@@ -65,6 +65,8 @@ tl::optional<SpeakerSetup> readLegacySpeakerSetup(juce::XmlElement const & xml)
                                              ? LegacyLbapPosition{ azimuth, zenith, length }.toPosition()
                                              : Position{ PolarVector{ azimuth, zenith, length } } };
 
+                    DBG(position.toString());
+
                     // audio params
                     dbfs_t const gain{ static_cast<float>(spk->getDoubleAttribute("Gain", 0.0)) };
                     hz_t const highpass{ static_cast<float>(spk->getDoubleAttribute("HighPassCutoff", 0.0)) };
@@ -73,6 +75,8 @@ tl::optional<SpeakerSetup> readLegacySpeakerSetup(juce::XmlElement const & xml)
                     // build data
                     auto speakerData{ std::make_unique<SpeakerData>() };
                     speakerData->position = position;
+                    //these appear fine
+                    //DBG(speakerData->position.toString());
                     speakerData->gain = gain;
                     speakerData->highpassData
                         = (highpass == hz_t{} ? tl::optional<SpeakerHighpassData>{} : SpeakerHighpassData{ highpass });

@@ -41,6 +41,14 @@ struct TripletData {
 
 using triplet_list_t = std::vector<TripletData>;
 
+void checkGains(SpeakersSpatGains & gains, const int numSpeakers)
+{
+    auto * rawGains{ gains.data() };
+
+    for (int i{}; i < numSpeakers; ++i)
+        jassert(rawGains[i] >= -1.0f && rawGains[i] <= 1.0f);
+}
+
 //==============================================================================
 /* Selects a vector base of a virtual source.
  * Calculates gain factors in that base. */
@@ -55,6 +63,8 @@ static void computeGains(juce::Array<SpeakerSet> & sets,
     vec[0] = position.getCartesian().x;
     vec[1] = position.getCartesian().y;
     vec[2] = position.getCartesian().z;
+    //THE POSITION HERE IS BAD
+    DBG(position.toString());
 
     for (auto & set : sets) {
         set.setGains[0] = 0.0f;
@@ -68,6 +78,12 @@ static void computeGains(juce::Array<SpeakerSet> & sets,
         for (std::size_t j{}; j < dim; ++j) {
             for (std::size_t k{}; k < dim; ++k) {
                 set.setGains[j] += vec[k] * set.invMx[(dim * j + k)];
+                if (set.setGains[j] < -1.0f || set.setGains[j] > 1.0f)
+                {
+                    DBG("vec[k]: " + juce::String(vec[k]));
+                    DBG("set.invMx[(dim * j + k)]: " + juce::String(set.invMx[(dim * j + k)]));
+                    jassertfalse;
+                }
             }
             if (set.smallestWt > set.setGains[j])
                 set.smallestWt = set.setGains[j];
@@ -75,6 +91,8 @@ static void computeGains(juce::Array<SpeakerSet> & sets,
                 ++set.negGAm;
         }
     }
+
+    checkGains(gains, numSpeakers);
 
     int j{};
     auto tmp = sets[0].smallestWt;
@@ -93,28 +111,44 @@ static void computeGains(juce::Array<SpeakerSet> & sets,
         }
     }
 
+    checkGains(gains, numSpeakers);
+
     if (sets[j].setGains[0] <= 0.0f && sets[j].setGains[1] <= 0.0f && sets[j].setGains[2] <= 0.0f) {
         sets[j].setGains[0] = 1.0f;
         sets[j].setGains[1] = 1.0f;
         sets[j].setGains[2] = 1.0f;
     }
 
+    checkGains(gains, numSpeakers);
+
     auto * rawGains{ gains.data() };
 #if DEBUG
     if (sets.isEmpty())
         return;
 #endif
-    rawGains[sets[j].speakerNos[0].get() - 1] = sets[j].setGains[0];
-    rawGains[sets[j].speakerNos[1].get() - 1] = sets[j].setGains[1];
+
+    const auto someRandomSpeakerIndex1 = sets[j].speakerNos[0].get() - 1;
+    const auto someRandomSpeakerIndex2 = sets[j].speakerNos[1].get() - 1;
+
+    const auto someRandomGain1 = sets[j].setGains[0];
+    const auto someRandomGain2 = sets[j].setGains[1];
+
+    rawGains[someRandomSpeakerIndex1] = someRandomGain1;
+    rawGains[someRandomSpeakerIndex2] = someRandomGain2;
+
     if (dim == 3) {
         rawGains[sets[j].speakerNos[2].get() - 1] = sets[j].setGains[2];
     }
+
+    checkGains(gains, numSpeakers);
 
     for (int i{}; i < numSpeakers; ++i) {
         if (rawGains[i] < 0.0f) {
             rawGains[i] = 0.0f;
         }
     }
+
+    checkGains(gains, numSpeakers);
 }
 
 //==============================================================================
@@ -717,6 +751,10 @@ void vbapCompute(SourceData const & source, SpeakersSpatGains & gains, VbapData 
     jassert(source.position);
     data.direction = source.position->getPolar();
     std::fill(gains.begin(), gains.end(), 0.0f);
+
+    // THE DIRECTION HERE IS BAD
+    DBG(data.direction.toString());
+
     computeGains(data.speakerSets, gains, data.numSpeakers, data.direction, data.dimension);
     if (data.dimension == 3) {
         if (source.azimuthSpan > 0 || source.zenithSpan > 0) {

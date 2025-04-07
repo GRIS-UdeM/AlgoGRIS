@@ -63,6 +63,9 @@ VbapSpatAlgorithm::VbapSpatAlgorithm(SpeakersData const & speakers)
     auto const numSpeakers{ narrow<int>(index) };
 
     mSetupData = vbapInit(loudSpeakers, numSpeakers, dimensions, outputPatches);
+
+    // this position is NOT bad
+    DBG(mSetupData->direction.toString());
 }
 
 //==============================================================================
@@ -73,6 +76,9 @@ void VbapSpatAlgorithm::updateSpatData(source_index_t const sourceIndex, SourceD
     auto & spatDataQueue{ mData[sourceIndex].spatDataQueue };
     auto * ticket{ spatDataQueue.acquire() };
     auto & gains{ ticket->get() };
+
+    //this position is bad
+    DBG(mSetupData->direction.toString());
 
     if (sourceData.position) {
         vbapCompute(sourceData, gains, *mSetupData);
