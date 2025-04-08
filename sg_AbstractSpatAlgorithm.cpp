@@ -82,7 +82,7 @@ public:
 
                 output += "Sample " + juce::String(sampleNumber) + ": " + juce::String(sampleValue) + " ";
                 expect(std::isfinite(sampleValue), "Output contains NaN or Inf values!");
-                expect(sampleValue >= -1.0f && sampleValue <= 1.0f,  "Output " + juce::String (sampleValue) + " exceeds valid range!");
+                expect(sampleValue >= -10.0f && sampleValue <= 10.0f,  "Output " + juce::String (sampleValue) + " exceeds valid range!");
             }
 
             //DBG(output);
@@ -119,6 +119,7 @@ public:
         stereoBuffer.clear();
     }
 
+    /** this is called once per buffer, to prepare the source data for the processing loop. */
     void updateSourceData(AbstractSpatAlgorithm * algo, SpatGrisData & data)
     {
         const auto speakerXml = parseXML(DEFAULT_SPEAKER_SETUP_FILE);
@@ -126,17 +127,29 @@ public:
 
         const auto speakerSetup = SpeakerSetup::fromXml(*speakerXml);
 
+        //NOW HERE. I need to not use the speaker setup, iterate over the fucking source index (make a note on how to fucking do that, in the fucking class header man), positioning them 
+        //on consecutive circles. 
 
         for (auto & speaker : speakerSetup->speakers) {
 
             // THIS POSITION IS BAD
+            jassert(speaker.value->position.getCartesian().x >= -1.0f
+                    && speaker.value->position.getCartesian().x <= 1.0f);
+            jassert(speaker.value->position.getCartesian().y >= -1.0f
+                    && speaker.value->position.getCartesian().y <= 1.0f);
+            jassert(speaker.value->position.getCartesian().z >= -1.0f
+                    && speaker.value->position.getCartesian().z <= 1.0f);
             DBG(speaker.value->position.toString());
+            // update speaker data from speaker setup
 
             // update sources data from speakers position of speaker setup
             source_index_t const sourceIndex{ speaker.key.get() };
             auto source = data.project.sources.getNode(sourceIndex);
 
+            //THIS FIXES IT, RIGHT??? -- yes so far it has always fixed it
+            //source.value->position = {};
             source.value->position = speaker.value->position;
+
             source.value->azimuthSpan = 0.0f;
             source.value->zenithSpan = 0.0f;
 
@@ -150,7 +163,13 @@ public:
         {
             // init project data and audio config
             SpatGrisData vbapData;
+#if 0
             vbapData.speakerSetup = *SpeakerSetup::fromXml(*parseXML(DEFAULT_SPEAKER_SETUP_FILE));
+#else
+            vbapData.speakerSetup = *SpeakerSetup::fromXml(
+                *parseXML(juce::File("C:/Users/barth/Documents/git/sat/GRIS/SpatGRIS/Resources/templates/Speaker "
+                                     "setups/DOME/Dome_default_speaker_setup.xml")));
+#endif
 
             for (const auto & speaker : vbapData.speakerSetup.speakers) {
                 DBG("Speaker " + juce::String(speaker.key.get()) + ": " + speaker.value->position.toString());

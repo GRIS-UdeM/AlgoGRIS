@@ -38,8 +38,8 @@ tl::optional<SpeakerSetup> readLegacySpeakerSetup(juce::XmlElement const & xml)
     }
 
     juce::Array<std::pair<int, output_patch_t>> layout;
-    juce::OwnedArray<SpeakerData> duplicatedSpeakers{};
-    SpeakerSetup result{};
+    SpeakerSetup speakerSetup{};
+    juce::OwnedArray<SpeakerData> duplicatedSpeakerDataArray{};
 
     for (auto const * ring : xml.getChildIterator()) {
         if (ring->hasTagName("Ring")) {
@@ -65,8 +65,6 @@ tl::optional<SpeakerSetup> readLegacySpeakerSetup(juce::XmlElement const & xml)
                                              ? LegacyLbapPosition{ azimuth, zenith, length }.toPosition()
                                              : Position{ PolarVector{ azimuth, zenith, length } } };
 
-                    DBG(position.toString());
-
                     // audio params
                     dbfs_t const gain{ static_cast<float>(spk->getDoubleAttribute("Gain", 0.0)) };
                     hz_t const highpass{ static_cast<float>(spk->getDoubleAttribute("HighPassCutoff", 0.0)) };
@@ -76,22 +74,28 @@ tl::optional<SpeakerSetup> readLegacySpeakerSetup(juce::XmlElement const & xml)
                     auto speakerData{ std::make_unique<SpeakerData>() };
                     speakerData->position = position;
                     //these appear fine
-                    //DBG(speakerData->position.toString());
+                    DBG(speakerData->position.toString());
                     speakerData->gain = gain;
                     speakerData->highpassData
                         = (highpass == hz_t{} ? tl::optional<SpeakerHighpassData>{} : SpeakerHighpassData{ highpass });
                     speakerData->isDirectOutOnly = isDirectOutOnly;
 
-                    if (!result.speakers.contains(outputPatch)) {
+                    if (!speakerSetup.speakers.contains(outputPatch)) {
                         layout.add(std::make_pair(layoutIndex, outputPatch));
-                        result.speakers.add(outputPatch, std::move(speakerData));
+                        speakerSetup.speakers.add(outputPatch, std::move(speakerData));
                     } else {
-                        duplicatedSpeakers.add(std::move(speakerData));
+                        duplicatedSpeakerDataArray.add(std::move(speakerData));
                     }
                 }
             }
         }
     }
+
+    DBG("size of duplicatedSpeakerDataArray: " + juce::String(duplicatedSpeakerDataArray.size()));
+
+    //these are still valid
+    for (auto speakersData : speakerSetup.speakers)
+        DBG (speakersData.value->position.toString());
 
     static auto const GET_MAX_OUTPUT_PATCH = [&](SpeakersData const & speakers) {
         if (speakers.size() == 0) {
@@ -109,33 +113,42 @@ tl::optional<SpeakerSetup> readLegacySpeakerSetup(juce::XmlElement const & xml)
 
     std::sort(layout.begin(), layout.end());
 
-    auto maxOutputPatch{ GET_MAX_OUTPUT_PATCH(result.speakers) };
+    auto maxOutputPatch{ GET_MAX_OUTPUT_PATCH(speakerSetup.speakers) };
     auto maxLayoutIndex{ layout.getLast().first };
 
-    for (auto * speaker : duplicatedSpeakers) {
+    for (auto * speaker : duplicatedSpeakerDataArray) {
         auto const outputPatch{ ++maxOutputPatch };
         auto const layoutIndex{ ++maxLayoutIndex };
-        result.speakers.add(outputPatch, std::unique_ptr<SpeakerData>(speaker));
+        speakerSetup.speakers.add(outputPatch, std::unique_ptr<SpeakerData>(speaker));
         layout.add(std::make_pair(layoutIndex, outputPatch));
     }
-    duplicatedSpeakers.clearQuick(false);
+    duplicatedSpeakerDataArray.clearQuick(false);
 
-    result.ordering.resize(layout.size());
+    for (auto speakersData : speakerSetup.speakers)
+        DBG(speakersData.value->position.toString());
+
+    speakerSetup.ordering.resize(layout.size());
     std::transform(layout.begin(),
                    layout.end(),
-                   result.ordering.begin(),
+                   speakerSetup.ordering.begin(),
                    [](std::pair<int, output_patch_t> const & indexOutputPair) { return indexOutputPair.second; });
 
+    for (auto speakersData : speakerSetup.speakers)
+        DBG(speakersData.value->position.toString());
+
     auto const getCorrectedSpatMode = [&]() {
-        if (!result.isDomeLike()) {
+        if (!speakerSetup.isDomeLike()) {
             return SpatMode::mbap;
         }
         return spatMode;
     };
 
-    result.spatMode = getCorrectedSpatMode();
+    speakerSetup.spatMode = getCorrectedSpatMode();
 
-    return result;
+    for (auto speakersData : speakerSetup.speakers)
+        DBG(speakersData.value->position.toString());
+
+    return speakerSetup;
 }
 
 //==============================================================================
