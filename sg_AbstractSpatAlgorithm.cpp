@@ -82,7 +82,7 @@ public:
 
                 output += "Sample " + juce::String(sampleNumber) + ": " + juce::String(sampleValue) + " ";
                 expect(std::isfinite(sampleValue), "Output contains NaN or Inf values!");
-                expect(sampleValue >= -10.0f && sampleValue <= 10.0f,  "Output " + juce::String (sampleValue) + " exceeds valid range!");
+                expect(sampleValue >= -MAX_SAMPLE_VALUE && sampleValue <= MAX_SAMPLE_VALUE,  "Output " + juce::String (sampleValue) + " exceeds valid range!");
             }
 
             //DBG(output);
@@ -122,18 +122,32 @@ public:
     /** this is called once per buffer, to prepare the source data for the processing loop. */
     void updateSourceData(AbstractSpatAlgorithm * algo, SpatGrisData & data)
     {
-        //NOW HERE. I need to not use the speaker setup, iterate over the fucking source index (make a note on how to fucking do that, in the fucking class header man), positioning them 
-        //on consecutive circles.
+        const auto numSources{ data.project.sources.size() };
+        const auto numRings{ 3 };
+        const auto numSourcesPerRing{ numSources/numRings };
+        const auto elevSteps{ HALF_PI.get() / numRings };
+        const auto azimSteps{ TWO_PI.get() / numSourcesPerRing };
+        auto curRing{ 0 };
+        auto curAzimuth{ 0.f };
 
-        for (auto source : data.project.sources) {
-            //THIS FIXES IT, RIGHT??? -- yes so far it has always fixed it
-            source.value->position = {};
-            //source.value->position = speaker.value->position;
+        for (int i = 1; i <= numSources; ++i) {
+            const auto sourceIndex{ source_index_t{ i } };
+            auto source{ data.project.sources[sourceIndex] };
 
-            source.value->azimuthSpan = 0.0f;
-            source.value->zenithSpan = 0.0f;
+#if 1
+            source.position = PolarVector{ radians_t{ curAzimuth }, radians_t{ curRing * elevSteps }, 1.f };
+#else
+            source.position = {};
+#endif
+            //DBG(source.position->toString());
+            curAzimuth += azimSteps;
 
-            algo->updateSpatData(source.key, *source.value);
+            algo->updateSpatData(sourceIndex, source);
+
+            if (curRing < numRings && i % numSourcesPerRing == 0) {
+                ++curRing;
+                curAzimuth = 0;
+            }
         }
     }
 
@@ -143,18 +157,7 @@ public:
         {
             // init project data and audio config
             SpatGrisData vbapData;
-#if 0
             vbapData.speakerSetup = *SpeakerSetup::fromXml(*parseXML(DEFAULT_SPEAKER_SETUP_FILE));
-#else
-            vbapData.speakerSetup = *SpeakerSetup::fromXml(
-                *parseXML(juce::File("C:/Users/barth/Documents/git/sat/GRIS/SpatGRIS/Resources/templates/Speaker "
-                                     "setups/DOME/Dome_default_speaker_setup.xml")));
-#endif
-
-            //for (const auto & speaker : vbapData.speakerSetup.speakers) {
-            //    DBG("Speaker " + juce::String(speaker.key.get()) + ": " + speaker.value->position.toString());
-            //}
-
             vbapData.project = *ProjectData::fromXml(*parseXML(DEFAULT_PROJECT_FILE));
             vbapData.project.spatMode = SpatMode::vbap;
             vbapData.appData.stereoMode = {};

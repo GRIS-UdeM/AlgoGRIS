@@ -139,20 +139,22 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
                 currentGain = targetGain;
                 if (currentGain >= SMALL_GAIN) {
                     //TODO VB: or here
+                    // we get here when using the pipeline for real with jack
                     jassertfalse;
                     juce::FloatVectorOperations::addWithMultiply(outputSamples, inputSamples, currentGain, numSamples);
                 }
                 continue;
             }
 
-            //TOOO VB we never make it here
-            // jassertfalse;
+            //TOOO VB we never make it here -- actually now we do
+            //jassertfalse;
             // interpolation necessary
             if (juce::approximatelyEqual (gainInterpolation, 0.f)) {
                 // linear interpolation over buffer size
                 for (int sampleIndex{}; sampleIndex < numSamples; ++sampleIndex) {
                     currentGain += gainSlope;
                     outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
+                    jassert(outputSamples[sampleIndex] >= -MAX_SAMPLE_VALUE && outputSamples[sampleIndex] <= MAX_SAMPLE_VALUE);
                 }
             } else {
                 // log interpolation with 1st order filter
@@ -161,6 +163,7 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
                     for (int sampleIndex{}; sampleIndex < numSamples && currentGain >= SMALL_GAIN; ++sampleIndex) {
                         currentGain = targetGain + (currentGain - targetGain) * gainFactor;
                         outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
+                        jassert(outputSamples[sampleIndex] >= -MAX_SAMPLE_VALUE && outputSamples[sampleIndex] <= MAX_SAMPLE_VALUE);
                     }
                     continue;
                 }
@@ -169,9 +172,26 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
                 for (int sampleIndex{}; sampleIndex < numSamples; ++sampleIndex) {
                     currentGain = targetGain + (currentGain - targetGain) * gainFactor;
                     outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
+                    jassert(outputSamples[sampleIndex] >= -MAX_SAMPLE_VALUE && outputSamples[sampleIndex] <= MAX_SAMPLE_VALUE);
                 }
             }
         }
+    }
+
+
+    for (auto const & speaker : speakersBuffer) {
+        juce::String output = "Speaker " + juce::String(speaker.key.get()) + ": ";
+        auto const * speakerBuffer = speaker.value->getReadPointer(0);
+
+        for (int sampleNumber = 0; sampleNumber < speakersBuffer.getNumSamples(); ++sampleNumber) {
+            const auto sampleValue = speakerBuffer[sampleNumber];
+
+            output += "Sample " + juce::String(sampleNumber) + ": " + juce::String(sampleValue) + " ";
+            jassert (std::isfinite(sampleValue));
+            jassert(sampleValue >= -MAX_SAMPLE_VALUE && sampleValue <= MAX_SAMPLE_VALUE);
+        }
+
+        DBG(output);
     }
 }
 

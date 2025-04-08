@@ -30,6 +30,8 @@
 #include "sg_Position.hpp"
 #include "sg_Triplet.hpp"
 
+constexpr float MAX_SAMPLE_VALUE = 1.f;
+
 namespace gris
 {
 constexpr auto DEFAULT_UDP_INPUT_PORT = 18022;
