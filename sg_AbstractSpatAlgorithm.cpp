@@ -122,33 +122,19 @@ public:
     /** this is called once per buffer, to prepare the source data for the processing loop. */
     void updateSourceData(AbstractSpatAlgorithm * algo, SpatGrisData & data)
     {
-        const auto speakerXml = parseXML(DEFAULT_SPEAKER_SETUP_FILE);
-        DBG("Speaker setup: " + speakerXml->toString());
-
-        const auto speakerSetup = SpeakerSetup::fromXml(*speakerXml);
-
         //NOW HERE. I need to not use the speaker setup, iterate over the fucking source index (make a note on how to fucking do that, in the fucking class header man), positioning them 
-        //on consecutive circles. 
+        //on consecutive circles.
 
-        for (auto & speaker : speakerSetup->speakers) {
 
-            // THIS POSITION IS BAD
-            jassert(speaker.value->position.getCartesian().x >= -1.0f
-                    && speaker.value->position.getCartesian().x <= 1.0f);
-            jassert(speaker.value->position.getCartesian().y >= -1.0f
-                    && speaker.value->position.getCartesian().y <= 1.0f);
-            jassert(speaker.value->position.getCartesian().z >= -1.0f
-                    && speaker.value->position.getCartesian().z <= 1.0f);
-            DBG(speaker.value->position.toString());
-            // update speaker data from speaker setup
+        const auto numSources = data.project.sources.size();
 
-            // update sources data from speakers position of speaker setup
-            source_index_t const sourceIndex{ speaker.key.get() };
+        for (int i = 1; i <= numSources; ++i) {
+            const auto sourceIndex{ source_index_t{ i } };
             auto source = data.project.sources.getNode(sourceIndex);
 
             //THIS FIXES IT, RIGHT??? -- yes so far it has always fixed it
-            //source.value->position = {};
-            source.value->position = speaker.value->position;
+            source.value->position = {};
+            //source.value->position = speaker.value->position;
 
             source.value->azimuthSpan = 0.0f;
             source.value->zenithSpan = 0.0f;
