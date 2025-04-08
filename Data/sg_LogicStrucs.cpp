@@ -815,8 +815,6 @@ std::unique_ptr<juce::XmlElement> SpeakerSetup::toXml() const
 //==============================================================================
 tl::optional<SpeakerSetup> SpeakerSetup::fromXml(juce::XmlElement const & xml)
 {
-    DBG(xml.toString());
-
     auto const spatMode{ stringToSpatMode(xml.getStringAttribute(XmlTags::SPAT_MODE)) };
     auto const diffusion{ tl::optional<float>(xml.getStringAttribute(XmlTags::DIFFUSION).getFloatValue()) };
 
@@ -846,8 +844,6 @@ tl::optional<SpeakerSetup> SpeakerSetup::fromXml(juce::XmlElement const & xml)
         if (!speakerData) {
             return tl::nullopt;
         }
-
-        DBG (speakerData->position.toString());
 
         result->speakers.add(outputPatch, std::make_unique<SpeakerData>(*speakerData));
     }

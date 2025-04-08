@@ -64,7 +64,7 @@ static void computeGains(juce::Array<SpeakerSet> & sets,
     vec[1] = position.getCartesian().y;
     vec[2] = position.getCartesian().z;
     //THE POSITION HERE IS BAD
-    DBG(position.toString());
+    //DBG(position.toString());
 
     for (auto & set : sets) {
         set.setGains[0] = 0.0f;
@@ -78,14 +78,14 @@ static void computeGains(juce::Array<SpeakerSet> & sets,
         for (std::size_t j{}; j < dim; ++j) {
             for (std::size_t k{}; k < dim; ++k) {
                 set.setGains[j] += vec[k] * set.invMx[(dim * j + k)];
-                if (set.setGains[j] < -10.0f || set.setGains[j] > 10.0f)
-                {
-                    //ok so one of these will usually be bad, and it's inconsistent which one
-                    DBG("set.setGains[j]: " + juce::String(set.setGains[j]));
-                    DBG("vec[k]: " + juce::String(vec[k]));
-                    DBG("set.invMx[(dim * j + k)]: " + juce::String(set.invMx[(dim * j + k)]));
-                    jassertfalse; 
-                }
+                //if (set.setGains[j] < -10.0f || set.setGains[j] > 10.0f)
+                //{
+                //    //ok so one of these will usually be bad, and it's inconsistent which one
+                //    DBG("set.setGains[j]: " + juce::String(set.setGains[j]));
+                //    DBG("vec[k]: " + juce::String(vec[k]));
+                //    DBG("set.invMx[(dim * j + k)]: " + juce::String(set.invMx[(dim * j + k)]));
+                //    jassertfalse; 
+                //}
             }
             if (set.smallestWt > set.setGains[j])
                 set.smallestWt = set.setGains[j];
@@ -757,7 +757,7 @@ void vbapCompute(SourceData const & source, SpeakersSpatGains & gains, VbapData 
     std::fill(gains.begin(), gains.end(), 0.0f);
 
     // THE DIRECTION HERE IS BAD
-    DBG(data.direction.toString());
+    //DBG(data.direction.toString());
 
     computeGains(data.speakerSets, gains, data.numSpeakers, data.direction, data.dimension);
     if (data.dimension == 3) {

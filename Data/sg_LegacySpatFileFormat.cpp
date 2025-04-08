@@ -74,7 +74,7 @@ tl::optional<SpeakerSetup> readLegacySpeakerSetup(juce::XmlElement const & xml)
                     auto speakerData{ std::make_unique<SpeakerData>() };
                     speakerData->position = position;
                     //these appear fine
-                    DBG(speakerData->position.toString());
+                    //DBG(speakerData->position.toString());
                     speakerData->gain = gain;
                     speakerData->highpassData
                         = (highpass == hz_t{} ? tl::optional<SpeakerHighpassData>{} : SpeakerHighpassData{ highpass });
@@ -91,11 +91,11 @@ tl::optional<SpeakerSetup> readLegacySpeakerSetup(juce::XmlElement const & xml)
         }
     }
 
-    DBG("size of duplicatedSpeakerDataArray: " + juce::String(duplicatedSpeakerDataArray.size()));
+    //DBG("size of duplicatedSpeakerDataArray: " + juce::String(duplicatedSpeakerDataArray.size()));
 
     //these are still valid
-    for (auto speakersData : speakerSetup.speakers)
-        DBG (speakersData.value->position.toString());
+    //for (auto speakersData : speakerSetup.speakers)
+    //    DBG (speakersData.value->position.toString());
 
     static auto const GET_MAX_OUTPUT_PATCH = [&](SpeakersData const & speakers) {
         if (speakers.size() == 0) {
@@ -124,8 +124,8 @@ tl::optional<SpeakerSetup> readLegacySpeakerSetup(juce::XmlElement const & xml)
     }
     duplicatedSpeakerDataArray.clearQuick(false);
 
-    for (auto speakersData : speakerSetup.speakers)
-        DBG(speakersData.value->position.toString());
+    //for (auto speakersData : speakerSetup.speakers)
+    //    DBG(speakersData.value->position.toString());
 
     speakerSetup.ordering.resize(layout.size());
     std::transform(layout.begin(),
@@ -133,8 +133,8 @@ tl::optional<SpeakerSetup> readLegacySpeakerSetup(juce::XmlElement const & xml)
                    speakerSetup.ordering.begin(),
                    [](std::pair<int, output_patch_t> const & indexOutputPair) { return indexOutputPair.second; });
 
-    for (auto speakersData : speakerSetup.speakers)
-        DBG(speakersData.value->position.toString());
+    //for (auto speakersData : speakerSetup.speakers)
+    //    DBG(speakersData.value->position.toString());
 
     auto const getCorrectedSpatMode = [&]() {
         if (!speakerSetup.isDomeLike()) {
@@ -145,8 +145,8 @@ tl::optional<SpeakerSetup> readLegacySpeakerSetup(juce::XmlElement const & xml)
 
     speakerSetup.spatMode = getCorrectedSpatMode();
 
-    for (auto speakersData : speakerSetup.speakers)
-        DBG(speakersData.value->position.toString());
+    //for (auto speakersData : speakerSetup.speakers)
+    //    DBG(speakersData.value->position.toString());
 
     return speakerSetup;
 }

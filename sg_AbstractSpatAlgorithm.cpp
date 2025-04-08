@@ -125,13 +125,7 @@ public:
         //NOW HERE. I need to not use the speaker setup, iterate over the fucking source index (make a note on how to fucking do that, in the fucking class header man), positioning them 
         //on consecutive circles.
 
-
-        const auto numSources = data.project.sources.size();
-
-        for (int i = 1; i <= numSources; ++i) {
-            const auto sourceIndex{ source_index_t{ i } };
-            auto source = data.project.sources.getNode(sourceIndex);
-
+        for (auto source : data.project.sources) {
             //THIS FIXES IT, RIGHT??? -- yes so far it has always fixed it
             source.value->position = {};
             //source.value->position = speaker.value->position;
@@ -157,9 +151,9 @@ public:
                                      "setups/DOME/Dome_default_speaker_setup.xml")));
 #endif
 
-            for (const auto & speaker : vbapData.speakerSetup.speakers) {
-                DBG("Speaker " + juce::String(speaker.key.get()) + ": " + speaker.value->position.toString());
-            }
+            //for (const auto & speaker : vbapData.speakerSetup.speakers) {
+            //    DBG("Speaker " + juce::String(speaker.key.get()) + ": " + speaker.value->position.toString());
+            //}
 
             vbapData.project = *ProjectData::fromXml(*parseXML(DEFAULT_PROJECT_FILE));
             vbapData.project.spatMode = SpatMode::vbap;
@@ -186,7 +180,7 @@ public:
 
                 auto const numLoops{ static_cast<int>(DEFAULT_SAMPLE_RATE * testDurationSeconds / bufferSize) };
                 for (int i = 0; i < numLoops; ++i) {
-                    DBG("loop: " + juce::String(i));
+                    //DBG("loop: " + juce::String(i));
                     checkSourceBufferValidity(sourceBuffers);
 
                     vbapAlgo->process(*vbapConfig, sourceBuffers, speakerBuffers, stereoBuffer, sourcePeaks, nullptr);
