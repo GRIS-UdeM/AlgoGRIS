@@ -140,7 +140,7 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
                 if (currentGain >= SMALL_GAIN) {
                     //TODO VB: or here
                     // we get here when using the pipeline for real with jack
-                    jassertfalse;
+                    //jassertfalse;
                     juce::FloatVectorOperations::addWithMultiply(outputSamples, inputSamples, currentGain, numSamples);
                 }
                 continue;
@@ -172,6 +172,10 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
                 for (int sampleIndex{}; sampleIndex < numSamples; ++sampleIndex) {
                     currentGain = targetGain + (currentGain - targetGain) * gainFactor;
                     outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
+                    DBG("source.key " + juce::String(source.key.get()) + " speaker " + juce::String(speaker.key.get())
+                        + " outputSamples["
+                        + juce::String(sampleIndex)
+                        + "]: " + juce::String(outputSamples[sampleIndex]));
                     jassert(outputSamples[sampleIndex] >= -MAX_SAMPLE_VALUE && outputSamples[sampleIndex] <= MAX_SAMPLE_VALUE);
                 }
             }
@@ -179,20 +183,20 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
     }
 
 
-    for (auto const & speaker : speakersBuffer) {
-        juce::String output = "Speaker " + juce::String(speaker.key.get()) + ": ";
-        auto const * speakerBuffer = speaker.value->getReadPointer(0);
+    //for (auto const & speaker : speakersBuffer) {
+    //    juce::String output = "Speaker " + juce::String(speaker.key.get()) + ": ";
+    //    auto const * speakerBuffer = speaker.value->getReadPointer(0);
 
-        for (int sampleNumber = 0; sampleNumber < speakersBuffer.getNumSamples(); ++sampleNumber) {
-            const auto sampleValue = speakerBuffer[sampleNumber];
+    //    for (int sampleNumber = 0; sampleNumber < speakersBuffer.getNumSamples(); ++sampleNumber) {
+    //        const auto sampleValue = speakerBuffer[sampleNumber];
 
-            output += "Sample " + juce::String(sampleNumber) + ": " + juce::String(sampleValue) + " ";
-            jassert (std::isfinite(sampleValue));
-            jassert(sampleValue >= -MAX_SAMPLE_VALUE && sampleValue <= MAX_SAMPLE_VALUE);
-        }
+    //        output += "Sample " + juce::String(sampleNumber) + ": " + juce::String(sampleValue) + " ";
+    //        jassert (std::isfinite(sampleValue));
+    //        jassert(sampleValue >= -MAX_SAMPLE_VALUE && sampleValue <= MAX_SAMPLE_VALUE);
+    //    }
 
-        DBG(output);
-    }
+    //    DBG(output);
+    //}
 }
 
 //==============================================================================

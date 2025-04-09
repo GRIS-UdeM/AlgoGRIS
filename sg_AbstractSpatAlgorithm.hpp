@@ -26,7 +26,6 @@
 // can be useful to turn off unit testing when debugging and running the app multiple times in a row.
 #define RUN_UNIT_TEST 1
 
-
 namespace gris
 {
 //==============================================================================

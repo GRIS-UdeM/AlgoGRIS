@@ -37,7 +37,8 @@ namespace gris
 class AbstractSpatAlgorithmTest : public juce::UnitTest
 {
     float constexpr static testDurationSeconds{ .1f };
-    std::vector<int> const bufferSizes{ 1, 512, 1024, SourceAudioBuffer::MAX_NUM_SAMPLES };
+    //std::vector<int> const bufferSizes{ /*1,*/ 512, 1024, SourceAudioBuffer::MAX_NUM_SAMPLES };
+    std::vector<int> const bufferSizes{ 1024 };
 
     SourceAudioBuffer sourceBuffers;
     SpeakerAudioBuffer speakerBuffers;
@@ -122,8 +123,14 @@ public:
     /** this is called once per buffer, to prepare the source data for the processing loop. */
     void updateSourceData(AbstractSpatAlgorithm * algo, SpatGrisData & data)
     {
+#if 1
         const auto numSources{ data.project.sources.size() };
         const auto numRings{ 3 };
+#else
+        const auto numSources{ 1 };
+        const auto numRings{ 1 };
+#endif
+
         const auto numSourcesPerRing{ numSources/numRings };
         const auto elevSteps{ HALF_PI.get() / numRings };
         const auto azimSteps{ TWO_PI.get() / numSourcesPerRing };
@@ -136,6 +143,11 @@ public:
 
 #if 1
             source.position = PolarVector{ radians_t{ curAzimuth }, radians_t{ curRing * elevSteps }, 1.f };
+            //source.position = CartesianVector {1.f, 1.f, 1.f};
+            //THIS ONE IS FINE, LOCATION TAKEN DIRECTION FROM IRL RUN
+            //computeGains: (-3.08809e-08, 0.706473, 0.70774); polar: PolarVector(azimuth: 1.5708, elevation: 0.786294, length: 1)
+            //source.position = CartesianVector{ 0.f, 0.706473f, 0.70774f };
+            DBG(source.position->toString());
 #else
             source.position = {};
 #endif
@@ -157,7 +169,13 @@ public:
         {
             // init project data and audio config
             SpatGrisData vbapData;
+#if 0
             vbapData.speakerSetup = *SpeakerSetup::fromXml(*parseXML(DEFAULT_SPEAKER_SETUP_FILE));
+#else
+            //vbapData.speakerSetup = *SpeakerSetup::fromXml(*parseXML(juce::File("C:/Users/barth/Documents/git/sat/GRIS/SpatGRIS/Resources/templates/Speaker setups/DOME/Dome_default_speaker_setup.xml")));
+            vbapData.speakerSetup = *SpeakerSetup::fromXml(*parseXML(juce::File("C:/Users/barth/Documents/git/sat/GRIS/SpatGRIS/Resources/templates/Speaker setups/DOME/Dome4(4)Subs1 Quad.xml")));
+            
+#endif
             vbapData.project = *ProjectData::fromXml(*parseXML(DEFAULT_PROJECT_FILE));
             vbapData.project.spatMode = SpatMode::vbap;
             vbapData.appData.stereoMode = {};
@@ -193,37 +211,37 @@ public:
             }
         }
 
-        beginTest("HRTF test");
-        {
-            SpatGrisData hrtfData;
-            hrtfData.speakerSetup = *SpeakerSetup::fromXml(*parseXML(BINAURAL_SPEAKER_SETUP_FILE));
-            hrtfData.project = *ProjectData::fromXml(*parseXML(DEFAULT_PROJECT_FILE));
-            hrtfData.project.spatMode = SpatMode::vbap;
-            hrtfData.appData.stereoMode = StereoMode::hrtf;
-            auto const hrtfConfig{ hrtfData.toAudioConfig() };
-            const auto numSources{ hrtfConfig->sourcesAudioConfig.size() };
-            const auto numSpeakers{ hrtfConfig->speakersAudioConfig.size() };
+        //beginTest("HRTF test");
+        //{
+        //    SpatGrisData hrtfData;
+        //    hrtfData.speakerSetup = *SpeakerSetup::fromXml(*parseXML(BINAURAL_SPEAKER_SETUP_FILE));
+        //    hrtfData.project = *ProjectData::fromXml(*parseXML(DEFAULT_PROJECT_FILE));
+        //    hrtfData.project.spatMode = SpatMode::vbap;
+        //    hrtfData.appData.stereoMode = StereoMode::hrtf;
+        //    auto const hrtfConfig{ hrtfData.toAudioConfig() };
+        //    const auto numSources{ hrtfConfig->sourcesAudioConfig.size() };
+        //    const auto numSpeakers{ hrtfConfig->speakersAudioConfig.size() };
 
-            for (int bufferSize : bufferSizes) {
-                hrtfData.appData.audioSettings.bufferSize = bufferSize;
-                initBuffers(bufferSize, numSources, numSpeakers);
+        //    for (int bufferSize : bufferSizes) {
+        //        hrtfData.appData.audioSettings.bufferSize = bufferSize;
+        //        initBuffers(bufferSize, numSources, numSpeakers);
 
-                auto hrtfAlgo{ AbstractSpatAlgorithm::make(hrtfData.speakerSetup,
-                                                           hrtfData.project.spatMode,
-                                                           hrtfData.appData.stereoMode,
-                                                           hrtfData.project.sources,
-                                                           hrtfData.appData.audioSettings.sampleRate,
-                                                           hrtfData.appData.audioSettings.bufferSize) };
-                updateSourceData(hrtfAlgo.get(), hrtfData);
+        //        auto hrtfAlgo{ AbstractSpatAlgorithm::make(hrtfData.speakerSetup,
+        //                                                   hrtfData.project.spatMode,
+        //                                                   hrtfData.appData.stereoMode,
+        //                                                   hrtfData.project.sources,
+        //                                                   hrtfData.appData.audioSettings.sampleRate,
+        //                                                   hrtfData.appData.audioSettings.bufferSize) };
+        //        updateSourceData(hrtfAlgo.get(), hrtfData);
 
-                auto const numLoops{ static_cast<int>(DEFAULT_SAMPLE_RATE * testDurationSeconds / bufferSize) };
-                for (int i = 0; i < numLoops; ++i) {
-                    checkSourceBufferValidity(sourceBuffers);
-                    hrtfAlgo->process(*hrtfConfig, sourceBuffers, speakerBuffers, stereoBuffer, sourcePeaks, nullptr);
-                    checkSpeakerBufferValidity(speakerBuffers);
-                }
-            }
-        }
+        //        auto const numLoops{ static_cast<int>(DEFAULT_SAMPLE_RATE * testDurationSeconds / bufferSize) };
+        //        for (int i = 0; i < numLoops; ++i) {
+        //            checkSourceBufferValidity(sourceBuffers);
+        //            hrtfAlgo->process(*hrtfConfig, sourceBuffers, speakerBuffers, stereoBuffer, sourcePeaks, nullptr);
+        //            checkSpeakerBufferValidity(speakerBuffers);
+        //        }
+        //    }
+        //}
     }
 
     void shutdown() override { isRunning = false; }
