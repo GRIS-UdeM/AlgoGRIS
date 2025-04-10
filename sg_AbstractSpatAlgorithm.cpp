@@ -101,15 +101,9 @@ public:
         for (int i = 1; i <= numSpeakers; ++i)
             speakerIndices.add(output_patch_t{ i });
 
-        // init source buffers,  fill 'em with pink noise, and calculate the peaks
+        // init source buffers
         sourceBuffers.init(sourcesIndices);
         sourceBuffers.setNumSamples(bufferSize);
-
-        //TODO VB: this should probably be done on each loop?
-        for (auto source : sourcesIndices) {
-            fillWithPinkNoise(sourceBuffers[source].getArrayOfWritePointers(), bufferSize, 1, .5f);
-            sourcePeaks[source] = sourceBuffers[source].getMagnitude(0, bufferSize);
-        }
 
         // init speaker buffers
         speakerBuffers.init(speakerIndices);
@@ -118,6 +112,18 @@ public:
         // init stereo buffer
         stereoBuffer.setSize(2, bufferSize);
         stereoBuffer.clear();
+    }
+
+    /** fill Source Buffers with pink noise, and calculate the peaks */
+    void fillSourceBuffersWithNoise (const size_t numSources, const int bufferSize)
+    {
+        sourceBuffers.silence();
+        for (int i = 1; i <= numSources; ++i)
+        {
+            const auto sourceIndex { source_index_t{ i } };
+            fillWithPinkNoise (sourceBuffers[sourceIndex].getArrayOfWritePointers (), bufferSize, 1, .1f);
+            sourcePeaks[sourceIndex] = sourceBuffers[sourceIndex].getMagnitude (0, bufferSize);
+        }
     }
 
     void positionSources(AbstractSpatAlgorithm * algo, SpatGrisData & data)
@@ -162,11 +168,14 @@ public:
             const auto numSources{ vbapConfig->sourcesAudioConfig.size() };
             const auto numSpeakers{ vbapConfig->speakersAudioConfig.size() };
 
+            //for every test buffer size
             for (int bufferSize : bufferSizes) {
                 vbapData.appData.audioSettings.bufferSize = bufferSize;
 
+                //init our buffers
                 initBuffers(bufferSize, numSources, numSpeakers);
 
+                //create our spatialization algorithm
                 auto vbapAlgo{ AbstractSpatAlgorithm::make(vbapData.speakerSetup,
                                                            vbapData.project.spatMode,
                                                            vbapData.appData.stereoMode,
@@ -174,16 +183,22 @@ public:
                                                            vbapData.appData.audioSettings.sampleRate,
                                                            vbapData.appData.audioSettings.bufferSize) };
 
+                //position the sound sources
                 positionSources(vbapAlgo.get(), vbapData);
 
+                //now simulate processing an audio loop of testDurationSeconds
                 auto const numLoops{ static_cast<int>(DEFAULT_SAMPLE_RATE * testDurationSeconds / bufferSize) };
                 for (int i = 0; i < numLoops; ++i) {
+                    // fill the source buffers with pink noise
+                    fillSourceBuffersWithNoise (numSources, bufferSize);
                     checkSourceBufferValidity(sourceBuffers);
 
+                    //process the audio
                     speakerBuffers.silence();
                     stereoBuffer.clear();
                     vbapAlgo->process(*vbapConfig, sourceBuffers, speakerBuffers, stereoBuffer, sourcePeaks, nullptr);
 
+                    //check that the audio output is valid
                     checkSpeakerBufferValidity(speakerBuffers);
                 }
             }
