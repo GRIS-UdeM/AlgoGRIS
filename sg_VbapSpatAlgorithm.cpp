@@ -100,7 +100,7 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
     ASSERT_AUDIO_THREAD;
 
     auto const & gainInterpolation{ config.spatGainsInterpolation };
-    jassert (gainInterpolation == 0.f);
+    //jassert (gainInterpolation == 0.f);
     auto const gainFactor{ std::pow(gainInterpolation, 0.1f) * 0.0099f + 0.99f };
 
     auto const & speakersAudioConfig{ altSpeakerConfig ? *altSpeakerConfig : config.speakersAudioConfig };
@@ -139,9 +139,6 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
                 // no interpolation
                 currentGain = targetGain;
                 if (currentGain >= SMALL_GAIN) {
-                    //TODO VB: or here
-                    // we get here when using the pipeline for real with jack
-                    //jassertfalse;
                     juce::FloatVectorOperations::addWithMultiply(outputSamples, inputSamples, currentGain, numSamples);
                 }
                 continue;
@@ -152,16 +149,16 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
                 // linear interpolation over buffer size
                 for (int sampleIndex{}; sampleIndex < numSamples; ++sampleIndex) {
                     currentGain += gainSlope;
-                    DBG ("outputSamples before: " + juce::String (outputSamples[sampleIndex]));
+                    //DBG ("outputSamples before: " + juce::String (outputSamples[sampleIndex]));
                     outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
 
-                    DBG ("source " + juce::String (source.key.get ())
-                         + "\tspeaker " + juce::String (speaker.key.get ())
-                         + "\tinputSamples[" + juce::String (sampleIndex) + "]: " + juce::String (inputSamples[sampleIndex], 7)
-                         + "\tcurrentGain " + juce::String (currentGain, 7)
-                         + "\tgainSlope " + juce::String (gainSlope, 7)
-                         + "\toutputSamples[" + juce::String (sampleIndex) + "]: " + juce::String (outputSamples[sampleIndex], 7)
-                    );
+                    //DBG ("source " + juce::String (source.key.get ())
+                    //     + "\tspeaker " + juce::String (speaker.key.get ())
+                    //     + "\tinputSamples[" + juce::String (sampleIndex) + "]: " + juce::String (inputSamples[sampleIndex], 7)
+                    //     + "\tcurrentGain " + juce::String (currentGain, 7)
+                    //     + "\tgainSlope " + juce::String (gainSlope, 7)
+                    //     + "\toutputSamples[" + juce::String (sampleIndex) + "]: " + juce::String (outputSamples[sampleIndex], 7)
+                    //);
 
                     jassert(outputSamples[sampleIndex] >= -MAX_SAMPLE_VALUE && outputSamples[sampleIndex] <= MAX_SAMPLE_VALUE);
                 }
@@ -183,35 +180,19 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
                     currentGain = targetGain + (currentGain - targetGain) * gainFactor;
                     outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
 
-                    DBG("source " + juce::String(source.key.get())
-                        + "\tspeaker " + juce::String(speaker.key.get())
-                        + "\tinputSamples[" + juce::String (sampleIndex) + "]: " + juce::String (inputSamples[sampleIndex], 7)
-                        + "\tcurrentGain " + juce::String(currentGain, 7)
-                        + "\ttargetGain " + juce::String(targetGain, 7)
-                        + "\tgainFactor " + juce::String (gainFactor, 7)
-                        + "\toutputSamples["+ juce::String(sampleIndex)+ "]: " + juce::String(outputSamples[sampleIndex], 7)
-                    );
+                    //DBG("source " + juce::String(source.key.get())
+                    //    + "\tspeaker " + juce::String(speaker.key.get())
+                    //    + "\tinputSamples[" + juce::String (sampleIndex) + "]: " + juce::String (inputSamples[sampleIndex], 7)
+                    //    + "\tcurrentGain " + juce::String(currentGain, 7)
+                    //    + "\ttargetGain " + juce::String(targetGain, 7)
+                    //    + "\tgainFactor " + juce::String (gainFactor, 7)
+                    //    + "\toutputSamples["+ juce::String(sampleIndex)+ "]: " + juce::String(outputSamples[sampleIndex], 7)
+                    //);
                     jassert(outputSamples[sampleIndex] >= -MAX_SAMPLE_VALUE && outputSamples[sampleIndex] <= MAX_SAMPLE_VALUE);
                 }
             }
         }
     }
-
-
-    //for (auto const & speaker : speakersBuffer) {
-    //    juce::String output = "Speaker " + juce::String(speaker.key.get()) + ": ";
-    //    auto const * speakerBuffer = speaker.value->getReadPointer(0);
-
-    //    for (int sampleNumber = 0; sampleNumber < speakersBuffer.getNumSamples(); ++sampleNumber) {
-    //        const auto sampleValue = speakerBuffer[sampleNumber];
-
-    //        output += "Sample " + juce::String(sampleNumber) + ": " + juce::String(sampleValue) + " ";
-    //        jassert (std::isfinite(sampleValue));
-    //        jassert(sampleValue >= -MAX_SAMPLE_VALUE && sampleValue <= MAX_SAMPLE_VALUE);
-    //    }
-
-    //    DBG(output);
-    //}
 }
 
 //==============================================================================

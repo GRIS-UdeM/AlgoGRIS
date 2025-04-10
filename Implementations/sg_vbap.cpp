@@ -67,7 +67,7 @@ static void computeGains(juce::Array<SpeakerSet> & sets,
     vec[1] = position.getCartesian().y;
     vec[2] = position.getCartesian().z;
     //THE POSITION HERE IS BAD
-    DBG("computeGains: " + position.toString());
+    //DBG("computeGains: " + position.toString());
 
     for (auto & set : sets) {
         set.setGains[0] = 0.0f;
@@ -81,14 +81,14 @@ static void computeGains(juce::Array<SpeakerSet> & sets,
         for (std::size_t j{}; j < dim; ++j) {
             for (std::size_t k{}; k < dim; ++k) {
                 set.setGains[j] += vec[k] * set.invMx[(dim * j + k)];
-                if (set.setGains[j] < -MAX_SAMPLE_VALUE || set.setGains[j] > MAX_SAMPLE_VALUE)
-                {
-                    //ok so one of these will usually be bad, and it's inconsistent which one
-                    DBG("set.setGains[j]: " + juce::String(set.setGains[j]));
-                    DBG("vec[k]: " + juce::String(vec[k]));
-                    DBG("set.invMx[(dim * j + k)]: " + juce::String(set.invMx[(dim * j + k)]));
-                    jassertfalse; 
-                }
+                //if (set.setGains[j] < -MAX_SAMPLE_VALUE || set.setGains[j] > MAX_SAMPLE_VALUE)
+                //{
+                //    //ok so one of these will usually be bad, and it's inconsistent which one
+                //    DBG("set.setGains[j]: " + juce::String(set.setGains[j]));
+                //    DBG("vec[k]: " + juce::String(vec[k]));
+                //    DBG("set.invMx[(dim * j + k)]: " + juce::String(set.invMx[(dim * j + k)]));
+                //    jassertfalse; 
+                //}
             }
             if (set.smallestWt > set.setGains[j])
                 set.smallestWt = set.setGains[j];
@@ -745,12 +745,11 @@ std::unique_ptr<VbapData> vbapInit(std::array<Position, MAX_NUM_SPEAKERS> & spea
         for (std::size_t j{}; j < data->dimension * data->dimension; ++j) {
             newSet.invMx[j] = triplet.tripletInverseMatrix[j];
             //NOW HERE, PRINT THIS WITH ALL THE DETAILS AND COMPARE THE PRINTOUT FOR IRL AND DURING TESTS, MAKING SURE TO LOAD THE SAME FILE
-            DBG("triplet " + juce::String(tripletNumber++) + " newSet.invMx[" + juce::String(j) + "]: " + juce::String(newSet.invMx[j]));
-            if (newSet.invMx[j] < -MAX_SAMPLE_VALUE || newSet.invMx[j] > MAX_SAMPLE_VALUE) {
-                DBG("newSet.invMx[j]: " + juce::String(newSet.invMx[j]));
-                //THIS IS NOT HIT IRL
-                jassertfalse;
-            }
+            //DBG("triplet " + juce::String(tripletNumber++) + " newSet.invMx[" + juce::String(j) + "]: " + juce::String(newSet.invMx[j]));
+            //if (newSet.invMx[j] < -MAX_SAMPLE_VALUE || newSet.invMx[j] > MAX_SAMPLE_VALUE) {
+            //    DBG("newSet.invMx[j]: " + juce::String(newSet.invMx[j]));
+            //    jassertfalse;
+            //}
         }
         data->speakerSets.add(newSet);
     }

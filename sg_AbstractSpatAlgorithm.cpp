@@ -227,6 +227,7 @@ public:
                     checkSourceBufferValidity(sourceBuffers);
 
                     speakerBuffers.silence();
+                    stereoBuffer.clear();
                     vbapAlgo->process(*vbapConfig, sourceBuffers, speakerBuffers, stereoBuffer, sourcePeaks, nullptr);
 
                     checkSpeakerBufferValidity(speakerBuffers);
@@ -234,37 +235,41 @@ public:
             }
         }
 
-        //beginTest("HRTF test");
-        //{
-        //    SpatGrisData hrtfData;
-        //    hrtfData.speakerSetup = *SpeakerSetup::fromXml(*parseXML(BINAURAL_SPEAKER_SETUP_FILE));
-        //    hrtfData.project = *ProjectData::fromXml(*parseXML(DEFAULT_PROJECT_FILE));
-        //    hrtfData.project.spatMode = SpatMode::vbap;
-        //    hrtfData.appData.stereoMode = StereoMode::hrtf;
-        //    auto const hrtfConfig{ hrtfData.toAudioConfig() };
-        //    const auto numSources{ hrtfConfig->sourcesAudioConfig.size() };
-        //    const auto numSpeakers{ hrtfConfig->speakersAudioConfig.size() };
+        beginTest("HRTF test");
+        {
+            SpatGrisData hrtfData;
+            hrtfData.speakerSetup = *SpeakerSetup::fromXml(*parseXML(BINAURAL_SPEAKER_SETUP_FILE));
+            hrtfData.project = *ProjectData::fromXml(*parseXML(DEFAULT_PROJECT_FILE));
+            hrtfData.project.spatMode = SpatMode::vbap;
+            hrtfData.appData.stereoMode = StereoMode::hrtf;
+            auto const hrtfConfig{ hrtfData.toAudioConfig() };
+            const auto numSources{ hrtfConfig->sourcesAudioConfig.size() };
+            const auto numSpeakers{ hrtfConfig->speakersAudioConfig.size() };
 
-        //    for (int bufferSize : bufferSizes) {
-        //        hrtfData.appData.audioSettings.bufferSize = bufferSize;
-        //        initBuffers(bufferSize, numSources, numSpeakers);
+            for (int bufferSize : bufferSizes) {
+                hrtfData.appData.audioSettings.bufferSize = bufferSize;
+                initBuffers(bufferSize, numSources, numSpeakers);
 
-        //        auto hrtfAlgo{ AbstractSpatAlgorithm::make(hrtfData.speakerSetup,
-        //                                                   hrtfData.project.spatMode,
-        //                                                   hrtfData.appData.stereoMode,
-        //                                                   hrtfData.project.sources,
-        //                                                   hrtfData.appData.audioSettings.sampleRate,
-        //                                                   hrtfData.appData.audioSettings.bufferSize) };
-        //        updateSourceData(hrtfAlgo.get(), hrtfData);
+                auto hrtfAlgo{ AbstractSpatAlgorithm::make(hrtfData.speakerSetup,
+                                                           hrtfData.project.spatMode,
+                                                           hrtfData.appData.stereoMode,
+                                                           hrtfData.project.sources,
+                                                           hrtfData.appData.audioSettings.sampleRate,
+                                                           hrtfData.appData.audioSettings.bufferSize) };
+                updateSourceData(hrtfAlgo.get(), hrtfData);
 
-        //        auto const numLoops{ static_cast<int>(DEFAULT_SAMPLE_RATE * testDurationSeconds / bufferSize) };
-        //        for (int i = 0; i < numLoops; ++i) {
-        //            checkSourceBufferValidity(sourceBuffers);
-        //            hrtfAlgo->process(*hrtfConfig, sourceBuffers, speakerBuffers, stereoBuffer, sourcePeaks, nullptr);
-        //            checkSpeakerBufferValidity(speakerBuffers);
-        //        }
-        //    }
-        //}
+                auto const numLoops{ static_cast<int>(DEFAULT_SAMPLE_RATE * testDurationSeconds / bufferSize) };
+                for (int i = 0; i < numLoops; ++i) {
+                    checkSourceBufferValidity(sourceBuffers);
+
+                    speakerBuffers.silence ();
+                    stereoBuffer.clear ();
+                    hrtfAlgo->process(*hrtfConfig, sourceBuffers, speakerBuffers, stereoBuffer, sourcePeaks, nullptr);
+
+                    checkSpeakerBufferValidity(speakerBuffers);
+                }
+            }
+        }
     }
 
     void shutdown() override { isRunning = false; }
