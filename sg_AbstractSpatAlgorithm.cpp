@@ -152,6 +152,49 @@ public:
         }
     }
 
+    void testUsingProjectData (gris::SpatGrisData& data)
+    {
+        const auto config { data.toAudioConfig () };
+        const auto numSources { config->sourcesAudioConfig.size () };
+        const auto numSpeakers { config->speakersAudioConfig.size () };
+
+        //for every test buffer size
+        for (int bufferSize : bufferSizes) {
+            data.appData.audioSettings.bufferSize = bufferSize;
+
+            //init our buffers
+            initBuffers (bufferSize, numSources, numSpeakers);
+
+            //create our spatialization algorithm
+            auto algo{ AbstractSpatAlgorithm::make(data.speakerSetup,
+                                                   data.project.spatMode,
+                                                   data.appData.stereoMode,
+                                                   data.project.sources,
+                                                   data.appData.audioSettings.sampleRate,
+                                                   data.appData.audioSettings.bufferSize) };
+
+            //position the sound sources
+            positionSources (algo.get (), data);
+
+            //now simulate processing an audio loop of testDurationSeconds
+            auto const numLoops { static_cast<int>(DEFAULT_SAMPLE_RATE * testDurationSeconds / bufferSize) };
+            for (int i = 0; i < numLoops; ++i) {
+                // fill the source buffers with pink noise
+                fillSourceBuffersWithNoise (numSources, bufferSize);
+                checkSourceBufferValidity (sourceBuffers);
+
+                //process the audio
+                speakerBuffers.silence ();
+                stereoBuffer.clear ();
+                algo->process (*config, sourceBuffers, speakerBuffers, stereoBuffer, sourcePeaks, nullptr);
+
+                //check that the audio output is valid
+                checkSpeakerBufferValidity (speakerBuffers);
+            }
+        }
+    }
+
+
     void runTest() override
     {
         beginTest("VBAP test");
@@ -163,45 +206,7 @@ public:
             vbapData.project.spatMode = SpatMode::vbap;
             vbapData.appData.stereoMode = {};
 
-            // the default project and speaker setups have 18 sources and 18 speakers, so we should only be using these
-            const auto vbapConfig{ vbapData.toAudioConfig() };
-            const auto numSources{ vbapConfig->sourcesAudioConfig.size() };
-            const auto numSpeakers{ vbapConfig->speakersAudioConfig.size() };
-
-            //for every test buffer size
-            for (int bufferSize : bufferSizes) {
-                vbapData.appData.audioSettings.bufferSize = bufferSize;
-
-                //init our buffers
-                initBuffers(bufferSize, numSources, numSpeakers);
-
-                //create our spatialization algorithm
-                auto vbapAlgo{ AbstractSpatAlgorithm::make(vbapData.speakerSetup,
-                                                           vbapData.project.spatMode,
-                                                           vbapData.appData.stereoMode,
-                                                           vbapData.project.sources,
-                                                           vbapData.appData.audioSettings.sampleRate,
-                                                           vbapData.appData.audioSettings.bufferSize) };
-
-                //position the sound sources
-                positionSources(vbapAlgo.get(), vbapData);
-
-                //now simulate processing an audio loop of testDurationSeconds
-                auto const numLoops{ static_cast<int>(DEFAULT_SAMPLE_RATE * testDurationSeconds / bufferSize) };
-                for (int i = 0; i < numLoops; ++i) {
-                    // fill the source buffers with pink noise
-                    fillSourceBuffersWithNoise (numSources, bufferSize);
-                    checkSourceBufferValidity(sourceBuffers);
-
-                    //process the audio
-                    speakerBuffers.silence();
-                    stereoBuffer.clear();
-                    vbapAlgo->process(*vbapConfig, sourceBuffers, speakerBuffers, stereoBuffer, sourcePeaks, nullptr);
-
-                    //check that the audio output is valid
-                    checkSpeakerBufferValidity(speakerBuffers);
-                }
-            }
+            testUsingProjectData (vbapData);
         }
 
         beginTest("HRTF test");
@@ -211,33 +216,8 @@ public:
             hrtfData.project = *ProjectData::fromXml(*parseXML(DEFAULT_PROJECT_FILE));
             hrtfData.project.spatMode = SpatMode::vbap;
             hrtfData.appData.stereoMode = StereoMode::hrtf;
-            auto const hrtfConfig{ hrtfData.toAudioConfig() };
-            const auto numSources{ hrtfConfig->sourcesAudioConfig.size() };
-            const auto numSpeakers{ hrtfConfig->speakersAudioConfig.size() };
 
-            for (int bufferSize : bufferSizes) {
-                hrtfData.appData.audioSettings.bufferSize = bufferSize;
-                initBuffers(bufferSize, numSources, numSpeakers);
-
-                auto hrtfAlgo{ AbstractSpatAlgorithm::make(hrtfData.speakerSetup,
-                                                           hrtfData.project.spatMode,
-                                                           hrtfData.appData.stereoMode,
-                                                           hrtfData.project.sources,
-                                                           hrtfData.appData.audioSettings.sampleRate,
-                                                           hrtfData.appData.audioSettings.bufferSize) };
-                positionSources(hrtfAlgo.get(), hrtfData);
-
-                auto const numLoops{ static_cast<int>(DEFAULT_SAMPLE_RATE * testDurationSeconds / bufferSize) };
-                for (int i = 0; i < numLoops; ++i) {
-                    checkSourceBufferValidity(sourceBuffers);
-
-                    speakerBuffers.silence ();
-                    stereoBuffer.clear ();
-                    hrtfAlgo->process(*hrtfConfig, sourceBuffers, speakerBuffers, stereoBuffer, sourcePeaks, nullptr);
-
-                    checkSpeakerBufferValidity(speakerBuffers);
-                }
-            }
+            testUsingProjectData (hrtfData);
         }
 
         beginTest ("MBAP test");
@@ -247,33 +227,8 @@ public:
             mbapData.speakerSetup = *SpeakerSetup::fromXml (*parseXML (DEFAULT_CUBE_SPEAKER_SETUP));
             mbapData.project.spatMode = SpatMode::mbap;
             mbapData.appData.stereoMode = {};
-            auto const mbapConfig { mbapData.toAudioConfig () };
-            const auto numSources { mbapConfig->sourcesAudioConfig.size () };
-            const auto numSpeakers { mbapConfig->speakersAudioConfig.size () };
 
-            for (int bufferSize : bufferSizes) {
-                mbapData.appData.audioSettings.bufferSize = bufferSize;
-                initBuffers (bufferSize, numSources, numSpeakers);
-
-                auto mbapAlgo{ AbstractSpatAlgorithm::make(mbapData.speakerSetup,
-                                                           mbapData.project.spatMode,
-                                                           mbapData.appData.stereoMode,
-                                                           mbapData.project.sources,
-                                                           mbapData.appData.audioSettings.sampleRate,
-                                                           mbapData.appData.audioSettings.bufferSize) };
-                positionSources (mbapAlgo.get (), mbapData);
-
-                auto const numLoops { static_cast<int>(DEFAULT_SAMPLE_RATE * testDurationSeconds / bufferSize) };
-                for (int i = 0; i < numLoops; ++i) {
-                    checkSourceBufferValidity (sourceBuffers);
-
-                    speakerBuffers.silence ();
-                    stereoBuffer.clear ();
-                    mbapAlgo->process (*mbapConfig, sourceBuffers, speakerBuffers, stereoBuffer, sourcePeaks, nullptr);
-
-                    checkSpeakerBufferValidity (speakerBuffers);
-                }
-            }
+            testUsingProjectData (mbapData);
         }
     }
 
