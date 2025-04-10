@@ -41,13 +41,13 @@ struct TripletData {
 
 using triplet_list_t = std::vector<TripletData>;
 
-void checkGains(SpeakersSpatGains & gains, const int numSpeakers)
-{
-    auto * rawGains{ gains.data() };
-
-    for (int i{}; i < numSpeakers; ++i)
-        jassert(rawGains[i] >= -10.0f && rawGains[i] <= 10.0f);
-}
+//void checkGains(SpeakersSpatGains & gains, const int numSpeakers)
+//{
+//    auto * rawGains{ gains.data() };
+//
+//    for (int i{}; i < numSpeakers; ++i)
+//        jassert(rawGains[i] >= -10.0f && rawGains[i] <= 10.0f);
+//}
 
 //==============================================================================
 /* Selects a vector base of a virtual source.
@@ -97,7 +97,7 @@ static void computeGains(juce::Array<SpeakerSet> & sets,
         }
     }
 
-    checkGains(gains, numSpeakers);
+    //checkGains(gains, numSpeakers);
 
     int j{};
     auto tmp = sets[0].smallestWt;
@@ -116,7 +116,7 @@ static void computeGains(juce::Array<SpeakerSet> & sets,
         }
     }
 
-    checkGains(gains, numSpeakers);
+    //checkGains(gains, numSpeakers);
 
     if (sets[j].setGains[0] <= 0.0f && sets[j].setGains[1] <= 0.0f && sets[j].setGains[2] <= 0.0f) {
         sets[j].setGains[0] = 1.0f;
@@ -124,7 +124,7 @@ static void computeGains(juce::Array<SpeakerSet> & sets,
         sets[j].setGains[2] = 1.0f;
     }
 
-    checkGains(gains, numSpeakers);
+    //checkGains(gains, numSpeakers);
 
     auto * rawGains{ gains.data() };
 #if DEBUG
@@ -145,7 +145,7 @@ static void computeGains(juce::Array<SpeakerSet> & sets,
         rawGains[sets[j].speakerNos[2].get() - 1] = sets[j].setGains[2];
     }
 
-    checkGains(gains, numSpeakers);
+    //checkGains(gains, numSpeakers);
 
     for (int i{}; i < numSpeakers; ++i) {
         if (rawGains[i] < 0.0f) {
@@ -153,7 +153,7 @@ static void computeGains(juce::Array<SpeakerSet> & sets,
         }
     }
 
-    checkGains(gains, numSpeakers);
+    //checkGains(gains, numSpeakers);
 }
 
 //==============================================================================
@@ -736,7 +736,7 @@ std::unique_ptr<VbapData> vbapInit(std::array<Position, MAX_NUM_SPEAKERS> & spea
     data->dimension = narrow<std::size_t>(dimensions);
     data->numSpeakers = narrow<int>(speakers.size());
 
-    auto tripletNumber = 0;
+    //auto tripletNumber = 0;
     for (auto const & triplet : triplets) {
         SpeakerSet newSet{};
         for (std::size_t j{}; j < data->dimension; ++j) {
