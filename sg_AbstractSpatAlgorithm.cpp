@@ -121,7 +121,7 @@ public:
         for (int i = 1; i <= numSources; ++i)
         {
             const auto sourceIndex { source_index_t{ i } };
-            fillWithPinkNoise (sourceBuffers[sourceIndex].getArrayOfWritePointers (), bufferSize, 1, .1f);
+            fillWithPinkNoise (sourceBuffers[sourceIndex].getArrayOfWritePointers (), bufferSize, 1, .5f);
             sourcePeaks[sourceIndex] = sourceBuffers[sourceIndex].getMagnitude (0, bufferSize);
         }
     }
