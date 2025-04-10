@@ -120,8 +120,7 @@ public:
         stereoBuffer.clear();
     }
 
-    /** this is called once per buffer, to prepare the source data for the processing loop. */
-    void updateSourceData(AbstractSpatAlgorithm * algo, SpatGrisData & data)
+    void positionSources(AbstractSpatAlgorithm * algo, SpatGrisData & data)
     {
         const auto numSources{ data.project.sources.size() };
         const auto numRings{ 3 };
@@ -149,7 +148,6 @@ public:
 
     void runTest() override
     {
-#if 0
         beginTest("VBAP test");
         {
             // init project data and audio config
@@ -176,7 +174,7 @@ public:
                                                            vbapData.appData.audioSettings.sampleRate,
                                                            vbapData.appData.audioSettings.bufferSize) };
 
-                updateSourceData(vbapAlgo.get(), vbapData);
+                positionSources(vbapAlgo.get(), vbapData);
 
                 auto const numLoops{ static_cast<int>(DEFAULT_SAMPLE_RATE * testDurationSeconds / bufferSize) };
                 for (int i = 0; i < numLoops; ++i) {
@@ -212,7 +210,7 @@ public:
                                                            hrtfData.project.sources,
                                                            hrtfData.appData.audioSettings.sampleRate,
                                                            hrtfData.appData.audioSettings.bufferSize) };
-                updateSourceData(hrtfAlgo.get(), hrtfData);
+                positionSources(hrtfAlgo.get(), hrtfData);
 
                 auto const numLoops{ static_cast<int>(DEFAULT_SAMPLE_RATE * testDurationSeconds / bufferSize) };
                 for (int i = 0; i < numLoops; ++i) {
@@ -226,7 +224,7 @@ public:
                 }
             }
         }
-#endif
+
         beginTest ("MBAP test");
         {
             SpatGrisData mbapData;
@@ -248,7 +246,7 @@ public:
                                                            mbapData.project.sources,
                                                            mbapData.appData.audioSettings.sampleRate,
                                                            mbapData.appData.audioSettings.bufferSize) };
-                updateSourceData (mbapAlgo.get (), mbapData);
+                positionSources (mbapAlgo.get (), mbapData);
 
                 auto const numLoops { static_cast<int>(DEFAULT_SAMPLE_RATE * testDurationSeconds / bufferSize) };
                 for (int i = 0; i < numLoops; ++i) {
