@@ -100,6 +100,7 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
     ASSERT_AUDIO_THREAD;
 
     auto const & gainInterpolation{ config.spatGainsInterpolation };
+    jassert (gainInterpolation == 0.f);
     auto const gainFactor{ std::pow(gainInterpolation, 0.1f) * 0.0099f + 0.99f };
 
     auto const & speakersAudioConfig{ altSpeakerConfig ? *altSpeakerConfig : config.speakersAudioConfig };
@@ -146,14 +147,22 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
                 continue;
             }
 
-            //TOOO VB we never make it here -- actually now we do
-            //jassertfalse;
             // interpolation necessary
             if (juce::approximatelyEqual (gainInterpolation, 0.f)) {
                 // linear interpolation over buffer size
                 for (int sampleIndex{}; sampleIndex < numSamples; ++sampleIndex) {
                     currentGain += gainSlope;
+                    DBG ("outputSamples before: " + juce::String (outputSamples[sampleIndex]));
                     outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
+
+                    DBG ("source " + juce::String (source.key.get ())
+                         + "\tspeaker " + juce::String (speaker.key.get ())
+                         + "\tinputSamples[" + juce::String (sampleIndex) + "]: " + juce::String (inputSamples[sampleIndex], 7)
+                         + "\tcurrentGain " + juce::String (currentGain, 7)
+                         + "\tgainSlope " + juce::String (gainSlope, 7)
+                         + "\toutputSamples[" + juce::String (sampleIndex) + "]: " + juce::String (outputSamples[sampleIndex], 7)
+                    );
+
                     jassert(outputSamples[sampleIndex] >= -MAX_SAMPLE_VALUE && outputSamples[sampleIndex] <= MAX_SAMPLE_VALUE);
                 }
             } else {
@@ -169,13 +178,19 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
                 }
 
                 // not targeting silence
-                for (int sampleIndex{}; sampleIndex < numSamples; ++sampleIndex) {
+                for (int sampleIndex{}; sampleIndex < numSamples; ++sampleIndex)
+                {
                     currentGain = targetGain + (currentGain - targetGain) * gainFactor;
                     outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
-                    DBG("source.key " + juce::String(source.key.get()) + " speaker " + juce::String(speaker.key.get())
-                        + " outputSamples["
-                        + juce::String(sampleIndex)
-                        + "]: " + juce::String(outputSamples[sampleIndex]));
+
+                    DBG("source " + juce::String(source.key.get())
+                        + "\tspeaker " + juce::String(speaker.key.get())
+                        + "\tinputSamples[" + juce::String (sampleIndex) + "]: " + juce::String (inputSamples[sampleIndex], 7)
+                        + "\tcurrentGain " + juce::String(currentGain, 7)
+                        + "\ttargetGain " + juce::String(targetGain, 7)
+                        + "\tgainFactor " + juce::String (gainFactor, 7)
+                        + "\toutputSamples["+ juce::String(sampleIndex)+ "]: " + juce::String(outputSamples[sampleIndex], 7)
+                    );
                     jassert(outputSamples[sampleIndex] >= -MAX_SAMPLE_VALUE && outputSamples[sampleIndex] <= MAX_SAMPLE_VALUE);
                 }
             }

@@ -746,11 +746,11 @@ std::unique_ptr<VbapData> vbapInit(std::array<Position, MAX_NUM_SPEAKERS> & spea
             newSet.invMx[j] = triplet.tripletInverseMatrix[j];
             //NOW HERE, PRINT THIS WITH ALL THE DETAILS AND COMPARE THE PRINTOUT FOR IRL AND DURING TESTS, MAKING SURE TO LOAD THE SAME FILE
             DBG("triplet " + juce::String(tripletNumber++) + " newSet.invMx[" + juce::String(j) + "]: " + juce::String(newSet.invMx[j]));
-            //if (newSet.invMx[j] < -MAX_SAMPLE_VALUE || newSet.invMx[j] > MAX_SAMPLE_VALUE) {
-            //    DBG("newSet.invMx[j]: " + juce::String(newSet.invMx[j]));
-            //    //THIS IS NOT HIT IRL
-            //    jassertfalse;
-            //}
+            if (newSet.invMx[j] < -MAX_SAMPLE_VALUE || newSet.invMx[j] > MAX_SAMPLE_VALUE) {
+                DBG("newSet.invMx[j]: " + juce::String(newSet.invMx[j]));
+                //THIS IS NOT HIT IRL
+                jassertfalse;
+            }
         }
         data->speakerSets.add(newSet);
     }

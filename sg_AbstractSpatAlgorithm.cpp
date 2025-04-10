@@ -107,7 +107,7 @@ public:
 
         //TODO VB: this should probably be done on each loop?
         for (auto source : sourcesIndices) {
-            fillWithPinkNoise(sourceBuffers[source].getArrayOfWritePointers(), bufferSize, 1, 1.f);
+            fillWithPinkNoise(sourceBuffers[source].getArrayOfWritePointers(), bufferSize, 1, .5f);
             sourcePeaks[source] = sourceBuffers[source].getMagnitude(0, bufferSize);
         }
 
@@ -137,12 +137,33 @@ public:
         auto curRing{ 0 };
         auto curAzimuth{ 0.f };
 
+        const std::array<CartesianVector, 18> positions{ {
+            { -0.714628, 0.384052, 0.584647 },
+            { -0.662694, 0.436887, 0.608249 },
+            { -0.607971, 0.489342, 0.625232 },
+            { -0.554899, 0.514906, 0.653421 },
+            { -0.508563, 0.538774, 0.67163 },
+            { -0.462055, 0.553451, 0.692963 },
+            { -0.357304, 0.564436, 0.744141 },
+            { -0.267278, 0.57124, 0.776046 },
+            { -0.195697, 0.565936, 0.800886 },
+            { -0.101748, 0.54087, 0.83493 },
+            { -0.0162338, 0.503246, 0.863991 },
+            { 0.0491514, 0.453285, 0.890009 },
+            { 0.148419, 0.390287, 0.908652 },
+            {0.292823, 0.248623, 0.923277 },
+            { 0.380084, 0.137711, 0.914643 },
+            { 0.432869, 0.0602729, 0.89944 },
+            { 0.47356, -0.0163296, 0.88061 },
+            { 0.512228, -0.0916619, 0.853944 },
+        } }; 
+
         for (int i = 1; i <= numSources; ++i) {
             const auto sourceIndex{ source_index_t{ i } };
             auto source{ data.project.sources[sourceIndex] };
 
 #if 1
-            source.position = PolarVector{ radians_t{ curAzimuth }, radians_t{ curRing * elevSteps }, 1.f };
+            source.position = positions[i-1];
             //source.position = CartesianVector {1.f, 1.f, 1.f};
             //THIS ONE IS FINE, LOCATION TAKEN DIRECTION FROM IRL RUN
             //computeGains: (-3.08809e-08, 0.706473, 0.70774); polar: PolarVector(azimuth: 1.5708, elevation: 0.786294, length: 1)
@@ -181,7 +202,8 @@ public:
             vbapData.appData.stereoMode = {};
 
             // the default project and speaker setups have 18 sources and 18 speakers, so we should only be using these
-            const auto vbapConfig{ vbapData.toAudioConfig() };
+            auto vbapConfig{ vbapData.toAudioConfig() };
+            vbapConfig->spatGainsInterpolation = 0.f;
             const auto numSources{ vbapConfig->sourcesAudioConfig.size() };
             const auto numSpeakers{ vbapConfig->speakersAudioConfig.size() };
 
@@ -204,6 +226,7 @@ public:
                     //DBG("loop: " + juce::String(i));
                     checkSourceBufferValidity(sourceBuffers);
 
+                    speakerBuffers.silence();
                     vbapAlgo->process(*vbapConfig, sourceBuffers, speakerBuffers, stereoBuffer, sourcePeaks, nullptr);
 
                     checkSpeakerBufferValidity(speakerBuffers);
