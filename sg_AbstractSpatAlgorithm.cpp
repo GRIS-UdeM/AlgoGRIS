@@ -37,8 +37,8 @@ namespace gris
 class AbstractSpatAlgorithmTest : public juce::UnitTest
 {
     float constexpr static testDurationSeconds{ .1f };
-    //std::vector<int> const bufferSizes{ /*1,*/ 512, 1024, SourceAudioBuffer::MAX_NUM_SAMPLES };
-    std::vector<int> const bufferSizes{ 1024 };
+    std::vector<int> const bufferSizes{ 1, 512, 1024, SourceAudioBuffer::MAX_NUM_SAMPLES };
+    //std::vector<int> const bufferSizes{ 1024 };
 
     SourceAudioBuffer sourceBuffers;
     SpeakerAudioBuffer speakerBuffers;
@@ -168,7 +168,7 @@ public:
             //THIS ONE IS FINE, LOCATION TAKEN DIRECTION FROM IRL RUN
             //computeGains: (-3.08809e-08, 0.706473, 0.70774); polar: PolarVector(azimuth: 1.5708, elevation: 0.786294, length: 1)
             //source.position = CartesianVector{ 0.f, 0.706473f, 0.70774f };
-            DBG(source.position->toString());
+            //DBG(source.position->toString());
 #else
             source.position = {};
 #endif
