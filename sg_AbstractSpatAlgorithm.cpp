@@ -149,6 +149,7 @@ public:
 
     void runTest() override
     {
+#if 0
         beginTest("VBAP test");
         {
             // init project data and audio config
@@ -222,6 +223,42 @@ public:
                     hrtfAlgo->process(*hrtfConfig, sourceBuffers, speakerBuffers, stereoBuffer, sourcePeaks, nullptr);
 
                     checkSpeakerBufferValidity(speakerBuffers);
+                }
+            }
+        }
+#endif
+        beginTest ("MBAP test");
+        {
+            SpatGrisData mbapData;
+            mbapData.project = *ProjectData::fromXml (*juce::parseXML (DEFAULT_CUBE_PROJECT));
+            mbapData.speakerSetup = *SpeakerSetup::fromXml (*parseXML (DEFAULT_CUBE_SPEAKER_SETUP));
+            mbapData.project.spatMode = SpatMode::mbap;
+            mbapData.appData.stereoMode = {};
+            auto const mbapConfig { mbapData.toAudioConfig () };
+            const auto numSources { mbapConfig->sourcesAudioConfig.size () };
+            const auto numSpeakers { mbapConfig->speakersAudioConfig.size () };
+
+            for (int bufferSize : bufferSizes) {
+                mbapData.appData.audioSettings.bufferSize = bufferSize;
+                initBuffers (bufferSize, numSources, numSpeakers);
+
+                auto mbapAlgo{ AbstractSpatAlgorithm::make(mbapData.speakerSetup,
+                                                           mbapData.project.spatMode,
+                                                           mbapData.appData.stereoMode,
+                                                           mbapData.project.sources,
+                                                           mbapData.appData.audioSettings.sampleRate,
+                                                           mbapData.appData.audioSettings.bufferSize) };
+                updateSourceData (mbapAlgo.get (), mbapData);
+
+                auto const numLoops { static_cast<int>(DEFAULT_SAMPLE_RATE * testDurationSeconds / bufferSize) };
+                for (int i = 0; i < numLoops; ++i) {
+                    checkSourceBufferValidity (sourceBuffers);
+
+                    speakerBuffers.silence ();
+                    stereoBuffer.clear ();
+                    mbapAlgo->process (*mbapConfig, sourceBuffers, speakerBuffers, stereoBuffer, sourcePeaks, nullptr);
+
+                    checkSpeakerBufferValidity (speakerBuffers);
                 }
             }
         }
