@@ -14,7 +14,7 @@ set(CMAKE_CXX_STANDARD 20)
 
 # 1. Look for a system JUCE if any
 if(NOT TARGET juce::juce_core)
-  find_package(JUCE REQUIRED)
+  find_package(JUCE)
 endif()
 
 # 2. If not, look for hte one we are shipping
