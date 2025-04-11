@@ -34,11 +34,11 @@ jobs:
         include:
           - name: Linux
             os: ubuntu-latest
-            extra-flags: -G "Ninja Multi-Config"
+            extra-flags: -G"Ninja Multi-Config"
 
           - name: macOS
             os: macos-latest
-            extra-flags: -G "Ninja Multi-Config" -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64"
+            extra-flags: -G"Ninja Multi-Config" -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64"
 
           - name: Windows
             os: windows-latest
@@ -82,11 +82,12 @@ jobs:
         uses: mozilla-actions/sccache-action@v0.0.7
 
       - name: Configure
-        run: cmake -S . \
-                   -B build \
-                   -DCMAKE_C_COMPILER_LAUNCHER=sccache \
-                   -DCMAKE_CXX_COMPILER_LAUNCHER=sccache \
-                   ${{ matrix.extra-flags }} 
+        run: |
+          cmake -S . \
+                -B build \
+                -DCMAKE_C_COMPILER_LAUNCHER=sccache \
+                -DCMAKE_CXX_COMPILER_LAUNCHER=sccache \
+                ${{ matrix.extra-flags }} 
 
       - name: Build debug
         run: cmake --build build --config Debug --parallel
