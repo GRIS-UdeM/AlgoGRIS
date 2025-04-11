@@ -6,7 +6,17 @@ project(AlgoGRIS
   LANGUAGES C CXX
 )
 
+# Dependencies
 include(CTest)
+include(FetchContent)
+
+FetchContent_Declare(
+    Catch2
+    GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+    GIT_TAG        v3.4.0
+)
+
+FetchContent_MakeAvailable(Catch2)
 
 # Global CMake configuration
 set(CMAKE_CXX_SCAN_FOR_MODULES 0)
@@ -117,3 +127,17 @@ target_link_libraries(AlgoGRIS
     juce::juce_graphics
     juce::juce_gui_basics
 )
+
+# Tests
+if(TARGET Catch2::Catch2WithMain)
+  include(Catch)
+  function(algogris_add_test _filename)
+    get_filename_component(_testname "${_filename}" NAME_WE)
+    add_executable("${_testname}" "${_filename}")
+    target_link_libraries("${_testname}" PRIVATE AlgoGRIS Catch2::Catch2WithMain)
+    catch_discover_tests("${_testname}")
+  endfunction()
+
+  algogris_add_test("tests/unit/test_core.cpp")
+endif()
+
