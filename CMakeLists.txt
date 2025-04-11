@@ -6,6 +6,8 @@ project(AlgoGRIS
   LANGUAGES CXX
 )
 
+include(CTest)
+
 set(CMAKE_CXX_SCAN_FOR_MODULES 0)
 set(CMAKE_CXX_STANDARD 20)
 
