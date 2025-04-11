@@ -35,6 +35,8 @@ add_library(AlgoGRIS
   sg_HybridSpatAlgorithm.hpp
   sg_MbapSpatAlgorithm.cpp
   sg_MbapSpatAlgorithm.hpp
+  sg_PinkNoiseGenerator.cpp
+  sg_PinkNoiseGenerator.hpp
   sg_StereoSpatAlgorithm.cpp
   sg_StereoSpatAlgorithm.hpp
   sg_VbapSpatAlgorithm.cpp

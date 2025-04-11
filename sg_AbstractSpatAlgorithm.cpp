@@ -19,6 +19,7 @@
 
 #include "sg_AbstractSpatAlgorithm.hpp"
 
+#include "sg_PinkNoiseGenerator.hpp"
 #include "sg_HrtfSpatAlgorithm.hpp"
 #include "sg_HybridSpatAlgorithm.hpp"
 #include "sg_MbapSpatAlgorithm.hpp"
@@ -32,26 +33,13 @@
 
 namespace gris
 {
-void fillSourceBufferWithNoise(SourceAudioBuffer & buffer, AudioConfig& config)
-{
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_real_distribution<float> dist(-1.0f, 1.0f);
-
-    for (auto const & source : config.sourcesAudioConfig)
-        for (auto const & speaker : config.speakersAudioConfig)
-            if (!source.value.isMuted && !speaker.value.isMuted)
-                for (int sample = 0; sample < buffer.getNumSamples(); ++sample)
-                    buffer[source.key].getWritePointer(0)[sample] = dist(gen);
-}
-
 class AbstractSpatAlgorithmTest : public juce::UnitTest
 {
     float constexpr static testDurationSeconds{ .1f };
     std::vector<int> const bufferSizes{ 1, 512, 1024, SourceAudioBuffer::MAX_NUM_SAMPLES };
 
-    SourceAudioBuffer sourceBuffer;
-    SpeakerAudioBuffer speakerBuffer;
+    SourceAudioBuffer sourceBuffers;
+    SpeakerAudioBuffer speakerBuffers;
     juce::AudioBuffer<float> stereoBuffer;
     SourcePeaks sourcePeaks;
 
@@ -60,72 +48,150 @@ public:
 
     AbstractSpatAlgorithmTest() : juce::UnitTest("AbstractSpatAlgorithmTest") {}
 
-    void checkSpeakerBufferValidity(SpeakerAudioBuffer & buffer, AudioConfig & config)
-    {
-        for (auto const & speaker : config.speakersAudioConfig) {
-            for (int sample = 0; sample < buffer.getNumSamples(); ++sample) {
-                float value = buffer[speaker.key].getReadPointer(0)[sample];
-                expect(std::isfinite(value), "Output contains NaN or Inf values!");
-                // TODO: the output is not in the expected range. Need to go through the whole process chain to
-                // understand; presumably we're missing some kind of spatialization data or initialization.
-                // expect(value >= -1.0f && value <= 1.0f, "Output exceeds valid range!");
-            }
-        }
-    }
-
-    void checkSourceBufferValidity(SourceAudioBuffer & buffer, AudioConfig & config)
-    {
-        for (auto const & source : config.sourcesAudioConfig) {
-            for (int sample = 0; sample < buffer.getNumSamples(); ++sample) {
-                float value = buffer[source.key].getReadPointer(0)[sample];
-                expect(std::isfinite(value), "buffer contains NaN or Inf values!");
-                expect(value >= -1.0f && value <= 1.0f, "Value exceeds valid range!");
-            }
-        }
-    }
-
-    void initBuffers (int bufferSize)
-    {
-        sourceBuffer.setNumSamples(bufferSize);
-        speakerBuffer.setNumSamples(bufferSize);
-        stereoBuffer.setSize(2, bufferSize);
-
-        // init source buffer with MAX_NUM_SOURCES sources
-        juce::Array<source_index_t> sources;
-        for (int i = 1; i <= MAX_NUM_SOURCES; ++i)
-            sources.add(source_index_t{ i });
-        sourceBuffer.init(sources);
-
-        // init speaker buffer with MAX_NUM_SPEAKERS speakers
-        juce::Array<output_patch_t> speakers;
-        for (int i = 1; i <= MAX_NUM_SPEAKERS; ++i)
-            speakers.add(output_patch_t{ i });
-        speakerBuffer.init(speakers);
-    }
-
     void initialise() override { isRunning = true; }
 
-    void updateSourcePeaks(AudioConfig& config)
+    void checkSourceBufferValidity(const SourceAudioBuffer & buffer)
     {
-        for (auto const & source : config.sourcesAudioConfig) {
-            auto const peak{ sourceBuffer[source.key].getMagnitude(0, sourceBuffer.getNumSamples()) };
-            sourcePeaks[source.key] = peak;
+        for (auto const & source : buffer) {
+            juce::String output = "Source " + juce::String(source.key.get()) + ": ";
+            auto const * sourceBuffer = source.value->getReadPointer(0);
+
+            for (int sampleNumber = 0; sampleNumber < buffer.getNumSamples(); ++sampleNumber) {
+                const auto sampleValue = sourceBuffer[sampleNumber];
+
+                output += "Sample " + juce::String(sampleNumber) + ": " + juce::String(sampleValue) + " ";
+                expect(std::isfinite(sampleValue), "Output contains NaN or Inf values!");
+                expect(sampleValue >= -1.0f && sampleValue <= 1.0f, "Output exceeds valid range!");
+            }
+
+            //DBG(output);
         }
     }
 
-    void updateSourceData(AbstractSpatAlgorithm * algo, SpatGrisData & data)
+    void checkSpeakerBufferValidity(const SpeakerAudioBuffer & buffer)
     {
-        for (auto & speaker : SpeakerSetup::fromXml(*parseXML(DEFAULT_SPEAKER_SETUP_FILE))->speakers) {
-            // update sources data from speakers position of speaker setup
-            source_index_t const sourceIndex{ speaker.key.get() };
-            auto source = data.project.sources.getNode(sourceIndex);
-            source.value->position = speaker.value->position;
-            source.value->azimuthSpan = 0.0f;
-            source.value->zenithSpan = 0.0f;
+        for (auto const & speaker : buffer)
+        {
+            juce::String output = "Speaker " + juce::String(speaker.key.get()) + ": ";
+            auto const * speakerBuffer = speaker.value->getReadPointer(0);
 
-            algo->updateSpatData(source.key, *source.value);
+            for (int sampleNumber = 0; sampleNumber < buffer.getNumSamples(); ++sampleNumber)
+            {
+                const auto sampleValue = speakerBuffer[sampleNumber];
+
+                output += "Sample " + juce::String(sampleNumber) + ": " + juce::String(sampleValue) + " ";
+                expect(std::isfinite(sampleValue), "Output contains NaN or Inf values!");
+                expect(sampleValue >= -1.f && sampleValue <= 1.f,  "Output " + juce::String (sampleValue) + " exceeds valid range!");
+            }
+
+            //DBG(output);
         }
     }
+
+    void initBuffers(const int bufferSize, const size_t numSources, const size_t numSpeakers)
+    {
+        //construct the arrays of indices
+        juce::Array<source_index_t> sourcesIndices;
+        for (int i = 1; i <= numSources; ++i)
+            sourcesIndices.add(source_index_t{ i });
+
+        juce::Array<output_patch_t> speakerIndices;
+        for (int i = 1; i <= numSpeakers; ++i)
+            speakerIndices.add(output_patch_t{ i });
+
+        // init source buffers
+        sourceBuffers.init(sourcesIndices);
+        sourceBuffers.setNumSamples(bufferSize);
+
+        // init speaker buffers
+        speakerBuffers.init(speakerIndices);
+        speakerBuffers.setNumSamples(bufferSize);
+
+        // init stereo buffer
+        stereoBuffer.setSize(2, bufferSize);
+        stereoBuffer.clear();
+    }
+
+    /** fill Source Buffers with pink noise, and calculate the peaks */
+    void fillSourceBuffersWithNoise (const size_t numSources, const int bufferSize)
+    {
+        sourceBuffers.silence();
+        for (int i = 1; i <= numSources; ++i)
+        {
+            const auto sourceIndex { source_index_t{ i } };
+            fillWithPinkNoise (sourceBuffers[sourceIndex].getArrayOfWritePointers (), bufferSize, 1, .5f);
+            sourcePeaks[sourceIndex] = sourceBuffers[sourceIndex].getMagnitude (0, bufferSize);
+        }
+    }
+
+    void positionSources(AbstractSpatAlgorithm * algo, SpatGrisData & data)
+    {
+        const auto numSources{ data.project.sources.size() };
+        const auto numRings{ 3 };
+        const auto numSourcesPerRing{ numSources/numRings };
+        const auto elevSteps{ HALF_PI.get() / numRings };
+        const auto azimSteps{ TWO_PI.get() / numSourcesPerRing };
+        auto curRing{ 0 };
+        auto curAzimuth{ 0.f };
+
+        for (int i = 1; i <= numSources; ++i) {
+            const auto sourceIndex{ source_index_t{ i } };
+            auto source{ data.project.sources[sourceIndex] };
+
+            source.position = PolarVector(radians_t {curAzimuth}, radians_t { curRing * elevSteps}, 1.f);
+            curAzimuth += azimSteps;
+
+            algo->updateSpatData(sourceIndex, source);
+
+            if (curRing < numRings && i % numSourcesPerRing == 0) {
+                ++curRing;
+                curAzimuth = 0;
+            }
+        }
+    }
+
+    void testUsingProjectData (gris::SpatGrisData& data)
+    {
+        const auto config { data.toAudioConfig () };
+        const auto numSources { config->sourcesAudioConfig.size () };
+        const auto numSpeakers { config->speakersAudioConfig.size () };
+
+        //for every test buffer size
+        for (int bufferSize : bufferSizes) {
+            data.appData.audioSettings.bufferSize = bufferSize;
+
+            //init our buffers
+            initBuffers (bufferSize, numSources, numSpeakers);
+
+            //create our spatialization algorithm
+            auto algo{ AbstractSpatAlgorithm::make(data.speakerSetup,
+                                                   data.project.spatMode,
+                                                   data.appData.stereoMode,
+                                                   data.project.sources,
+                                                   data.appData.audioSettings.sampleRate,
+                                                   data.appData.audioSettings.bufferSize) };
+
+            //position the sound sources
+            positionSources (algo.get (), data);
+
+            //now simulate processing an audio loop of testDurationSeconds
+            auto const numLoops { static_cast<int>(DEFAULT_SAMPLE_RATE * testDurationSeconds / bufferSize) };
+            for (int i = 0; i < numLoops; ++i) {
+                // fill the source buffers with pink noise
+                fillSourceBuffersWithNoise (numSources, bufferSize);
+                checkSourceBufferValidity (sourceBuffers);
+
+                //process the audio
+                speakerBuffers.silence ();
+                stereoBuffer.clear ();
+                algo->process (*config, sourceBuffers, speakerBuffers, stereoBuffer, sourcePeaks, nullptr);
+
+                //check that the audio output is valid
+                checkSpeakerBufferValidity (speakerBuffers);
+            }
+        }
+    }
+
 
     void runTest() override
     {
@@ -138,34 +204,7 @@ public:
             vbapData.project.spatMode = SpatMode::vbap;
             vbapData.appData.stereoMode = {};
 
-            // the default project and speaker setups have 18 sources and 18 speakers
-            auto const vbapConfig{ vbapData.toAudioConfig() };
-            // DBG("number of sources: " << vbapConfig->sourcesAudioConfig.size());
-            // DBG("number of speakers: " << vbapConfig->speakersAudioConfig.size());
-
-            for (int bufferSize : bufferSizes) {
-                vbapData.appData.audioSettings.bufferSize = bufferSize;
-                initBuffers(bufferSize);
-
-                auto vbapAlgo{ AbstractSpatAlgorithm::make(vbapData.speakerSetup,
-                                                           vbapData.project.spatMode,
-                                                           vbapData.appData.stereoMode,
-                                                           vbapData.project.sources,
-                                                           vbapData.appData.audioSettings.sampleRate,
-                                                           vbapData.appData.audioSettings.bufferSize) };
-
-                updateSourceData(vbapAlgo.get(), vbapData);
-
-                auto const numLoops{ static_cast<int>(DEFAULT_SAMPLE_RATE * testDurationSeconds / bufferSize) };
-                for (int i = 0; i < numLoops; ++i) {
-                    fillSourceBufferWithNoise(sourceBuffer, *vbapConfig);
-                    updateSourcePeaks(*vbapConfig);
-
-                    checkSourceBufferValidity(sourceBuffer, *vbapConfig);
-                    vbapAlgo->process(*vbapConfig, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks, nullptr);
-                    checkSpeakerBufferValidity(speakerBuffer, *vbapConfig);
-                }
-            }
+            testUsingProjectData (vbapData);
         }
 
         beginTest("HRTF test");
@@ -175,30 +214,19 @@ public:
             hrtfData.project = *ProjectData::fromXml(*parseXML(DEFAULT_PROJECT_FILE));
             hrtfData.project.spatMode = SpatMode::vbap;
             hrtfData.appData.stereoMode = StereoMode::hrtf;
-            auto const hrtfConfig{ hrtfData.toAudioConfig() };
 
-            for (int bufferSize : bufferSizes) {
-                hrtfData.appData.audioSettings.bufferSize = bufferSize;
-                initBuffers(bufferSize);
+            testUsingProjectData (hrtfData);
+        }
 
-                auto hrtfAlgo{ AbstractSpatAlgorithm::make(hrtfData.speakerSetup,
-                                                           hrtfData.project.spatMode,
-                                                           hrtfData.appData.stereoMode,
-                                                           hrtfData.project.sources,
-                                                           hrtfData.appData.audioSettings.sampleRate,
-                                                           hrtfData.appData.audioSettings.bufferSize) };
-                updateSourceData(hrtfAlgo.get(), hrtfData);
+        beginTest ("MBAP test");
+        {
+            SpatGrisData mbapData;
+            mbapData.project = *ProjectData::fromXml (*juce::parseXML (DEFAULT_CUBE_PROJECT));
+            mbapData.speakerSetup = *SpeakerSetup::fromXml (*parseXML (DEFAULT_CUBE_SPEAKER_SETUP));
+            mbapData.project.spatMode = SpatMode::mbap;
+            mbapData.appData.stereoMode = {};
 
-                auto const numLoops{ static_cast<int>(DEFAULT_SAMPLE_RATE * testDurationSeconds / bufferSize) };
-                for (int i = 0; i < numLoops; ++i) {
-                    fillSourceBufferWithNoise(sourceBuffer, *hrtfConfig);
-                    updateSourcePeaks(*hrtfConfig);
-
-                    checkSourceBufferValidity(sourceBuffer, *hrtfConfig);
-                    hrtfAlgo->process(*hrtfConfig, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks, nullptr);
-                    checkSpeakerBufferValidity(speakerBuffer, *hrtfConfig);
-                }
-            }
+            testUsingProjectData (mbapData);
         }
     }
 
