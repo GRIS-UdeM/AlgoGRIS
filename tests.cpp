@@ -1,4 +1,4 @@
-#include "../sg_AbstractSpatAlgorithm.hpp"
+#include "sg_AbstractSpatAlgorithm.hpp"
 
 /**
  * @brief Main test function.
