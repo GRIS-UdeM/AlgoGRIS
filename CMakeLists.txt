@@ -3,16 +3,26 @@ project(AlgoGRIS
   VERSION 1.0.0
   DESCRIPTION "Spatialization Algorithms"
   HOMEPAGE_URL "https://github.com/GRIS-UdeM/AlgoGRIS"
-  LANGUAGES CXX
+  LANGUAGES C CXX
 )
 
 include(CTest)
 
+# Global CMake configuration
 set(CMAKE_CXX_SCAN_FOR_MODULES 0)
 set(CMAKE_CXX_STANDARD 20)
 
-find_package(JUCE REQUIRED)
+# 1. Look for a system JUCE if any
+if(NOT TARGET juce::juce_core)
+  find_package(JUCE REQUIRED)
+endif()
 
+# 2. If not, look for hte one we are shipping
+if(NOT TARGET juce::juce_core)
+  add_subdirectory(submodules/JUCE)
+endif()
+
+# Library setup
 add_library(AlgoGRIS
   sg_AbstractSpatAlgorithm.cpp
   sg_AbstractSpatAlgorithm.hpp
