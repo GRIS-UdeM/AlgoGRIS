@@ -2,6 +2,9 @@ installer/ControlGris
 installer/SpeakerView
 installer/AudioDescriptors
 
+# CMake stuff
+*.user
+
 # Inno output dir for Windows installer
 WindowsInstallerOutput
 
