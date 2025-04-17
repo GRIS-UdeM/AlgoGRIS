@@ -145,14 +145,6 @@ add_library(MainTest STATIC
 target_link_libraries(MainTest PUBLIC
   Catch2::Catch2
   AlgoGRIS
-  jpeg
-  png
-  curl
-  FLAC
-  vorbis
-  vorbisfile
-  vorbisenc
-  ogg
 )
 
 if(TARGET Catch2::Catch2WithMain)
