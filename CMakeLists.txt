@@ -19,6 +19,7 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(Catch2)
 
 # Global CMake configuration
+set(CMAKE_INCLUDE_CURRENT_DIR 1)
 set(CMAKE_CXX_SCAN_FOR_MODULES 0)
 set(CMAKE_CXX_STANDARD 20)
 
@@ -59,6 +60,18 @@ add_library(AlgoGRIS
   Containers/sg_StrongArray.hpp
   Containers/sg_TaggedAudioBuffer.hpp
   Containers/sg_ThreadSafeBuffer.hpp
+
+  Data/StrongTypes/sg_CartesianVector.cpp
+  Data/StrongTypes/sg_Dbfs.hpp
+  Data/StrongTypes/sg_Degrees.hpp
+  Data/StrongTypes/sg_Hz.hpp
+  Data/StrongTypes/sg_Meters.hpp
+  Data/StrongTypes/sg_OutputPatch.hpp
+  Data/StrongTypes/sg_Radians.hpp
+  Data/StrongTypes/sg_StrongFloat.hpp
+  Data/StrongTypes/sg_StrongIndex.hpp
+  Data/StrongTypes/sg_CartesianVector.hpp
+  Data/StrongTypes/sg_SourceIndex.hpp
 
   Data/sg_AudioStructs.cpp
   Data/sg_AudioStructs.hpp
@@ -114,30 +127,44 @@ namespace ProjectInfo
 ]=]
 )
 
-target_include_directories(AlgoGRIS SYSTEM
-  PRIVATE
-    ${CMAKE_CURRENT_BINARY_DIR}
-)
-
 target_link_libraries(AlgoGRIS
-  PRIVATE
+  PUBLIC
     juce::juce_core
     juce::juce_audio_basics
     juce::juce_data_structures
     juce::juce_graphics
     juce::juce_gui_basics
+    juce::juce_dsp
 )
 
 # Tests
+add_library(MainTest STATIC
+  tests/Catch2Main.cpp
+  tests/sg_TestUtils.hpp
+)
+target_link_libraries(MainTest PUBLIC
+  Catch2::Catch2
+  AlgoGRIS
+  jpeg
+  png
+  curl
+  FLAC
+  vorbis
+  vorbisfile
+  vorbisenc
+  ogg
+)
+
 if(TARGET Catch2::Catch2WithMain)
   include(Catch)
   function(algogris_add_test _filename)
     get_filename_component(_testname "${_filename}" NAME_WE)
     add_executable("${_testname}" "${_filename}")
-    target_link_libraries("${_testname}" PRIVATE AlgoGRIS Catch2::Catch2WithMain)
+    target_link_libraries("${_testname}" PRIVATE MainTest)
     catch_discover_tests("${_testname}")
   endfunction()
 
   algogris_add_test("tests/unit/test_core.cpp")
+  algogris_add_test("tests/unit/test_AbstractSpatAlgorithm.cpp")
 endif()
 
