@@ -19,8 +19,8 @@
 
 #pragma once
 
-#include "Data/StrongTypes/sg_SourceIndex.hpp"
-#include "Data/sg_constants.hpp"
+#include "../Data/StrongTypes/sg_SourceIndex.hpp"
+#include "../Data/sg_constants.hpp"
 #include "sg_OwnedMap.hpp"
 #include "sg_StaticVector.hpp"
 
