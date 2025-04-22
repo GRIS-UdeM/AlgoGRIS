@@ -28,6 +28,8 @@ if(NOT TARGET juce::juce_core)
   find_package(JUCE QUIET)
 endif()
 
+find_package(CURL QUIET)
+
 # 2. If not, look for hte one we are shipping
 if(NOT TARGET juce::juce_core)
   add_subdirectory(submodules/JUCE)
@@ -147,6 +149,9 @@ target_link_libraries(MainTest PUBLIC
   AlgoGRIS
 )
 
+if(TARGET CURL::libcurl)
+target_link_libraries(MainTest PUBLIC CURL::libcurl)
+endif()
 if(TARGET Catch2::Catch2WithMain)
   include(Catch)
   function(algogris_add_test _filename)
