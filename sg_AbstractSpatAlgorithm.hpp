@@ -23,9 +23,6 @@
 #include "Containers/sg_TaggedAudioBuffer.hpp"
 #include "Data/sg_Triplet.hpp"
 
-// can be useful to turn off unit testing when debugging and running the app multiple times in a row.
-#define RUN_UNIT_TEST 1
-
 namespace gris
 {
 //==============================================================================
@@ -37,8 +34,13 @@ bool isProbablyAudioThread();
 
 //==============================================================================
 #define ASSERT_OSC_THREAD jassert(isOscThread())
+#if !defined(ALGOGRIS_UNIT_TESTS)
 #define ASSERT_AUDIO_THREAD jassert(isProbablyAudioThread())
-
+#define ASSERT_NOT_AUDIO_THREAD jassert(!isProbablyAudioThread())
+#else
+#define ASSERT_AUDIO_THREAD do { } while(0)
+#define ASSERT_NOT_AUDIO_THREAD do { } while(0)
+#endif
 //==============================================================================
 /** Base class for a spatialization algorithm. */
 class AbstractSpatAlgorithm

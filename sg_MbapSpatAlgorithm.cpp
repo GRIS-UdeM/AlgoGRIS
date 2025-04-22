@@ -46,7 +46,7 @@ MbapSpatAlgorithm::MbapSpatAlgorithm(SpeakerSetup const & speakerSetup) : mField
 //==============================================================================
 void MbapSpatAlgorithm::updateSpatData(source_index_t const sourceIndex, SourceData const & sourceData) noexcept
 {
-    jassert(!isProbablyAudioThread());
+    ASSERT_NOT_AUDIO_THREAD;
 
     auto & data{ mData[sourceIndex] };
 

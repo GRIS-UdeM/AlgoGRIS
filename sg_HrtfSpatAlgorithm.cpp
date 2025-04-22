@@ -120,7 +120,7 @@ HrtfSpatAlgorithm::HrtfSpatAlgorithm(SpeakerSetup const & speakerSetup,
 //==============================================================================
 void HrtfSpatAlgorithm::updateSpatData(source_index_t const sourceIndex, SourceData const & sourceData) noexcept
 {
-    jassert(!isProbablyAudioThread());
+    ASSERT_NOT_AUDIO_THREAD;
 
     if (sourceData.directOut) {
         return;

@@ -139,19 +139,26 @@ target_link_libraries(AlgoGRIS
     juce::juce_dsp
 )
 
+target_compile_definitions(AlgoGRIS
+  PUBLIC
+    $<$<BOOL:${BUILD_TESTING}>:ALGOGRIS_UNIT_TESTS>
+)
+
 # Tests
 add_library(MainTest STATIC
   tests/Catch2Main.cpp
   tests/sg_TestUtils.hpp
 )
+
 target_link_libraries(MainTest PUBLIC
   Catch2::Catch2
   AlgoGRIS
 )
 
 if(TARGET CURL::libcurl)
-target_link_libraries(MainTest PUBLIC CURL::libcurl)
+  target_link_libraries(MainTest PUBLIC CURL::libcurl)
 endif()
+
 if(TARGET Catch2::Catch2WithMain)
   include(Catch)
   function(algogris_add_test _filename)
