@@ -30,7 +30,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
-          path: submodules/
+          path: submodules/AlgoGRIS
 
       - name: Install dependencies # taken from https://github.com/juce-framework/JUCE/blob/develop/docs/Linux%20Dependencies.md
         run: |
@@ -79,7 +79,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
-          path: submodules/
+          path: submodules/AlgoGRIS
 
       - name: Install latest Clang
         run: |
@@ -126,7 +126,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
-          path: submodules/
+          path: submodules/AlgoGRIS
 
       - name: Debug CMake Path
         run: ls -R submodules/AlgoGRIS/submodules/JUCE/extras/Projucer
@@ -177,7 +177,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
-          path: submodules/
+          path: submodules/AlgoGRIS
 
       - name: Download ASIO SDK
         run: curl -L https://www.steinberg.net/asiosdk --output ASIOSDK.zip

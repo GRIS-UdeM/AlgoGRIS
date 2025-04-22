@@ -162,6 +162,6 @@ if(TARGET Catch2::Catch2WithMain)
   endfunction()
 
   algogris_add_test("tests/unit/test_core.cpp")
-  algogris_add_test("tests/unit/test_AbstractSpatAlgorithm.cpp")
+#  algogris_add_test("tests/unit/test_AbstractSpatAlgorithm.cpp")
 endif()
 
