@@ -17,7 +17,7 @@ jobs:
           sudo apt-get install -y git curl unzip sudo wget lsb-release software-properties-common make build-essential tzdata
 
       - name: Check out SpatGRIS
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           submodules: recursive
           repository: GRIS-UdeM/SpatGRIS
@@ -27,7 +27,7 @@ jobs:
         run: rm -rf submodules/AlgoGRIS
 
       - name: Check out our AlgoGRIS
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           submodules: recursive
           path: submodules/
@@ -66,7 +66,7 @@ jobs:
           apt-get install -y git curl unzip sudo wget lsb-release software-properties-common make build-essential tzdata
 
       - name: Check out repository code with submodules
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           submodules: recursive
           repository: GRIS-UdeM/SpatGRIS
@@ -76,7 +76,7 @@ jobs:
         run: rm -rf submodules/AlgoGRIS
 
       - name: Check out our AlgoGRIS
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           submodules: recursive
           path: submodules/
@@ -113,7 +113,7 @@ jobs:
     runs-on: macos-13
     steps:
       - name: Check out repository code with submodules
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           submodules: recursive
           repository: GRIS-UdeM/SpatGRIS
@@ -123,7 +123,7 @@ jobs:
         run: rm -rf submodules/AlgoGRIS
 
       - name: Check out our AlgoGRIS
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           submodules: recursive
           path: submodules/
@@ -163,17 +163,18 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Check out SpatGRIS
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           submodules: recursive
           repository: GRIS-UdeM/SpatGRIS
           ref: dev-sat
 
       - name: Remove AlgoGRIS
+        shell: bash
         run: rm -rf submodules/AlgoGRIS
 
       - name: Check out our AlgoGRIS
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           submodules: recursive
           path: submodules/
