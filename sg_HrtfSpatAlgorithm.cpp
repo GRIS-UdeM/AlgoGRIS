@@ -19,12 +19,12 @@
 
 #include "sg_HrtfSpatAlgorithm.hpp"
 
-#include "sg_DummySpatAlgorithm.hpp"
-#include "sg_HybridSpatAlgorithm.hpp"
-#include "sg_MbapSpatAlgorithm.hpp"
 #include "Containers/sg_StaticMap.hpp"
 #include "Containers/sg_StrongArray.hpp"
 #include "Containers/sg_TaggedAudioBuffer.hpp"
+#include "sg_DummySpatAlgorithm.hpp"
+#include "sg_HybridSpatAlgorithm.hpp"
+#include "sg_MbapSpatAlgorithm.hpp"
 #include "sg_VbapSpatAlgorithm.hpp"
 
 namespace gris

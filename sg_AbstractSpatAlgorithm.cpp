@@ -45,7 +45,7 @@ bool isOscThread()
 //==============================================================================
 bool isProbablyAudioThread()
 {
-    return (! isOscThread() && !juce::MessageManager::getInstance()->isThisTheMessageThread());
+    return (!isOscThread() && !juce::MessageManager::getInstance()->isThisTheMessageThread());
 }
 
 //==============================================================================

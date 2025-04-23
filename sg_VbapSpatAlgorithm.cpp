@@ -18,10 +18,10 @@
 */
 
 #include "sg_VbapSpatAlgorithm.hpp"
-#include "sg_DummySpatAlgorithm.hpp"
 #include "Containers/sg_StaticMap.hpp"
 #include "Containers/sg_StrongArray.hpp"
 #include "Containers/sg_TaggedAudioBuffer.hpp"
+#include "sg_DummySpatAlgorithm.hpp"
 
 namespace gris
 {

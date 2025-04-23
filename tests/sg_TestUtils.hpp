@@ -81,4 +81,4 @@ inline void checkSourceBufferValidity(SourceAudioBuffer & buffer, AudioConfig & 
     }
 }
 
-} // namespace gris
+} // namespace gris::tests
