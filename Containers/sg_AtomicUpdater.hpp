@@ -19,11 +19,13 @@
 
 #pragma once
 
-#include "../Data/sg_Macros.hpp"
 #include "juce_core/system/juce_PlatformDefs.h"
+
 #include <array>
 #include <atomic>
 #include <cstddef>
+
+#include "../Data/sg_Macros.hpp"
 
 namespace gris
 {

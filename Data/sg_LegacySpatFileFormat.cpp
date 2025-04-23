@@ -26,12 +26,16 @@
 #include "Data/StrongTypes/sg_SourceIndex.hpp"
 #include "Data/sg_SpatMode.hpp"
 #include "Data/sg_constants.hpp"
+
+#include "sg_LegacyLbapPosition.hpp"
+#include "sg_LogicStrucs.hpp"
+
 #include "juce_core/juce_core.h"
 #include "juce_core/system/juce_PlatformDefs.h"
 #include "juce_graphics/juce_graphics.h"
-#include "sg_LegacyLbapPosition.hpp"
-#include "sg_LogicStrucs.hpp"
+
 #include "tl/optional.hpp"
+
 #include <algorithm>
 #include <memory>
 #include <utility>

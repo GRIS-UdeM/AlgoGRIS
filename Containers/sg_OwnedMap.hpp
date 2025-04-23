@@ -19,8 +19,6 @@
 
 #pragma once
 
-#include "../Data/StrongTypes/sg_StrongIndex.hpp"
-#include "../Data/sg_Macros.hpp"
 #include "juce_core/juce_core.h"
 #include "juce_core/system/juce_PlatformDefs.h"
 
@@ -29,6 +27,9 @@
 #include <cstddef>
 #include <iterator>
 #include <memory>
+
+#include "../Data/StrongTypes/sg_StrongIndex.hpp"
+#include "../Data/sg_Macros.hpp"
 
 namespace gris
 {

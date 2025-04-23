@@ -19,12 +19,14 @@
 
 #pragma once
 
-#include "../Data/sg_Narrow.hpp"
 #include "juce_core/juce_core.h"
 #include "juce_core/system/juce_PlatformDefs.h"
+
 #include <array>
 #include <cstddef>
 #include <type_traits>
+
+#include "../Data/sg_Narrow.hpp"
 
 namespace gris
 {

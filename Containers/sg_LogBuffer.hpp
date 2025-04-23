@@ -19,9 +19,9 @@
 
 #pragma once
 
-#include "../Data/sg_Macros.hpp"
-
 #include <JuceHeader.h>
+
+#include "../Data/sg_Macros.hpp"
 
 namespace gris
 {

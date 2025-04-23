@@ -20,10 +20,12 @@
 #pragma once
 
 #include <JuceHeader.h>
+
+#include "juce_core/juce_core.h"
+
 #include <cstdint>
 
 #include "../tl/optional.hpp"
-#include "juce_core/juce_core.h"
 
 // Uncomment to enable the Doppler stereo reduction.
 // #define USE_DOPPLER 1

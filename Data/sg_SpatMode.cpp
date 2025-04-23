@@ -18,8 +18,10 @@
 */
 
 #include "sg_SpatMode.hpp"
+
 #include "juce_core/juce_core.h"
 #include "juce_core/system/juce_PlatformDefs.h"
+
 #include "tl/optional.hpp"
 
 namespace gris

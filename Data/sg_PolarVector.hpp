@@ -20,7 +20,9 @@
 #pragma once
 
 #include "StrongTypes/sg_Radians.hpp"
+
 #include "sg_Macros.hpp"
+
 #include <algorithm>
 #include <type_traits>
 

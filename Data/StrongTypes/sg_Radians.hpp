@@ -20,8 +20,10 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include "juce_core/juce_core.h"
+
 #include "sg_StrongFloat.hpp"
+
+#include "juce_core/juce_core.h"
 
 namespace gris
 {

@@ -18,23 +18,30 @@
 */
 
 #include "sg_MbapSpatAlgorithm.hpp"
+
 #include "Containers/sg_StaticMap.hpp"
 #include "Containers/sg_StrongArray.hpp"
 #include "Containers/sg_TaggedAudioBuffer.hpp"
+
 #include "Data/StrongTypes/sg_SourceIndex.hpp"
 #include "Data/sg_AudioStructs.hpp"
 #include "Data/sg_LogicStrucs.hpp"
 #include "Data/sg_Narrow.hpp"
 #include "Data/sg_Triplet.hpp"
+
 #include "Implementations/sg_mbap.hpp"
+
+#include "sg_AbstractSpatAlgorithm.hpp"
+#include "sg_DummySpatAlgorithm.hpp"
+
 #include "juce_audio_basics/juce_audio_basics.h"
 #include "juce_core/juce_core.h"
 #include "juce_core/system/juce_PlatformDefs.h"
 #include "juce_events/juce_events.h"
-#include "sg_AbstractSpatAlgorithm.hpp"
-#include "sg_DummySpatAlgorithm.hpp"
-#include <cassert>
+
 #include <cmath>
+
+#include <cassert>
 #include <cstdlib>
 #include <memory>
 

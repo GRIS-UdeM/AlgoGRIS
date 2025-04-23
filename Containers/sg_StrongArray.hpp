@@ -19,10 +19,12 @@
 
 #pragma once
 
-#include "../Data/StrongTypes/sg_StrongIndex.hpp"
 #include "juce_core/system/juce_PlatformDefs.h"
+
 #include <array>
 #include <cstddef>
+
+#include "../Data/StrongTypes/sg_StrongIndex.hpp"
 
 namespace gris
 {
