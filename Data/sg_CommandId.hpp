@@ -23,7 +23,7 @@
 
 namespace gris
 {
-enum CommandId : std::uint8_t {
+enum CommandId : std::uint16_t {
     // File menu
     newProjectId = 1000,
     openProjectId,
