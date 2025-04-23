@@ -1,3 +1,4 @@
+# Note: keep in sync with https://github.com/GRIS-UdeM/SpatGRIS/blob/dev-sat/.github/workflows/SpatGris-builds.yml
 name: SpatGRIS CI
 
 on:
