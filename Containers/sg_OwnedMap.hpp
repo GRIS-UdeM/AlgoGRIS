@@ -27,8 +27,8 @@
 #include <array>
 #include <bitset>
 #include <cstddef>
-#include <memory>
 #include <iterator>
+#include <memory>
 
 namespace gris
 {

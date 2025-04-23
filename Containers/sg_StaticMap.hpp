@@ -25,8 +25,8 @@
 #include "juce_core/system/juce_PlatformDefs.h"
 #include "juce_events/juce_events.h"
 
-#include <array>
 #include <algorithm>
+#include <array>
 #include <bitset>
 #include <cstddef>
 #include <iterator>
