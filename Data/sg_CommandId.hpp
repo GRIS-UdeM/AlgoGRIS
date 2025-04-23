@@ -19,9 +19,11 @@
 
 #pragma once
 
+#include <cstdint>
+
 namespace gris
 {
-enum CommandId {
+enum CommandId : std::uint8_t {
     // File menu
     newProjectId = 1000,
     openProjectId,
@@ -67,5 +69,4 @@ enum CommandId {
     // Player control
     playerPlayStopId
 };
-
 }

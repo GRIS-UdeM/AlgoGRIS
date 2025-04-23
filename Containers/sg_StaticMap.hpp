@@ -20,6 +20,7 @@
 #pragma once
 
 #include "../Data/StrongTypes/sg_StrongIndex.hpp"
+#include "../Data/sg_Macros.hpp"
 
 #include <bitset>
 

@@ -28,11 +28,11 @@
 
 namespace gris
 {
-enum class SpatMode { invalid = -1, vbap = 0, mbap, hybrid };
+enum class SpatMode : std::int8_t { invalid = -1, vbap = 0, mbap, hybrid };
 #ifdef USE_DOPPLER
-enum class StereoMode { hrtf, stereo, doppler };
+enum class StereoMode : std::uint8_t { hrtf, stereo, doppler };
 #else
-enum class StereoMode { hrtf, stereo };
+enum class StereoMode : std::uint8_t { hrtf, stereo };
 #endif
 
 //==============================================================================
