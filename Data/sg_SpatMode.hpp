@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include <JuceHeader.h>
 #include <cstdint>
 
 #include "../tl/optional.hpp"

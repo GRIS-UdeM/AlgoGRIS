@@ -19,6 +19,8 @@
 
 #pragma once
 
+#include <JuceHeader.h>
+
 #define SG_DELETE_COPY(x)                                                                                              \
     x(x const &) = delete;                                                                                             \
     x & operator=(x const &) = delete;
