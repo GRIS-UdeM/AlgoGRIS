@@ -22,9 +22,17 @@
 #include "../Containers/sg_AtomicUpdater.hpp"
 #include "../Containers/sg_StaticMap.hpp"
 #include "../Containers/sg_StrongArray.hpp"
+#include "Data/StrongTypes/sg_OutputPatch.hpp"
+#include "Data/StrongTypes/sg_SourceIndex.hpp"
 #include "StrongTypes/sg_Radians.hpp"
+#include "juce_core/juce_core.h"
 #include "sg_SpatMode.hpp"
 #include "sg_constants.hpp"
+#include "tl/optional.hpp"
+#include <array>
+#include <cstdint>
+#include <memory>
+#include <utility>
 
 /** This file contains most of the structures used in an audio context. */
 

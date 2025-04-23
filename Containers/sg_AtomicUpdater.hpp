@@ -20,7 +20,10 @@
 #pragma once
 
 #include "../Data/sg_Macros.hpp"
-#include "sg_StaticVector.hpp"
+#include "juce_core/system/juce_PlatformDefs.h"
+#include <array>
+#include <atomic>
+#include <cstddef>
 
 namespace gris
 {

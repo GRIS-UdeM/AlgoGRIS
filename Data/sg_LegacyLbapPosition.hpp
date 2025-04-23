@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include "Data/StrongTypes/sg_Radians.hpp"
 #include "sg_Position.hpp"
 
 namespace gris

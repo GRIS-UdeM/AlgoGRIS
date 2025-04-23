@@ -20,8 +20,10 @@
 #pragma once
 
 #include "../Data/sg_Narrow.hpp"
-#include <JuceHeader.h>
+#include "juce_core/juce_core.h"
+#include "juce_core/system/juce_PlatformDefs.h"
 #include <array>
+#include <cstddef>
 #include <type_traits>
 
 namespace gris

@@ -21,14 +21,24 @@
 
 #include "../Containers/sg_OwnedMap.hpp"
 #include "../Containers/sg_StaticMap.hpp"
+#include "Containers/sg_AtomicUpdater.hpp"
+#include "Containers/sg_StrongArray.hpp"
+#include "Data/StrongTypes/sg_OutputPatch.hpp"
+#include "Data/sg_SpatMode.hpp"
+#include "Data/sg_constants.hpp"
 #include "StrongTypes/sg_CartesianVector.hpp"
 #include "StrongTypes/sg_Dbfs.hpp"
 #include "StrongTypes/sg_Hz.hpp"
 #include "StrongTypes/sg_Radians.hpp"
 #include "StrongTypes/sg_SourceIndex.hpp"
+#include "juce_core/juce_core.h"
+#include "juce_graphics/juce_graphics.h"
 #include "sg_AudioStructs.hpp"
 #include "sg_Position.hpp"
 #include "sg_Triplet.hpp"
+#include "tl/optional.hpp"
+#include <cstdint>
+#include <memory>
 
 namespace gris
 {

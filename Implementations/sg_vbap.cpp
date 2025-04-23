@@ -28,10 +28,28 @@
 
 #include "../Data/sg_LogicStrucs.hpp"
 #include "../Data/sg_Narrow.hpp"
+#include "Data/StrongTypes/sg_OutputPatch.hpp"
+#include "Data/StrongTypes/sg_Radians.hpp"
+#include "Data/sg_AudioStructs.hpp"
+#include "Data/sg_Position.hpp"
+#include "Data/sg_Triplet.hpp"
+#include "Data/sg_constants.hpp"
+#include "juce_core/juce_core.h"
+#include "juce_core/system/juce_PlatformDefs.h"
+#include "juce_dsp/juce_dsp.h"
 
+#include <algorithm>
+#include <array>
+#include <cmath>
 #include <cstdlib>
+#include <iterator>
+#include <memory>
+#include <numeric>
+#include <vector>
 
 namespace gris
+{
+namespace
 {
 //==============================================================================
 struct TripletData {
@@ -671,6 +689,7 @@ static void
         inverseMatrix[8] = (lp1->x * lp2->y - lp1->y * lp2->x) * inverseDet;
     }
 }
+} // namespace
 
 //==============================================================================
 std::unique_ptr<VbapData> vbapInit(std::array<Position, MAX_NUM_SPEAKERS> & speakers,

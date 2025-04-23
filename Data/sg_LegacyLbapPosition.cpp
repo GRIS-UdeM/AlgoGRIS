@@ -19,7 +19,9 @@
 
 #include "sg_LegacyLbapPosition.hpp"
 
+#include "Data/StrongTypes/sg_Radians.hpp"
 #include "sg_Position.hpp"
+#include <cmath>
 
 namespace gris
 {

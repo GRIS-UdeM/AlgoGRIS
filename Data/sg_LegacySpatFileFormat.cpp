@@ -19,8 +19,22 @@
 
 #include "sg_LegacySpatFileFormat.hpp"
 
+#include "Data/StrongTypes/sg_Dbfs.hpp"
+#include "Data/StrongTypes/sg_Hz.hpp"
+#include "Data/StrongTypes/sg_OutputPatch.hpp"
+#include "Data/StrongTypes/sg_Radians.hpp"
+#include "Data/StrongTypes/sg_SourceIndex.hpp"
+#include "Data/sg_SpatMode.hpp"
+#include "Data/sg_constants.hpp"
+#include "juce_core/juce_core.h"
+#include "juce_core/system/juce_PlatformDefs.h"
+#include "juce_graphics/juce_graphics.h"
 #include "sg_LegacyLbapPosition.hpp"
 #include "sg_LogicStrucs.hpp"
+#include "tl/optional.hpp"
+#include <algorithm>
+#include <memory>
+#include <utility>
 
 namespace gris
 {
@@ -47,7 +61,7 @@ tl::optional<SpeakerSetup> readLegacySpeakerSetup(juce::XmlElement const & xml)
                 if (spk->hasTagName("Speaker")) {
                     // layout
                     auto const layoutIndex{ spk->getIntAttribute("LayoutIndex") - 1 };
-                    output_patch_t outputPatch{ spk->getIntAttribute("OutputPatch") };
+                    output_patch_t const outputPatch{ spk->getIntAttribute("OutputPatch") };
                     jassert(LEGAL_OUTPUT_PATCH_RANGE.contains(outputPatch));
                     if (!LEGAL_OUTPUT_PATCH_RANGE.contains(outputPatch)) {
                         return tl::nullopt;

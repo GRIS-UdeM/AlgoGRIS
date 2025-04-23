@@ -35,8 +35,23 @@
 #include "../Data/sg_AudioStructs.hpp"
 #include "../Data/sg_Narrow.hpp"
 #include "../Data/sg_constants.hpp"
+#include "Data/sg_LogicStrucs.hpp"
+#include "Data/sg_Position.hpp"
+#include "juce_core/system/juce_PlatformDefs.h"
+#include <algorithm>
+#include <array>
+#include <cmath>
+#include <cstddef>
+#include <cstdlib>
+#include <functional>
+#include <iterator>
+#include <numeric>
+#include <utility>
+#include <vector>
 
 namespace gris
+{
+namespace
 {
 //==============================================================================
 /* Trilinear interpolation to retrieve the value at position (x, y, z) in a 3D matrix. */
@@ -216,6 +231,7 @@ static void computeGains(MbapField const & field, SourceData const & source, flo
         });
     }
 }
+} // namespace
 
 //==============================================================================
 size_t MbapField::getNumSpeakers() const

@@ -18,6 +18,12 @@
 */
 
 #include "sg_AudioStructs.hpp"
+#include "Data/sg_Narrow.hpp"
+#include "Data/sg_constants.hpp"
+#include "juce_core/juce_core.h"
+#include "juce_core/system/juce_PlatformDefs.h"
+#include <algorithm>
+#include <cmath>
 
 namespace gris
 {

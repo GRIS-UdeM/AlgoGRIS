@@ -18,6 +18,16 @@
 */
 
 #include "sg_constants.hpp"
+#include "Data/StrongTypes/sg_Dbfs.hpp"
+#include "Data/StrongTypes/sg_Hz.hpp"
+#include "Data/StrongTypes/sg_StrongFloat.hpp"
+#include "Data/sg_Narrow.hpp"
+#include "juce_core/juce_core.h"
+#include "juce_core/system/juce_PlatformDefs.h"
+#include "juce_graphics/juce_graphics.h"
+#include "juce_gui_basics/juce_gui_basics.h"
+#include "tl/optional.hpp"
+#include <algorithm>
 
 namespace gris
 {
@@ -56,6 +66,8 @@ juce::File const HRTF_FOLDER_80{ RESOURCES_DIR.getChildFile("hrtf_compact/elev" 
 
 juce::Colour const DEFAULT_SOURCE_COLOR{ narrow<juce::uint8>(255), 0, 0 };
 
+namespace
+{
 static constexpr auto SPEAKER_SETUP_TEMPLATES_COMMANDS_OFFSET = 2000;
 static constexpr auto PROJECT_TEMPLATES_COMMANDS_OFFSET = 3000;
 
@@ -66,7 +78,7 @@ static juce::Array<FileTemplate> extract(juce::File const & dir, juce::CommandID
     juce::Array<FileTemplate> result{};
 
     for (auto const & file : dir.findChildFiles(juce::File::TypesOfFileToFind::findFiles, false)) {
-        FileTemplate setup{ file.getFileNameWithoutExtension(), commandId++, file };
+        FileTemplate const setup{ file.getFileNameWithoutExtension(), commandId++, file };
         result.add(setup);
     }
 
@@ -95,6 +107,7 @@ static ProjectTemplates getProjectTemplates()
 
     return ProjectTemplates{ extract(domeDir, commandId), extract(cubeDir, commandId), extract(hybridDir, commandId) };
 }
+} // namespace
 
 SpeakerSetupTemplates const SPEAKER_SETUP_TEMPLATES{ getSpeakerSetupTemplates() };
 ProjectTemplates const PROJECT_TEMPLATES{ getProjectTemplates() };

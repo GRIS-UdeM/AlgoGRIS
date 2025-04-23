@@ -21,10 +21,16 @@
 
 #include "../Data/StrongTypes/sg_SourceIndex.hpp"
 #include "../Data/sg_constants.hpp"
+#include "Data/StrongTypes/sg_OutputPatch.hpp"
+#include "juce_audio_basics/juce_audio_basics.h"
+#include "juce_core/juce_core.h"
+#include "juce_core/system/juce_PlatformDefs.h"
+#include "juce_events/juce_events.h"
 #include "sg_OwnedMap.hpp"
 #include "sg_StaticVector.hpp"
 
-#include <JuceHeader.h>
+#include <cstddef>
+#include <memory>
 
 namespace gris
 {

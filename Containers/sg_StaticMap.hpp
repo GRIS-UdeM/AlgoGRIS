@@ -21,8 +21,15 @@
 
 #include "../Data/StrongTypes/sg_StrongIndex.hpp"
 #include "../Data/sg_Macros.hpp"
+#include "juce_core/juce_core.h"
+#include "juce_core/system/juce_PlatformDefs.h"
+#include "juce_events/juce_events.h"
 
+#include <array>
+#include <algorithm>
 #include <bitset>
+#include <cstddef>
+#include <iterator>
 
 namespace gris
 {

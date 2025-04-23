@@ -18,7 +18,9 @@
 */
 
 #include "sg_SpatMode.hpp"
-#include "sg_constants.hpp"
+#include "juce_core/juce_core.h"
+#include "juce_core/system/juce_PlatformDefs.h"
+#include "tl/optional.hpp"
 
 namespace gris
 {
@@ -36,6 +38,8 @@ juce::StringArray const STEREO_MODE_STRINGS{ "Binaural", "Stereo" };
 juce::StringArray const STEREO_TOOLTIPS{ "HRTF transfer", "Dumb Left/Right panning" };
 #endif
 
+namespace
+{
 //==============================================================================
 template<typename T>
 static juce::String const & enumToString(T const value, juce::StringArray const & stringArray) noexcept
@@ -55,6 +59,7 @@ static tl::optional<T> stringToEnum(juce::String const & string, juce::StringArr
     }
     return static_cast<T>(index);
 }
+} // namespace
 
 //==============================================================================
 juce::String const & spatModeToString(SpatMode const mode)

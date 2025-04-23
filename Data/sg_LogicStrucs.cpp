@@ -18,7 +18,20 @@
 */
 
 #include "sg_LogicStrucs.hpp"
+#include "Data/StrongTypes/sg_SourceIndex.hpp"
+#include "Data/sg_AudioStructs.hpp"
+#include "Data/sg_Narrow.hpp"
+#include "Data/sg_SpatMode.hpp"
+#include "Data/sg_constants.hpp"
+#include "juce_core/juce_core.h"
+#include "juce_core/system/juce_PlatformDefs.h"
 #include "sg_LegacySpatFileFormat.hpp"
+#include "tl/optional.hpp"
+#include <algorithm>
+#include <cmath>
+#include <cstdint>
+#include <memory>
+#include <utility>
 
 namespace gris
 {

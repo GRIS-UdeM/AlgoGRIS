@@ -19,9 +19,8 @@
 
 #pragma once
 
+#include "juce_core/juce_core.h"
 #include "sg_StrongFloat.hpp"
-
-#include <JuceHeader.h>
 
 namespace gris
 {

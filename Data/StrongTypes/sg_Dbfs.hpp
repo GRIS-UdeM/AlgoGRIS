@@ -20,9 +20,8 @@
 #pragma once
 
 #include "../sg_Macros.hpp"
+#include "juce_audio_basics/juce_audio_basics.h"
 #include "sg_StrongFloat.hpp"
-
-#include <JuceHeader.h>
 
 namespace gris
 {

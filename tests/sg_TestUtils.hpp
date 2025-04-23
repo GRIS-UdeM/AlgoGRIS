@@ -1,7 +1,15 @@
 #pragma once
+#include "Data/StrongTypes/sg_OutputPatch.hpp"
+#include "Data/StrongTypes/sg_SourceIndex.hpp"
+#include "Data/sg_constants.hpp"
+#include "catch2/catch_message.hpp"
+#include "catch2/catch_test_macros.hpp"
+#include "juce_audio_basics/juce_audio_basics.h"
+#include "juce_core/juce_core.h"
 #include <Containers/sg_TaggedAudioBuffer.hpp>
 #include <Data/sg_AudioStructs.hpp>
-#include <catch2/catch_all.hpp>
+#include <array>
+#include <cmath>
 #include <random>
 
 #define REQUIRE_MESSAGE(cond, msg)                                                                                     \
@@ -61,7 +69,7 @@ inline void checkSpeakerBufferValidity(SpeakerAudioBuffer & buffer, AudioConfig 
 {
     for (auto const & speaker : config.speakersAudioConfig) {
         for (int sample = 0; sample < buffer.getNumSamples(); ++sample) {
-            float value = buffer[speaker.key].getReadPointer(0)[sample];
+            float const value = buffer[speaker.key].getReadPointer(0)[sample];
             REQUIRE_MESSAGE(std::isfinite(value), "Output contains NaN or Inf values!");
             // TODO: the output is not in the expected range. Need to go through the whole process chain to
             // understand; presumably we're missing some kind of spatialization data or initialization.
@@ -74,7 +82,7 @@ inline void checkSourceBufferValidity(SourceAudioBuffer & buffer, AudioConfig & 
 {
     for (auto const & source : config.sourcesAudioConfig) {
         for (int sample = 0; sample < buffer.getNumSamples(); ++sample) {
-            float value = buffer[source.key].getReadPointer(0)[sample];
+            float const value = buffer[source.key].getReadPointer(0)[sample];
             REQUIRE_MESSAGE(std::isfinite(value), "buffer contains NaN or Inf values!");
             REQUIRE_MESSAGE((value >= -1.0f && value <= 1.0f), "Value exceeds valid range!");
         }
