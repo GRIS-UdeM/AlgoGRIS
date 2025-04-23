@@ -2,15 +2,20 @@
 #include "Data/StrongTypes/sg_OutputPatch.hpp"
 #include "Data/StrongTypes/sg_SourceIndex.hpp"
 #include "Data/sg_constants.hpp"
-#include "catch2/catch_message.hpp"
-#include "catch2/catch_test_macros.hpp"
+
 #include "juce_audio_basics/juce_audio_basics.h"
 #include "juce_core/juce_core.h"
+
 #include <Containers/sg_TaggedAudioBuffer.hpp>
 #include <Data/sg_AudioStructs.hpp>
-#include <array>
+
 #include <cmath>
+
+#include <array>
 #include <random>
+
+#include "catch2/catch_message.hpp"
+#include "catch2/catch_test_macros.hpp"
 
 #define REQUIRE_MESSAGE(cond, msg)                                                                                     \
     do {                                                                                                               \
