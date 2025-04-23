@@ -23,9 +23,6 @@
 #include "Containers/sg_TaggedAudioBuffer.hpp"
 #include "Data/sg_Triplet.hpp"
 
-// can be useful to turn off unit testing when debugging and running the app multiple times in a row.
-#define RUN_UNIT_TEST 1
-
 namespace gris
 {
 //==============================================================================
@@ -35,13 +32,20 @@ bool isOscThread();
 /** @return true if executed neither from the OSC thread nor from the message thread. */
 bool isProbablyAudioThread();
 
-/** @return true if the unit tests are running. */
-bool areUnitTestsRunning();
-
 //==============================================================================
 #define ASSERT_OSC_THREAD jassert(isOscThread())
-#define ASSERT_AUDIO_THREAD jassert(isProbablyAudioThread() || areUnitTestsRunning())
 
+/** Enable the audio thread checks if we aren't running unit tests. */
+#if !defined(ALGOGRIS_UNIT_TESTS)
+#define ASSERT_AUDIO_THREAD jassert(isProbablyAudioThread())
+#define ASSERT_NOT_AUDIO_THREAD jassert(!isProbablyAudioThread())
+#else
+// The do { } while(0) is necessary enforce that this macro has to be used as an expression, e.g.
+// to disallow the programmer to write ASSERT_AUDIO_THREAD without a semicolon.
+// Otherwise it could work locally and then fail when someone else biulds with !defined(ALGOGRIS_UNIT_TESTS)
+#define ASSERT_AUDIO_THREAD do { } while(0)
+#define ASSERT_NOT_AUDIO_THREAD do { } while(0)
+#endif
 //==============================================================================
 /** Base class for a spatialization algorithm. */
 class AbstractSpatAlgorithm

@@ -1,0 +1,208 @@
+# Note: keep in sync with https://github.com/GRIS-UdeM/SpatGRIS/blob/dev-sat/.github/workflows/SpatGris-builds.yml
+name: SpatGRIS CI
+
+on:
+  push:
+    branches: ['*']
+  pull_request:
+    branches: ['*']
+
+jobs:
+  Build-Ubuntu-Latest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install required packages
+        run: |
+          export TZ=Etc/UTC
+          sudo apt-get update
+          sudo apt-get install -y git curl unzip sudo wget lsb-release software-properties-common make build-essential tzdata
+
+      - name: Check out SpatGRIS
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          repository: GRIS-UdeM/SpatGRIS
+          ref: dev-sat
+
+      - name: Remove AlgoGRIS
+        run: rm -rf submodules/AlgoGRIS
+
+      - name: Check out our AlgoGRIS
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          path: submodules/AlgoGRIS
+
+      - name: Install dependencies # taken from https://github.com/juce-framework/JUCE/blob/develop/docs/Linux%20Dependencies.md
+        run: |
+          sudo apt-get install -y ladspa-sdk freeglut3-dev libasound2-dev libcurl4-openssl-dev libfreetype6-dev \
+              libxcomposite-dev libxcursor-dev libxinerama-dev libxrandr-dev mesa-common-dev libjack-jackd2-dev \
+              libfontconfig1-dev libx11-dev libxext-dev libxrender-dev libwebkit2gtk-4.1-dev libglu1-mesa-dev
+
+      - name: Build Projucer
+        run: make -C submodules/AlgoGRIS/submodules/JUCE/extras/Projucer/Builds/LinuxMakefile CONFIG=Release -j$(nproc)
+
+      - name: Generate Makefile
+        run: submodules/AlgoGRIS/submodules/JUCE/extras/Projucer/Builds/LinuxMakefile/build/Projucer --resave SpatGRIS.jucer
+
+      - name: Compile SpatGRIS
+        run: make -C Builds/LinuxMakefile CONFIG=Release -j$(nproc)
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: SpatGRIS-Build-Ubuntu-Latest
+          path: Builds/LinuxMakefile/build/SpatGRIS*
+
+  Build-Ubuntu-20-04:
+    runs-on: ubuntu-latest
+    container:
+      image: ubuntu:20.04
+    steps:
+      - name: Install required packages
+        run: |
+          export DEBIAN_FRONTEND=noninteractive
+          export TZ=Etc/UTC
+          apt-get update
+          apt-get install -y git curl unzip sudo wget lsb-release software-properties-common make build-essential tzdata
+
+      - name: Check out repository code with submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          repository: GRIS-UdeM/SpatGRIS
+          ref: dev-sat
+
+      - name: Remove AlgoGRIS
+        run: rm -rf submodules/AlgoGRIS
+
+      - name: Check out our AlgoGRIS
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          path: submodules/AlgoGRIS
+
+      - name: Install latest Clang
+        run: |
+          wget https://apt.llvm.org/llvm.sh
+          chmod +x llvm.sh
+          ./llvm.sh 18
+          apt-get install -y clang-18
+
+      - name: Install dependencies # taken from https://github.com/juce-framework/JUCE/blob/develop/docs/Linux%20Dependencies.md
+        run: |
+          apt-get install -y ladspa-sdk freeglut3-dev libasound2-dev libcurl4-openssl-dev libfreetype6-dev \
+              libxcomposite-dev libxcursor-dev libxinerama-dev libxrandr-dev mesa-common-dev libjack-jackd2-dev \
+              libfontconfig1-dev libx11-dev libxext-dev libxrender-dev libwebkit2gtk-4.0-dev libglu1-mesa-dev
+
+      - name: Build Projucer
+        run: make -C submodules/AlgoGRIS/submodules/JUCE/extras/Projucer/Builds/LinuxMakefile CXX=clang++-18 -j$(nproc)
+
+      - name: Generate Makefile
+        run: submodules/AlgoGRIS/submodules/JUCE/extras/Projucer/Builds/LinuxMakefile/build/Projucer --resave SpatGRIS.jucer
+
+      - name: Compile SpatGRIS
+        run: make -C  Builds/LinuxMakefile CXX=clang++-18 -j$(nproc)
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: SpatGRIS-Build-Ubuntu-20-04
+          path: Builds/LinuxMakefile/build/SpatGRIS*
+
+  Build-macOS:
+    runs-on: macos-13
+    steps:
+      - name: Check out repository code with submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          repository: GRIS-UdeM/SpatGRIS
+          ref: dev-sat
+
+      - name: Remove AlgoGRIS
+        run: rm -rf submodules/AlgoGRIS
+
+      - name: Check out our AlgoGRIS
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          path: submodules/AlgoGRIS
+
+      - name: Debug CMake Path
+        run: ls -R submodules/AlgoGRIS/submodules/JUCE/extras/Projucer
+
+      - name: Build Projucer
+        run: |
+          cd submodules/AlgoGRIS/submodules/JUCE/extras/Projucer/Builds/MacOSX
+          xcodebuild -project Projucer.xcodeproj \
+            -configuration Release \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Generate Xcode project
+        run: |
+          chmod +x submodules/AlgoGRIS/submodules/JUCE/extras/Projucer/Builds/MacOSX/build/Release/Projucer.app/Contents/MacOS/Projucer
+          submodules/AlgoGRIS/submodules/JUCE/extras/Projucer/Builds/MacOSX/build/Release/Projucer.app/Contents/MacOS/Projucer --resave SpatGRIS.jucer
+
+      - name: build
+        run: |
+          xcodebuild -project Builds/MacOSX/SpatGRIS.xcodeproj \
+            -configuration Release \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: SpatGRIS-Build-macOS
+          path: Builds/MacOSX/build/Release/*
+
+  Build-Windows:
+    runs-on: windows-latest
+    steps:
+      - name: Check out SpatGRIS
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          repository: GRIS-UdeM/SpatGRIS
+          ref: dev-sat
+
+      - name: Remove AlgoGRIS
+        shell: bash
+        run: rm -rf submodules/AlgoGRIS
+
+      - name: Check out our AlgoGRIS
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          path: submodules/AlgoGRIS
+
+      - name: Download ASIO SDK
+        run: curl -L https://www.steinberg.net/asiosdk --output ASIOSDK.zip
+
+      - name: Unpack ASIO SDK
+        run: Expand-Archive -Path ASIOSDK.zip -DestinationPath .
+
+      - name: Add msbuild to PATH
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Build Projucer
+        run: |
+          cd submodules/AlgoGRIS/submodules/JUCE/extras/Projucer/Builds/VisualStudio2022
+          msbuild Projucer.sln /p:Configuration=Release /p:Platform=x64 /p:WarningsAsErrors=False
+
+      - name: Generate Visual Studio project
+        run: |
+          submodules/AlgoGRIS/submodules/JUCE/extras/Projucer/Builds/VisualStudio2022/x64/Release/App/Projucer.exe --resave SpatGRIS.jucer
+
+      - name: Build SpatGRIS
+        run: msbuild Builds/VisualStudio2022/SpatGRIS_App.vcxproj -p:Configuration=Release -p:Platform=x64 -p:IncludePath=../../asiosdk_2.3.3_2019-06-14/common/
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: SpatGRIS-Build-Windows
+          path: Builds/VisualStudio2022/x64/Release/**/*.exe
