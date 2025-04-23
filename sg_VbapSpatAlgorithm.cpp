@@ -38,6 +38,7 @@
 #include "sg_DummySpatAlgorithm.hpp"
 #include <algorithm>
 #include <array>
+#include <cassert>
 #include <cmath>
 #include <cstddef>
 #include <cstdlib>
@@ -92,6 +93,7 @@ void VbapSpatAlgorithm::updateSpatData(source_index_t const sourceIndex, SourceD
 
     auto & spatDataQueue{ mData[sourceIndex].spatDataQueue };
     auto * ticket{ spatDataQueue.acquire() };
+    assert(ticket);
     auto & gains{ ticket->get() };
 
     if (sourceData.position) {

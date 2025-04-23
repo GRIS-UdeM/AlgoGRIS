@@ -37,6 +37,7 @@
 #include "sg_VbapSpatAlgorithm.hpp"
 #include <algorithm>
 #include <array>
+#include <cassert>
 #include <cmath>
 #include <cstddef>
 #include <memory>
@@ -58,6 +59,7 @@ void StereoSpatAlgorithm::updateSpatData(source_index_t const sourceIndex, Sourc
 
     auto & queue{ mData[sourceIndex].gainsUpdater };
     auto * ticket{ queue.acquire() };
+    assert(ticket);
     auto & gains{ ticket->get() };
 
     if (sourceData.position) {

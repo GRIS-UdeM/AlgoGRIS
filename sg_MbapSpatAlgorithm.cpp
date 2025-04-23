@@ -33,6 +33,7 @@
 #include "juce_events/juce_events.h"
 #include "sg_AbstractSpatAlgorithm.hpp"
 #include "sg_DummySpatAlgorithm.hpp"
+#include <cassert>
 #include <cmath>
 #include <cstdlib>
 #include <memory>
@@ -66,6 +67,7 @@ void MbapSpatAlgorithm::updateSpatData(source_index_t const sourceIndex, SourceD
 
     auto & exchanger{ data.dataQueue };
     auto * ticket{ exchanger.acquire() };
+    assert(ticket);
     auto & spatData{ ticket->get() };
 
     if (sourceData.position) {
