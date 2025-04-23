@@ -30,7 +30,7 @@ endif()
 
 find_package(CURL QUIET)
 
-# 2. If not, look for hte one we are shipping
+# 2. If not, look for the one we are shipping
 if(NOT TARGET juce::juce_core)
   add_subdirectory(submodules/JUCE)
 endif()
