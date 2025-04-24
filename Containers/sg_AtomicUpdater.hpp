@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "juce_core/system/juce_PlatformDefs.h"
+#include <JuceHeader.h>
 
 #include <array>
 #include <atomic>

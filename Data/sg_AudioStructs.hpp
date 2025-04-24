@@ -18,6 +18,7 @@
 */
 
 #pragma once
+#include <JuceHeader.h>
 
 #include "StrongTypes/sg_Radians.hpp"
 

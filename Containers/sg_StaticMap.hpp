@@ -19,9 +19,7 @@
 
 #pragma once
 
-#include "juce_core/juce_core.h"
-#include "juce_core/system/juce_PlatformDefs.h"
-#include "juce_events/juce_events.h"
+#include <JuceHeader.h>
 
 #include <algorithm>
 #include <array>
