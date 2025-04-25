@@ -37,6 +37,8 @@ static void testUsingProjectData(gris::SpatGrisData & data,
                                  juce::AudioBuffer<float> & stereoBuffer,
                                  SourcePeaks & sourcePeaks)
 {
+    std::cout << "testUsingProjectData" << std::endl;
+
     const auto config{ data.toAudioConfig() };
     const auto numSources{ config->sourcesAudioConfig.size() };
     const auto numSpeakers{ config->speakersAudioConfig.size() };
@@ -79,7 +81,7 @@ static void testUsingProjectData(gris::SpatGrisData & data,
 
 TEST_CASE("VBAP test", "[spat]")
 {
-    SourceAudioBuffer sourceBuffer;
+   SourceAudioBuffer sourceBuffer;
     SpeakerAudioBuffer speakerBuffer;
     juce::AudioBuffer<float> stereoBuffer;
     SourcePeaks sourcePeaks;
@@ -89,7 +91,11 @@ TEST_CASE("VBAP test", "[spat]")
         // init project data and audio config
         SpatGrisData vbapData;
         //TODO VB: hardcode this data?
-        // vbapData.speakerSetup = *SpeakerSetup::fromXml(*parseXML(DEFAULT_SPEAKER_SETUP_FILE));
+        const auto speakerSetupFile {juce::File::getCurrentWorkingDirectory ().getChildFile ("default_speaker_setup.xml")};
+        std::cout << "Speaker setup file: " << speakerSetupFile.getFullPathName() << std::endl;
+        //this is what's printed: /Users/rymer/Documents/git/sat/GRIS/SpatGRIS/submodules/AlgoGRIS/default_speaker_setup.xml
+        jassert (speakerSetupFile.existsAsFile());
+        vbapData.speakerSetup = *SpeakerSetup::fromXml(*parseXML(speakerSetupFile));
         // vbapData.project = *ProjectData::fromXml(*parseXML(DEFAULT_PROJECT_FILE));
         vbapData.project.spatMode = SpatMode::vbap;
         vbapData.appData.stereoMode = {};
