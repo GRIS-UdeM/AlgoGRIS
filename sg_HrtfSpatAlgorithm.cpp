@@ -52,7 +52,8 @@ HrtfSpatAlgorithm::HrtfSpatAlgorithm(SpeakerSetup const & speakerSetup,
                                      int const bufferSize)
 {
     JUCE_ASSERT_MESSAGE_THREAD;
-
+//TODO VB: pass whatever paths are needed into this constructor
+#if 0
     static juce::StringArray const NAMES{ "H0e025a.wav",  "H0e020a.wav",  "H0e065a.wav",  "H0e110a.wav",
                                           "H0e155a.wav",  "H0e160a.wav",  "H0e115a.wav",  "H0e070a.wav",
                                           "H40e032a.wav", "H40e026a.wav", "H40e084a.wav", "H40e148a.wav",
@@ -130,6 +131,7 @@ HrtfSpatAlgorithm::HrtfSpatAlgorithm(SpeakerSetup const & speakerSetup,
     }
 
     fixDirectOutsIntoPlace(sources, speakerSetup, projectSpatMode);
+#endif
 }
 
 //==============================================================================

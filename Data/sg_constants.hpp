@@ -36,7 +36,7 @@ struct SpatGrisVersion {
     int major;
     int minor;
     int patch;
-    //==============================================================================
+
     [[nodiscard]] constexpr int compare(SpatGrisVersion const & other) const noexcept
     {
         auto const majorDiff{ major - other.major };
@@ -49,12 +49,12 @@ struct SpatGrisVersion {
         }
         return patch - other.patch;
     }
-    //==============================================================================
+
     [[nodiscard]] juce::String toString() const noexcept
     {
         return juce::String{ major } + '.' + juce::String{ minor } + '.' + juce::String{ patch };
     }
-    //==============================================================================
+
     static SpatGrisVersion fromString(juce::String const & string)
     {
         SpatGrisVersion result{};
@@ -65,6 +65,8 @@ struct SpatGrisVersion {
         return result;
     }
 };
+
+//==============================================================================
 
 extern const SpatGrisVersion SPAT_GRIS_VERSION;
 
@@ -95,50 +97,7 @@ constexpr juce::Range<dbfs_t> LEGAL_PINK_NOISE_GAIN_RANGE{ dbfs_t{ -60.0f }, dbf
 constexpr auto SLICES_WIDTH = 25;
 constexpr auto SLICES_ID_BUTTON_HEIGHT = 17;
 
-extern juce::File const SPEAKER_TEMPLATES_DIR;
-extern juce::File const PROJECT_TEMPLATES_DIR;
-extern juce::File const CURRENT_WORKING_DIR;
-extern juce::File const SPLASH_SCREEN_FILE;
-extern juce::File const DEFAULT_PROJECT_FILE;
-extern juce::File const DEFAULT_PROJECT_DIRECTORY;
-extern juce::File const DEFAULT_SPEAKER_SETUP_FILE;
-extern juce::File const BINAURAL_SPEAKER_SETUP_FILE;
-extern juce::File const STEREO_SPEAKER_SETUP_FILE;
-extern juce::File const DEFAULT_CUBE_PROJECT;
-extern juce::File const DEFAULT_CUBE_SPEAKER_SETUP;
-extern juce::File const MANUAL_FILE_EN;
-extern juce::File const MANUAL_FILE_FR;
-extern juce::File const ICON_SMALL_FILE;
-extern juce::File const HRTF_FOLDER_0;
-extern juce::File const HRTF_FOLDER_40;
-extern juce::File const HRTF_FOLDER_80;
-
 extern juce::Colour const DEFAULT_SOURCE_COLOR;
-
-//==============================================================================
-struct FileTemplate {
-    juce::String name{};
-    juce::CommandID commandId{};
-    juce::File path{};
-
-    bool operator<(FileTemplate const & other) const noexcept;
-};
-
-//==============================================================================
-struct SpeakerSetupTemplates {
-    juce::Array<FileTemplate> dome{};
-    juce::Array<FileTemplate> cube{};
-};
-
-struct ProjectTemplates {
-    juce::Array<FileTemplate> dome{};
-    juce::Array<FileTemplate> cube{};
-    juce::Array<FileTemplate> hybrid{};
-};
-
-extern SpeakerSetupTemplates const SPEAKER_SETUP_TEMPLATES;
-extern ProjectTemplates const PROJECT_TEMPLATES;
-tl::optional<FileTemplate const &> commandIdToTemplate(juce::CommandID commandId);
 
 //==============================================================================
 extern juce::StringArray const RECORDING_FORMAT_STRINGS;
