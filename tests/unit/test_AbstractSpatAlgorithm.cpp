@@ -106,5 +106,62 @@ TEST_CASE("VBAP test", "[spat]")
             testUsingProjectData (vbapData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
         }
     }
-    std::cout << "vbap tests really all done\n";
+}
+
+// TEST_CASE("HRTF test", "[spat]")
+// {
+//     SourceAudioBuffer sourceBuffer;
+//     SpeakerAudioBuffer speakerBuffer;
+//     juce::AudioBuffer<float> stereoBuffer;
+//     SourcePeaks sourcePeaks;
+
+//     GIVEN("VBAP data sourced from XML")
+//     {
+//         SpatGrisData hrtfData;
+
+//         const auto hrtfSpeakerSetupFile {juce::File::getCurrentWorkingDirectory ().getChildFile ("tests/util/BINAURAL_SPEAKER_SETUP.xml")};
+//         if (const auto hrtfSpeakerSetup{ parseXML(hrtfSpeakerSetupFile) })
+//             hrtfData.speakerSetup = *SpeakerSetup::fromXml(*hrtfSpeakerSetup);
+
+//         const auto hrtfProjectFile {juce::File::getCurrentWorkingDirectory ().getChildFile ("tests/util/default_preset.xml")};
+//         if (const auto hrtfProject{ parseXML(hrtfProjectFile) })
+//             hrtfData.project = *ProjectData::fromXml(*hrtfProject);
+
+//         hrtfData.project.spatMode = SpatMode::vbap;
+//         hrtfData.appData.stereoMode = StereoMode::hrtf;
+
+//         THEN("The HRTF algo executes correctly")
+//         {
+//             testUsingProjectData (hrtfData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
+//         }
+//     }
+// }
+
+TEST_CASE("MBAP test", "[spat]")
+{
+    SourceAudioBuffer sourceBuffer;
+    SpeakerAudioBuffer speakerBuffer;
+    juce::AudioBuffer<float> stereoBuffer;
+    SourcePeaks sourcePeaks;
+
+    GIVEN("MBAP data sourced from XML")
+    {
+        SpatGrisData mbapData;
+
+        const auto mbapSpeakerSetupFile {juce::File::getCurrentWorkingDirectory ().getChildFile ("tests/util/Cube_default_speaker_setup.xml")};
+        if (const auto mbapSpeakerSetup{ parseXML(mbapSpeakerSetupFile) })
+            mbapData.speakerSetup = *SpeakerSetup::fromXml(*mbapSpeakerSetup);
+
+        const auto mbapProjectFile {juce::File::getCurrentWorkingDirectory ().getChildFile ("tests/util/default_project18(8X2-Subs2).xml")};
+        if (const auto project{ parseXML(mbapProjectFile) })
+            mbapData.project = *ProjectData::fromXml(*project);
+
+        mbapData.project.spatMode = SpatMode::mbap;
+        mbapData.appData.stereoMode = {};
+
+        THEN("The MBAP algo executes correctly")
+        {
+            testUsingProjectData (mbapData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
+        }
+    }
 }
