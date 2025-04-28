@@ -18,7 +18,6 @@
 */
 
 #include "sg_Position.hpp"
-
 #include "Data/StrongTypes/sg_CartesianVector.hpp"
 #include "Data/StrongTypes/sg_Radians.hpp"
 #include "Data/sg_PolarVector.hpp"

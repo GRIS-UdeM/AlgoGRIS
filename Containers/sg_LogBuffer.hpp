@@ -20,7 +20,6 @@
 #pragma once
 
 #include <JuceHeader.h>
-
 #include "../Data/sg_Macros.hpp"
 
 namespace gris

@@ -20,7 +20,6 @@
 #pragma once
 
 #include "sg_StrongFloat.hpp"
-
 #include "juce_core/juce_core.h"
 
 namespace gris

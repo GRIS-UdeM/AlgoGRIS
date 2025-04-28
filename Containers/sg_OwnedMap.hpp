@@ -20,13 +20,11 @@
 #pragma once
 
 #include <JuceHeader.h>
-
 #include <array>
 #include <bitset>
 #include <cstddef>
 #include <iterator>
 #include <memory>
-
 #include "../Data/StrongTypes/sg_StrongIndex.hpp"
 #include "../Data/sg_Macros.hpp"
 

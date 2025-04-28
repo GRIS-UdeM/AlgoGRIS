@@ -19,15 +19,11 @@
 
 #pragma once
 #include <JuceHeader.h>
-
 #include "../sg_Macros.hpp"
 #include "../sg_constants.hpp"
-
 #include "juce_core/juce_core.h"
 #include "juce_graphics/juce_graphics.h"
-
 #include "tl/optional.hpp"
-
 #include <algorithm>
 #include <limits>
 #include <memory>

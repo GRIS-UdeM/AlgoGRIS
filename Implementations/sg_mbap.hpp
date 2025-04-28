@@ -35,11 +35,9 @@
 #include "Data/StrongTypes/sg_OutputPatch.hpp"
 #include "Data/sg_AudioStructs.hpp"
 #include "Data/sg_Position.hpp"
-
 #include <array>
 #include <cstddef>
 #include <vector>
-
 #include "../Data/sg_LogicStrucs.hpp"
 
 namespace gris

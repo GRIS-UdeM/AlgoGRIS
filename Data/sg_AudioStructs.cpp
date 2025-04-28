@@ -18,12 +18,9 @@
 */
 
 #include "sg_AudioStructs.hpp"
-
 #include "Data/sg_Narrow.hpp"
 #include "Data/sg_constants.hpp"
-
 #include <cmath>
-
 #include <algorithm>
 
 namespace gris

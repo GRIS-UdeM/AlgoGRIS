@@ -20,7 +20,6 @@
 #ifdef USE_DOPPLER
 
     #include "sg_DopplerSpatAlgorithm.hpp"
-
     #include "sg_Meters.hpp"
 
 namespace gris

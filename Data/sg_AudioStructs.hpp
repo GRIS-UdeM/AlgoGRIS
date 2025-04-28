@@ -19,24 +19,17 @@
 
 #pragma once
 #include <JuceHeader.h>
-
 #include "StrongTypes/sg_Radians.hpp"
-
 #include "Data/StrongTypes/sg_OutputPatch.hpp"
 #include "Data/StrongTypes/sg_SourceIndex.hpp"
-
 #include "sg_SpatMode.hpp"
 #include "sg_constants.hpp"
-
 #include "juce_core/juce_core.h"
-
 #include "tl/optional.hpp"
-
 #include <array>
 #include <cstdint>
 #include <memory>
 #include <utility>
-
 #include "../Containers/sg_AtomicUpdater.hpp"
 #include "../Containers/sg_StaticMap.hpp"
 #include "../Containers/sg_StrongArray.hpp"

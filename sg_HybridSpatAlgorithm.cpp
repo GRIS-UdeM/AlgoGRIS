@@ -18,7 +18,6 @@
 */
 
 #include "sg_HybridSpatAlgorithm.hpp"
-
 #include "sg_DummySpatAlgorithm.hpp"
 
 namespace gris

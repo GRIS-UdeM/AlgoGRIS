@@ -18,15 +18,10 @@
 */
 
 #include "sg_PolarVector.hpp"
-
 #include "StrongTypes/sg_CartesianVector.hpp"
-
 #include "Data/StrongTypes/sg_Radians.hpp"
-
 #include "juce_dsp/juce_dsp.h"
-
 #include <cmath>
-
 #include <algorithm>
 
 #define FAST_TRIGO 1

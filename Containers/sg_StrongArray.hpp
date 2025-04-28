@@ -20,10 +20,8 @@
 #pragma once
 
 #include <JuceHeader.h>
-
 #include <array>
 #include <cstddef>
-
 #include "../Data/StrongTypes/sg_StrongIndex.hpp"
 
 namespace gris

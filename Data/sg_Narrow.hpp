@@ -20,7 +20,6 @@
 #pragma once
 
 #include <JuceHeader.h>
-
 #include <type_traits>
 
 namespace gris

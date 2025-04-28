@@ -21,7 +21,6 @@
 
 #include "../sg_Macros.hpp"
 #include "sg_StrongFloat.hpp"
-
 #include "juce_audio_basics/juce_audio_basics.h"
 
 namespace gris

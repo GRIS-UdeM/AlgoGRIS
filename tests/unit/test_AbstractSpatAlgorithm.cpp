@@ -1,6 +1,5 @@
 #include <catch2/catch_all.hpp>
 #include <tests/sg_TestUtils.hpp>
-
 #include <sg_AbstractSpatAlgorithm.hpp>
 
 using namespace gris;
