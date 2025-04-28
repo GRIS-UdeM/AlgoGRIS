@@ -1,3 +1,5 @@
+AlgoGRIS
+========
 
 <p align="left">
   <img width="150" src="https://github.com/user-attachments/assets/fbec48ec-1f0c-41f1-9a10-4ce993747f57">
@@ -6,6 +8,9 @@
 
 # AlgoGRIS
 
-This repository contains all the audio algorithms related to spatialization in the GRIS workflow.
+This repository contains all the audio algorithms related
+to spatialization in the GRIS workflow.
 
-AlgoGRIS is currently developed at the [Groupe de Recherche en Immersion Spatiale (GRIS)](https://gris.musique.umontreal.ca/) and the [Société des Arts Technologiques (SAT)](https://sat.qc.ca/en/).
+AlgoGRIS is currently developed at the
+[Groupe de Recherche en Immersion Spatiale (GRIS)](https://gris.musique.umontreal.ca/)
+and the [Société des Arts Technologiques (SAT)](https://sat.qc.ca/en/).

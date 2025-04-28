@@ -19,4 +19,8 @@ repos:
   rev: v0.44.0
   hooks:
     - id: markdownlint-fix
+      # Inline HTML is the only way to resize images on github-flavored markdown:
+      # https://gist.github.com/uupaa/f77d2bcf4dc7a294d109
+      # Line length is then also an issue
+      args: [ --disable=MD013, --disable=MD033 ]
 exclude: ^(submodules/|tl/)
