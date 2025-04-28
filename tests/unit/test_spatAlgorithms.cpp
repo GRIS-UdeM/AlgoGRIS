@@ -37,8 +37,6 @@ static void testUsingProjectData(gris::SpatGrisData & data,
                                  juce::AudioBuffer<float> & stereoBuffer,
                                  SourcePeaks & sourcePeaks)
 {
-    std::cout << "testUsingProjectData" << std::endl;
-
     const auto config{ data.toAudioConfig() };
     const auto numSources{ config->sourcesAudioConfig.size() };
     const auto numSpeakers{ config->speakersAudioConfig.size() };

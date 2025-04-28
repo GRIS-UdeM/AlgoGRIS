@@ -90,15 +90,24 @@ HrtfSpatAlgorithm::HrtfSpatAlgorithm(SpeakerSetup const & speakerSetup,
     static auto const FILES = GET_HRTF_IR_FILES();
 
     // Init inner spat algorithm
-    juce::Array<output_patch_t> hrtfPatches{};
     const auto hrtfSpeakerSetupFile {juce::File::getCurrentWorkingDirectory ().getChildFile ("tests/util/BINAURAL_SPEAKER_SETUP.xml")};
     auto const binauralXml{ juce::XmlDocument{ hrtfSpeakerSetupFile }.getDocumentElement() };
-    jassert(binauralXml);
+    if (! binauralXml)
+    {
+        jassertfalse;
+        return;
+    }
+
     auto const binauralSpeakerSetup{ SpeakerSetup::fromXml(*binauralXml) };
-    jassert(binauralSpeakerSetup);
-    mHrtfData.speakersAudioConfig
-        = binauralSpeakerSetup->toAudioConfig(44100.0); // TODO: find a way to update this number!
+    if (! binauralSpeakerSetup)
+    {
+        jassertfalse;
+        return;
+    }
+
+    mHrtfData.speakersAudioConfig = binauralSpeakerSetup->toAudioConfig(44100.0); // TODO: find a way to update this number!
     auto speakers = binauralSpeakerSetup->ordering;
+
     speakers.sort();
     mHrtfData.speakersBuffer.init(speakers);
 
