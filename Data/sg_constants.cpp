@@ -66,8 +66,6 @@ juce::File const HRTF_FOLDER_80{ RESOURCES_DIR.getChildFile("hrtf_compact/elev" 
 
 juce::Colour const DEFAULT_SOURCE_COLOR{ narrow<juce::uint8>(255), 0, 0 };
 
-namespace
-{
 static constexpr auto SPEAKER_SETUP_TEMPLATES_COMMANDS_OFFSET = 2000;
 static constexpr auto PROJECT_TEMPLATES_COMMANDS_OFFSET = 3000;
 
@@ -78,7 +76,7 @@ static juce::Array<FileTemplate> extract(juce::File const & dir, juce::CommandID
     juce::Array<FileTemplate> result{};
 
     for (auto const & file : dir.findChildFiles(juce::File::TypesOfFileToFind::findFiles, false)) {
-        FileTemplate const setup{ file.getFileNameWithoutExtension(), commandId++, file };
+        FileTemplate setup{ file.getFileNameWithoutExtension(), commandId++, file };
         result.add(setup);
     }
 
@@ -107,7 +105,6 @@ static ProjectTemplates getProjectTemplates()
 
     return ProjectTemplates{ extract(domeDir, commandId), extract(cubeDir, commandId), extract(hybridDir, commandId) };
 }
-} // namespace
 
 SpeakerSetupTemplates const SPEAKER_SETUP_TEMPLATES{ getSpeakerSetupTemplates() };
 ProjectTemplates const PROJECT_TEMPLATES{ getProjectTemplates() };

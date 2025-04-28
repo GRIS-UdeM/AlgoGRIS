@@ -59,7 +59,6 @@ void StereoSpatAlgorithm::updateSpatData(source_index_t const sourceIndex, Sourc
 
     auto & queue{ mData[sourceIndex].gainsUpdater };
     auto * ticket{ queue.acquire() };
-    assert(ticket);
     auto & gains{ ticket->get() };
 
     if (sourceData.position) {

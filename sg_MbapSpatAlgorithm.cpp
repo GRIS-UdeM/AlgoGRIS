@@ -67,7 +67,6 @@ void MbapSpatAlgorithm::updateSpatData(source_index_t const sourceIndex, SourceD
 
     auto & exchanger{ data.dataQueue };
     auto * ticket{ exchanger.acquire() };
-    assert(ticket);
     auto & spatData{ ticket->get() };
 
     if (sourceData.position) {

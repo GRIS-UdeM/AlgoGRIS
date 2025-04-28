@@ -50,13 +50,13 @@ constexpr auto MAX_OSC_INPUT_PORT = 65535;
 
 //==============================================================================
 /** The classical states of a mixing slice (input or output). */
-enum class SliceState : std::uint8_t { normal, muted, solo };
+enum class SliceState { normal, muted, solo };
 [[nodiscard]] juce::String sliceStateToString(SliceState state);
 [[nodiscard]] tl::optional<SliceState> stringToSliceState(juce::String const & string);
 
 //==============================================================================
 /** Attenuation Bypass State. Invalid is here to keep project file compatiblity */
-enum class AttenuationBypassSate : std::uint8_t { invalid, on, off };
+enum class AttenuationBypassSate { invalid, on, off };
 [[nodiscard]] juce::String attenuationBypassStateToString(AttenuationBypassSate state);
 [[nodiscard]] AttenuationBypassSate stringToAttenuationBypassState(juce::String const & string);
 
@@ -297,7 +297,7 @@ struct AudioSettings {
 };
 
 //==============================================================================
-enum class RecordingFormat : std::uint8_t {
+enum class RecordingFormat {
     wav,
     aiff
 #ifdef USE_CAF
@@ -306,7 +306,7 @@ enum class RecordingFormat : std::uint8_t {
 #endif
 };
 constexpr auto DEFAULT_RECORDING_FORMAT{ RecordingFormat::wav };
-enum class RecordingFileType : std::uint8_t { mono, interleaved };
+enum class RecordingFileType { mono, interleaved };
 constexpr auto DEFAULT_RECORDING_FILE_TYPE{ RecordingFileType::mono };
 
 juce::String recordingFormatToString(RecordingFormat format);

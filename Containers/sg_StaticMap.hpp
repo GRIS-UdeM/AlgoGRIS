@@ -376,7 +376,7 @@ juce::Array<KeyType> StaticMap<KeyType, ValueType, Capacity>::getKeys() const no
     JUCE_ASSERT_MESSAGE_THREAD;
     juce::Array<KeyType> result{};
     result.ensureStorageAllocated(narrow<int>(size()));
-    for (auto const & node : *this) {
+    for (auto const node : *this) {
         result.add(node.key);
     }
     return result;

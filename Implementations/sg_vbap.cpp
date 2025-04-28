@@ -47,8 +47,6 @@
 
 namespace gris
 {
-namespace
-{
 //==============================================================================
 struct TripletData {
     std::array<std::size_t, 3> tripletSpeakerNumber{}; /* Triplet speaker numbers */
@@ -687,7 +685,6 @@ static void
         inverseMatrix[8] = (lp1->x * lp2->y - lp1->y * lp2->x) * inverseDet;
     }
 }
-} // namespace
 
 //==============================================================================
 std::unique_ptr<VbapData> vbapInit(std::array<Position, MAX_NUM_SPEAKERS> & speakers,

@@ -60,7 +60,7 @@ tl::optional<SpeakerSetup> readLegacySpeakerSetup(juce::XmlElement const & xml)
                 if (spk->hasTagName("Speaker")) {
                     // layout
                     auto const layoutIndex{ spk->getIntAttribute("LayoutIndex") - 1 };
-                    output_patch_t const outputPatch{ spk->getIntAttribute("OutputPatch") };
+                    output_patch_t outputPatch{ spk->getIntAttribute("OutputPatch") };
                     jassert(LEGAL_OUTPUT_PATCH_RANGE.contains(outputPatch));
                     if (!LEGAL_OUTPUT_PATCH_RANGE.contains(outputPatch)) {
                         return tl::nullopt;

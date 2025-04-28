@@ -85,7 +85,7 @@ HrtfSpatAlgorithm::HrtfSpatAlgorithm(SpeakerSetup const & speakerSetup,
     static auto const FILES = GET_HRTF_IR_FILES();
 
     // Init inner spat algorithm
-    juce::Array<output_patch_t> const hrtfPatches{};
+    juce::Array<output_patch_t> hrtfPatches{};
     auto const binauralXml{ juce::XmlDocument{ BINAURAL_SPEAKER_SETUP_FILE }.getDocumentElement() };
     jassert(binauralXml);
     auto const binauralSpeakerSetup{ SpeakerSetup::fromXml(*binauralXml) };
