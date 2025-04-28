@@ -19,9 +19,19 @@
 
 #pragma once
 
-#include "Data/sg_LogicStrucs.hpp"
 #include "Containers/sg_TaggedAudioBuffer.hpp"
+#include "Data/StrongTypes/sg_SourceIndex.hpp"
+#include "Data/sg_AudioStructs.hpp"
+#include "Data/sg_LogicStrucs.hpp"
+#include "Data/sg_Macros.hpp"
+#include "Data/sg_SpatMode.hpp"
 #include "Data/sg_Triplet.hpp"
+#include "juce_audio_basics/juce_audio_basics.h"
+#include "juce_core/juce_core.h"
+#include "juce_core/system/juce_PlatformDefs.h"
+#include "tl/optional.hpp"
+#include <cstdint>
+#include <memory>
 
 namespace gris
 {
@@ -35,17 +45,20 @@ bool isProbablyAudioThread();
 //==============================================================================
 #define ASSERT_OSC_THREAD jassert(isOscThread())
 
+// clang-format off
 /** Enable the audio thread checks if we aren't running unit tests. */
 #if !defined(ALGOGRIS_UNIT_TESTS)
-#define ASSERT_AUDIO_THREAD jassert(isProbablyAudioThread())
-#define ASSERT_NOT_AUDIO_THREAD jassert(!isProbablyAudioThread())
+    #define ASSERT_AUDIO_THREAD jassert(isProbablyAudioThread())
+    #define ASSERT_NOT_AUDIO_THREAD jassert(!isProbablyAudioThread())
 #else
-// The do { } while(0) is necessary enforce that this macro has to be used as an expression, e.g.
-// to disallow the programmer to write ASSERT_AUDIO_THREAD without a semicolon.
-// Otherwise it could work locally and then fail when someone else biulds with !defined(ALGOGRIS_UNIT_TESTS)
-#define ASSERT_AUDIO_THREAD do { } while(0)
-#define ASSERT_NOT_AUDIO_THREAD do { } while(0)
+    // The do { } while(0) is necessary enforce that this macro has to be used as an expression, e.g.
+    // to disallow the programmer to write ASSERT_AUDIO_THREAD without a semicolon.
+    // Otherwise it could work locally and then fail when someone else biulds with !defined(ALGOGRIS_UNIT_TESTS)
+    #define ASSERT_AUDIO_THREAD do { } while (0)
+    #define ASSERT_NOT_AUDIO_THREAD do { } while (0)
 #endif
+// clang-format on
+
 //==============================================================================
 /** Base class for a spatialization algorithm. */
 class AbstractSpatAlgorithm

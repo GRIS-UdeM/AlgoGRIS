@@ -19,10 +19,11 @@
 
 #pragma once
 
-#include "../Data/sg_Narrow.hpp"
 #include <JuceHeader.h>
 #include <array>
+#include <cstddef>
 #include <type_traits>
+#include "../Data/sg_Narrow.hpp"
 
 namespace gris
 {

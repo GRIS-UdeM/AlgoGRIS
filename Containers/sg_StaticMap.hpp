@@ -19,9 +19,14 @@
 
 #pragma once
 
-#include "../Data/StrongTypes/sg_StrongIndex.hpp"
-
+#include <JuceHeader.h>
+#include <algorithm>
+#include <array>
 #include <bitset>
+#include <cstddef>
+#include <iterator>
+#include "../Data/StrongTypes/sg_StrongIndex.hpp"
+#include "../Data/sg_Macros.hpp"
 
 namespace gris
 {

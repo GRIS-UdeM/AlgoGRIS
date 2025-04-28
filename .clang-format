@@ -65,17 +65,36 @@ ForEachMacros:
   - foreach
   - Q_FOREACH
   - BOOST_FOREACH
-IncludeBlocks:   Preserve
+IncludeBlocks: Merge
 IncludeCategories:
-  - Regex:           '^"(llvm|llvm-c|clang|clang-c)/'
-    Priority:        2
-    SortPriority:    0
-  - Regex:           '^(<|"(gtest|gmock|isl|json)/)'
-    Priority:        3
-    SortPriority:    0
+  - Regex:           '<JuceHeader.h>'
+    Priority:        0
+  - Regex:           '<([[:alnum:]_]+\/)+([[:alnum:]_])+.(h|hpp)>'
+    Priority:        1000
+  - Regex:           '<([[:alnum:]_]+\/?)+.(h|hpp)>'
+    Priority:        2000
+  - Regex:           '<[[:alnum:]_]+>'
+    Priority:        3000
+  - Regex:           '<|"StrongTypes/'
+    Priority:        40
+  - Regex:           '<|"Containers/'
+    Priority:        50
+  - Regex:           '<|"Data/'
+    Priority:        60
+  - Regex:           '<|"Implementations/'
+    Priority:        70
+  - Regex:           '<|"sg_'
+    Priority:        100
+  - Regex:           '<|"\.\./sg_'
+    Priority:        100
+  - Regex:           '<|"\.\./\.\./sg_'
+    Priority:        100
+  - Regex:           '^(<|"juce)'
+    Priority:        200
+  - Regex:           '^(<|"tl/)'
+    Priority:        300
   - Regex:           '.*'
-    Priority:        1
-    SortPriority:    0
+    Priority:        10000
 IncludeIsMainRegex: '(Test)?$'
 IncludeIsMainSourceRegex: ''
 IndentCaseLabels: false
@@ -132,5 +151,3 @@ StatementMacros:
 TabWidth:        4
 UseCRLF:         false
 UseTab:          Never
-...
-

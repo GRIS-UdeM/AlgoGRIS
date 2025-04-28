@@ -15,4 +15,3 @@ int main(int argc, char * argv[])
 
     return result;
 }
-#include <catch2/catch_test_macros.hpp>

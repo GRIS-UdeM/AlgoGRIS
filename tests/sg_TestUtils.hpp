@@ -1,8 +1,16 @@
 #pragma once
+#include "Data/StrongTypes/sg_OutputPatch.hpp"
+#include "Data/StrongTypes/sg_SourceIndex.hpp"
+#include "Data/sg_constants.hpp"
+#include "juce_audio_basics/juce_audio_basics.h"
+#include "juce_core/juce_core.h"
 #include <Containers/sg_TaggedAudioBuffer.hpp>
 #include <Data/sg_AudioStructs.hpp>
-#include <catch2/catch_all.hpp>
+#include <cmath>
+#include <array>
 #include <random>
+#include "catch2/catch_message.hpp"
+#include "catch2/catch_test_macros.hpp"
 
 #define REQUIRE_MESSAGE(cond, msg)                                                                                     \
     do {                                                                                                               \
@@ -81,4 +89,4 @@ inline void checkSourceBufferValidity(SourceAudioBuffer & buffer, AudioConfig & 
     }
 }
 
-} // namespace gris
+} // namespace gris::tests

@@ -19,12 +19,15 @@
 
 #pragma once
 
-#include "../tl/optional.hpp"
+#include <JuceHeader.h>
 #include "StrongTypes/sg_Dbfs.hpp"
 #include "StrongTypes/sg_Hz.hpp"
 #include "StrongTypes/sg_OutputPatch.hpp"
 #include "StrongTypes/sg_SourceIndex.hpp"
-#include <JuceHeader.h>
+#include "juce_core/juce_core.h"
+#include "juce_graphics/juce_graphics.h"
+#include "juce_gui_basics/juce_gui_basics.h"
+#include "../tl/optional.hpp"
 
 namespace gris
 {

@@ -19,8 +19,10 @@
 
 #pragma once
 
-#include "sg_Macros.hpp"
 #include "StrongTypes/sg_Radians.hpp"
+#include "sg_Macros.hpp"
+#include <algorithm>
+#include <type_traits>
 
 namespace gris
 {

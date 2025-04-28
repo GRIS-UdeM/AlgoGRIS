@@ -18,17 +18,22 @@
 */
 
 #include "sg_AbstractSpatAlgorithm.hpp"
-
+#include "Data/sg_LogicStrucs.hpp"
+#include "Data/sg_SpatMode.hpp"
 #include "sg_HrtfSpatAlgorithm.hpp"
 #include "sg_HybridSpatAlgorithm.hpp"
 #include "sg_MbapSpatAlgorithm.hpp"
 #include "sg_StereoSpatAlgorithm.hpp"
 #include "sg_VbapSpatAlgorithm.hpp"
+#include "juce_core/juce_core.h"
+#include "juce_core/system/juce_PlatformDefs.h"
+#include "juce_events/juce_events.h"
+#include "tl/optional.hpp"
+#include <memory>
 
 #ifdef USE_DOPPLER
     #include "sg_DopplerSpatAlgorithm.hpp"
 #endif
-#include <random>
 
 namespace gris
 {
@@ -45,7 +50,7 @@ bool isOscThread()
 //==============================================================================
 bool isProbablyAudioThread()
 {
-    return (! isOscThread() && !juce::MessageManager::getInstance()->isThisTheMessageThread());
+    return (!isOscThread() && !juce::MessageManager::getInstance()->isThisTheMessageThread());
 }
 
 //==============================================================================

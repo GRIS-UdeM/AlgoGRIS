@@ -18,9 +18,22 @@
 */
 
 #include "sg_LegacySpatFileFormat.hpp"
-
+#include "Data/StrongTypes/sg_Dbfs.hpp"
+#include "Data/StrongTypes/sg_Hz.hpp"
+#include "Data/StrongTypes/sg_OutputPatch.hpp"
+#include "Data/StrongTypes/sg_Radians.hpp"
+#include "Data/StrongTypes/sg_SourceIndex.hpp"
+#include "Data/sg_SpatMode.hpp"
+#include "Data/sg_constants.hpp"
 #include "sg_LegacyLbapPosition.hpp"
 #include "sg_LogicStrucs.hpp"
+#include "juce_core/juce_core.h"
+#include "juce_core/system/juce_PlatformDefs.h"
+#include "juce_graphics/juce_graphics.h"
+#include "tl/optional.hpp"
+#include <algorithm>
+#include <memory>
+#include <utility>
 
 namespace gris
 {

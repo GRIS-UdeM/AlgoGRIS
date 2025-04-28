@@ -25,11 +25,25 @@
 */
 
 #include "sg_vbap.hpp"
-
+#include "Data/StrongTypes/sg_OutputPatch.hpp"
+#include "Data/StrongTypes/sg_Radians.hpp"
+#include "Data/sg_AudioStructs.hpp"
+#include "Data/sg_Position.hpp"
+#include "Data/sg_Triplet.hpp"
+#include "Data/sg_constants.hpp"
+#include "juce_core/juce_core.h"
+#include "juce_core/system/juce_PlatformDefs.h"
+#include "juce_dsp/juce_dsp.h"
+#include <cmath>
+#include <algorithm>
+#include <array>
+#include <cstdlib>
+#include <iterator>
+#include <memory>
+#include <numeric>
+#include <vector>
 #include "../Data/sg_LogicStrucs.hpp"
 #include "../Data/sg_Narrow.hpp"
-
-#include <cstdlib>
 
 namespace gris
 {

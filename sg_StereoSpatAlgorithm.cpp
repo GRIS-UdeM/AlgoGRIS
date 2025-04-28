@@ -19,12 +19,28 @@
 
 #include "sg_StereoSpatAlgorithm.hpp"
 #include "Containers/sg_StaticMap.hpp"
-#include "Containers/sg_StrongArray.hpp"
 #include "Containers/sg_TaggedAudioBuffer.hpp"
-#include "sg_DummySpatAlgorithm.hpp"
+#include "Data/StrongTypes/sg_Radians.hpp"
+#include "Data/StrongTypes/sg_SourceIndex.hpp"
+#include "Data/sg_AudioStructs.hpp"
+#include "Data/sg_LogicStrucs.hpp"
+#include "Data/sg_Narrow.hpp"
+#include "Data/sg_SpatMode.hpp"
+#include "Data/sg_Triplet.hpp"
+#include "sg_AbstractSpatAlgorithm.hpp"
 #include "sg_HybridSpatAlgorithm.hpp"
 #include "sg_MbapSpatAlgorithm.hpp"
 #include "sg_VbapSpatAlgorithm.hpp"
+#include "juce_audio_basics/juce_audio_basics.h"
+#include "juce_core/juce_core.h"
+#include "juce_core/system/juce_PlatformDefs.h"
+#include "juce_events/juce_events.h"
+#include <cmath>
+#include <algorithm>
+#include <array>
+#include <cassert>
+#include <cstddef>
+#include <memory>
 
 namespace gris
 {

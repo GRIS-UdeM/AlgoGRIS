@@ -18,8 +18,14 @@
 */
 
 #include "sg_CartesianVector.hpp"
+#include "Data/StrongTypes/sg_Radians.hpp"
 #include "../sg_PolarVector.hpp"
+#include "juce_core/juce_core.h"
+#include "tl/optional.hpp"
+#include <cmath>
 #include <algorithm>
+#include <cstdlib>
+#include <memory>
 
 namespace gris
 {

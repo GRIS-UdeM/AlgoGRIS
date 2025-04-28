@@ -19,10 +19,23 @@
 
 #pragma once
 
-#include "sg_AbstractSpatAlgorithm.hpp"
-#include "Containers/sg_StaticMap.hpp"
 #include "Containers/sg_StrongArray.hpp"
 #include "Containers/sg_TaggedAudioBuffer.hpp"
+#include "Data/StrongTypes/sg_OutputPatch.hpp"
+#include "Data/StrongTypes/sg_SourceIndex.hpp"
+#include "Data/sg_AudioStructs.hpp"
+#include "Data/sg_LogicStrucs.hpp"
+#include "Data/sg_Macros.hpp"
+#include "Data/sg_SpatMode.hpp"
+#include "Data/sg_Triplet.hpp"
+#include "Data/sg_constants.hpp"
+#include "sg_AbstractSpatAlgorithm.hpp"
+#include "juce_audio_basics/juce_audio_basics.h"
+#include "juce_core/juce_core.h"
+#include "juce_dsp/juce_dsp.h"
+#include "tl/optional.hpp"
+#include <array>
+#include <memory>
 
 namespace gris
 {

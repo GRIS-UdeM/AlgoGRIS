@@ -19,7 +19,10 @@
 
 #pragma once
 
+#include <JuceHeader.h>
 #include "sg_LogicStrucs.hpp"
+#include "juce_core/juce_core.h"
+#include "tl/optional.hpp"
 
 namespace gris
 {

@@ -20,7 +20,10 @@
 #pragma once
 
 #include "StrongTypes/sg_CartesianVector.hpp"
+#include "Data/StrongTypes/sg_Radians.hpp"
+#include "Data/sg_Macros.hpp"
 #include "sg_PolarVector.hpp"
+#include <type_traits>
 
 namespace gris
 {

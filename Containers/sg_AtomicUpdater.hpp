@@ -19,8 +19,11 @@
 
 #pragma once
 
+#include <JuceHeader.h>
+#include <array>
+#include <atomic>
+#include <cstddef>
 #include "../Data/sg_Macros.hpp"
-#include "sg_StaticVector.hpp"
 
 namespace gris
 {

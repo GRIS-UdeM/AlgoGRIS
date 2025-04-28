@@ -18,6 +18,16 @@
 */
 
 #include "sg_constants.hpp"
+#include "Data/StrongTypes/sg_Dbfs.hpp"
+#include "Data/StrongTypes/sg_Hz.hpp"
+#include "Data/StrongTypes/sg_StrongFloat.hpp"
+#include "Data/sg_Narrow.hpp"
+#include "juce_core/juce_core.h"
+#include "juce_core/system/juce_PlatformDefs.h"
+#include "juce_graphics/juce_graphics.h"
+#include "juce_gui_basics/juce_gui_basics.h"
+#include "tl/optional.hpp"
+#include <algorithm>
 
 namespace gris
 {

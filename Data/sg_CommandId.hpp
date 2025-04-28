@@ -19,6 +19,8 @@
 
 #pragma once
 
+#include <cstdint>
+
 namespace gris
 {
 enum CommandId {
@@ -67,5 +69,4 @@ enum CommandId {
     // Player control
     playerPlayStopId
 };
-
 }

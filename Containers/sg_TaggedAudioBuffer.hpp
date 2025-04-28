@@ -19,12 +19,14 @@
 
 #pragma once
 
-#include "../Data/StrongTypes/sg_SourceIndex.hpp"
-#include "../Data/sg_constants.hpp"
+#include <JuceHeader.h>
+#include "Data/StrongTypes/sg_OutputPatch.hpp"
 #include "sg_OwnedMap.hpp"
 #include "sg_StaticVector.hpp"
-
-#include <JuceHeader.h>
+#include <cstddef>
+#include <memory>
+#include "../Data/StrongTypes/sg_SourceIndex.hpp"
+#include "../Data/sg_constants.hpp"
 
 namespace gris
 {

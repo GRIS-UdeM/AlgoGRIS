@@ -2,11 +2,11 @@
 
 TEST_CASE("check things are setup", "[core]")
 {
-  GIVEN("A test suite running")
-  {
-    THEN("The tests run")
+    GIVEN("A test suite running")
     {
-      REQUIRE(true);
+        THEN("The tests run")
+        {
+            REQUIRE(true);
+        }
     }
-  }
 }
