@@ -65,7 +65,7 @@ class AbstractSpatAlgorithm
 {
 public:
     /** The types of errors that can arise when instantiating a spatialization algorithm. */
-    enum class Error {
+    enum class Error : std::uint8_t {
         notEnoughDomeSpeakers,
         notEnoughCubeSpeakers,
         flatDomeSpeakersTooFarApart,
