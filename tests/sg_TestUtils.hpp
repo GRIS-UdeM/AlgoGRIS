@@ -69,7 +69,7 @@ inline void checkSpeakerBufferValidity(SpeakerAudioBuffer & buffer, AudioConfig 
 {
     for (auto const & speaker : config.speakersAudioConfig) {
         for (int sample = 0; sample < buffer.getNumSamples(); ++sample) {
-            float value = buffer[speaker.key].getReadPointer(0)[sample];
+            float const value = buffer[speaker.key].getReadPointer(0)[sample];
             REQUIRE_MESSAGE(std::isfinite(value), "Output contains NaN or Inf values!");
             // TODO: the output is not in the expected range. Need to go through the whole process chain to
             // understand; presumably we're missing some kind of spatialization data or initialization.
@@ -82,7 +82,7 @@ inline void checkSourceBufferValidity(SourceAudioBuffer & buffer, AudioConfig & 
 {
     for (auto const & source : config.sourcesAudioConfig) {
         for (int sample = 0; sample < buffer.getNumSamples(); ++sample) {
-            float value = buffer[source.key].getReadPointer(0)[sample];
+            float const value = buffer[source.key].getReadPointer(0)[sample];
             REQUIRE_MESSAGE(std::isfinite(value), "buffer contains NaN or Inf values!");
             REQUIRE_MESSAGE((value >= -1.0f && value <= 1.0f), "Value exceeds valid range!");
         }

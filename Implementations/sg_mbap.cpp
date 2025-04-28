@@ -50,6 +50,8 @@
 
 namespace gris
 {
+namespace
+{
 //==============================================================================
 /* Trilinear interpolation to retrieve the value at position (x, y, z) in a 3D matrix. */
 static float trilinearInterpolation(matrix_t const & matrix, float const x, float const y, float const z)
@@ -228,6 +230,7 @@ static void computeGains(MbapField const & field, SourceData const & source, flo
         });
     }
 }
+} // namespace
 
 //==============================================================================
 size_t MbapField::getNumSpeakers() const
