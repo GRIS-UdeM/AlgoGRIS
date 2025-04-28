@@ -81,7 +81,7 @@ static void testUsingProjectData(gris::SpatGrisData & data,
 
 TEST_CASE("VBAP test", "[spat]")
 {
-   SourceAudioBuffer sourceBuffer;
+    SourceAudioBuffer sourceBuffer;
     SpeakerAudioBuffer speakerBuffer;
     juce::AudioBuffer<float> stereoBuffer;
     SourcePeaks sourcePeaks;
