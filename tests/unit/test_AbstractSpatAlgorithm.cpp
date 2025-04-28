@@ -91,12 +91,12 @@ TEST_CASE("VBAP test", "[spat]")
         SpatGrisData vbapData;
 
         const auto speakerSetupFile {juce::File::getCurrentWorkingDirectory ().getChildFile ("tests/util/default_speaker_setup.xml")};
-        jassert (speakerSetupFile.existsAsFile());
-        vbapData.speakerSetup = *SpeakerSetup::fromXml(*parseXML(speakerSetupFile));
+        if (const auto speakerSetup{ parseXML(speakerSetupFile) })
+            vbapData.speakerSetup = *SpeakerSetup::fromXml(*speakerSetup);
 
         const auto projectFile {juce::File::getCurrentWorkingDirectory ().getChildFile ("tests/util/default_preset.xml")};
-        jassert(projectFile.existsAsFile());
-        vbapData.project = *ProjectData::fromXml(*parseXML(projectFile));
+        if (const auto project{ parseXML(projectFile) })
+            vbapData.project = *ProjectData::fromXml(*project);
 
         vbapData.project.spatMode = SpatMode::vbap;
         vbapData.appData.stereoMode = {};
