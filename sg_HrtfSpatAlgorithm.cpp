@@ -177,8 +177,9 @@ void HrtfSpatAlgorithm::process(AudioConfig const & config,
     jassert(hrtfBuffer.size() == 16);
     hrtfBuffer.silence();
 
-    mInnerAlgorithm
-        ->process(config, sourcesBuffer, hrtfBuffer, stereoBuffer, sourcePeaks, &mHrtfData.speakersAudioConfig);
+    if (mInnerAlgorithm)
+        mInnerAlgorithm->process(config, sourcesBuffer, hrtfBuffer, stereoBuffer,
+                                 sourcePeaks, &mHrtfData.speakersAudioConfig);
 
     auto const numSamples{ sourcesBuffer.getNumSamples() };
 
