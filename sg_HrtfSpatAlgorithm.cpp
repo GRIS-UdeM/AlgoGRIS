@@ -52,17 +52,21 @@ HrtfSpatAlgorithm::HrtfSpatAlgorithm(SpeakerSetup const & speakerSetup,
                                      int const bufferSize)
 {
     JUCE_ASSERT_MESSAGE_THREAD;
-//TODO VB: pass whatever paths are needed into this constructor
-#if 0
+
+    static auto const hrtfDir {juce::File::getCurrentWorkingDirectory ().getChildFile ("tests/util/hrtf_compact")};
+    static auto const HRTF_FOLDER_0{ hrtfDir.getChildFile("elev0") };
+    static auto const HRTF_FOLDER_40{ hrtfDir.getChildFile("elev40") };
+    static auto const HRTF_FOLDER_80{ hrtfDir.getChildFile("elev80") };
+
     static juce::StringArray const NAMES{ "H0e025a.wav",  "H0e020a.wav",  "H0e065a.wav",  "H0e110a.wav",
                                           "H0e155a.wav",  "H0e160a.wav",  "H0e115a.wav",  "H0e070a.wav",
                                           "H40e032a.wav", "H40e026a.wav", "H40e084a.wav", "H40e148a.wav",
                                           "H40e154a.wav", "H40e090a.wav", "H80e090a.wav", "H80e090a.wav" };
+
     static auto const GET_HRTF_IR_FILE = [](int const speaker) {
         jassert(juce::isPositiveAndBelow(speaker, NAMES.size()));
 
         auto const & name{ NAMES[speaker] };
-
         if (speaker < 8) {
             return HRTF_FOLDER_0.getChildFile(name);
         }
@@ -87,7 +91,8 @@ HrtfSpatAlgorithm::HrtfSpatAlgorithm(SpeakerSetup const & speakerSetup,
 
     // Init inner spat algorithm
     juce::Array<output_patch_t> hrtfPatches{};
-    auto const binauralXml{ juce::XmlDocument{ BINAURAL_SPEAKER_SETUP_FILE }.getDocumentElement() };
+    const auto hrtfSpeakerSetupFile {juce::File::getCurrentWorkingDirectory ().getChildFile ("tests/util/BINAURAL_SPEAKER_SETUP.xml")};
+    auto const binauralXml{ juce::XmlDocument{ hrtfSpeakerSetupFile }.getDocumentElement() };
     jassert(binauralXml);
     auto const binauralSpeakerSetup{ SpeakerSetup::fromXml(*binauralXml) };
     jassert(binauralSpeakerSetup);
@@ -131,7 +136,6 @@ HrtfSpatAlgorithm::HrtfSpatAlgorithm(SpeakerSetup const & speakerSetup,
     }
 
     fixDirectOutsIntoPlace(sources, speakerSetup, projectSpatMode);
-#endif
 }
 
 //==============================================================================
