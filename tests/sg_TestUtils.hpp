@@ -84,7 +84,7 @@ inline void checkSpeakerBufferValidity(const SpeakerAudioBuffer & buffer)
             const auto sampleValue = speakerBuffer[sampleNumber];
 
             REQUIRE_MESSAGE(std::isfinite(sampleValue), "Output contains NaN or Inf values!");
-            //REQUIRE_MESSAGE(sampleValue >= -1.f && sampleValue <= 1.f, "Output " + juce::String(sampleValue) + " exceeds valid range!");
+            REQUIRE_MESSAGE((sampleValue >= -1.f && sampleValue <= 1.f), "Output " + juce::String(sampleValue) + " exceeds valid range!");
         }
     }
 }
@@ -98,7 +98,7 @@ inline void checkSourceBufferValidity(const SourceAudioBuffer & buffer)
             const auto sampleValue = sourceBuffer[sampleNumber];
 
             REQUIRE_MESSAGE(std::isfinite(sampleValue), "Output contains NaN or Inf values!");
-            // REQUIRE_MESSAGE(sampleValue >= -1.0f && sampleValue <= 1.0f, "Output exceeds valid range!");
+            REQUIRE_MESSAGE((sampleValue >= -1.0f && sampleValue <= 1.0f), "Output exceeds valid range!");
         }
     }
 }
