@@ -114,8 +114,6 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
 {
     ASSERT_AUDIO_THREAD;
 
-    // std::cout << "VbapSpatAlgorithm::process" << std::endl;
-
     auto const & gainInterpolation{ config.spatGainsInterpolation };
     // jassert (gainInterpolation == 0.f);
     auto const gainFactor{ std::pow(gainInterpolation, 0.1f) * 0.0099f + 0.99f };
@@ -145,8 +143,6 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
                 // speaker silent
                 continue;
             }
-
-            // std::cout << "VbapSpatAlgorithm::process Speaker: " << speaker.key.get() << std::endl;
 
             auto & currentGain{ lastGains[speaker.key] };
             auto const & targetGain{ gains[speaker.key] };
