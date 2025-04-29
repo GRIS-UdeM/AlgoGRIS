@@ -115,7 +115,6 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
     ASSERT_AUDIO_THREAD;
 
     auto const & gainInterpolation{ config.spatGainsInterpolation };
-    //jassert (gainInterpolation == 0.f);
     auto const gainFactor{ std::pow(gainInterpolation, 0.1f) * 0.0099f + 0.99f };
 
     auto const & speakersAudioConfig{ altSpeakerConfig ? *altSpeakerConfig : config.speakersAudioConfig };
@@ -180,8 +179,7 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
                 }
 
                 // not targeting silence
-                for (int sampleIndex{}; sampleIndex < numSamples; ++sampleIndex)
-                {
+                for (int sampleIndex{}; sampleIndex < numSamples; ++sampleIndex) {
                     currentGain = targetGain + (currentGain - targetGain) * gainFactor;
                     outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
                     jassert(outputSamples[sampleIndex] >= -1.f && outputSamples[sampleIndex] <= 1.f);
