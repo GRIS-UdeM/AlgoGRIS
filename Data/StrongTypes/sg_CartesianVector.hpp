@@ -226,7 +226,9 @@ template<typename T>
 static constexpr T sqrtNewtonRaphson(T const x, T const current, T const previous)
 {
     static_assert(std::is_floating_point_v<T>, "only works with floating point values");
-    return juce::approximatelyEqual (current, previous) ? current : sqrtNewtonRaphson(x, static_cast<T>(0.5) * (current + x / current), current);
+    return juce::approximatelyEqual(current, previous)
+               ? current
+               : sqrtNewtonRaphson(x, static_cast<T>(0.5) * (current + x / current), current);
 }
 
 //==============================================================================
