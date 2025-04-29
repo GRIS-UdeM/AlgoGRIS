@@ -1,13 +1,11 @@
 #pragma once
-<<<<<<< HEAD
+
 #include "Data/StrongTypes/sg_OutputPatch.hpp"
 #include "Data/StrongTypes/sg_SourceIndex.hpp"
 #include "Data/sg_constants.hpp"
 #include "juce_audio_basics/juce_audio_basics.h"
 #include "juce_core/juce_core.h"
-=======
 #include "sg_PinkNoiseGenerator.hpp"
->>>>>>> 5ca1402 (put in my own tests, only the VBAP for now, need to get the others from sg_AbstractSpatAlgorithm.cpp)
 #include <Containers/sg_TaggedAudioBuffer.hpp>
 #include <Data/sg_AudioStructs.hpp>
 #include <cmath>
