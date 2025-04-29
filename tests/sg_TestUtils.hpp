@@ -33,31 +33,20 @@ inline void initBuffers(const int bufferSize,
                         SpeakerAudioBuffer& speakerBuffer,
                         juce::AudioBuffer<float>& stereoBuffer)
 {
-    // if (sourceBuffer)
-    {
-        juce::Array<source_index_t> sourcesIndices;
-        for (int i = 1; i <= numSources; ++i)
-            sourcesIndices.add(source_index_t{ i });
+    juce::Array<source_index_t> sourcesIndices;
+    for (int i = 1; i <= numSources; ++i)
+        sourcesIndices.add(source_index_t{ i });
+    sourceBuffer.init(sourcesIndices);
+    sourceBuffer.setNumSamples(bufferSize);
 
-        sourceBuffer.init(sourcesIndices);
-        sourceBuffer.setNumSamples(bufferSize);
-    }
+    juce::Array<output_patch_t> speakerIndices;
+    for (int i = 1; i <= numSpeakers; ++i)
+        speakerIndices.add(output_patch_t{ i });
+    speakerBuffer.init(speakerIndices);
+    speakerBuffer.setNumSamples(bufferSize);
 
-    // if (speakerBuffer)
-     {
-        juce::Array<output_patch_t> speakerIndices;
-        for (int i = 1; i <= numSpeakers; ++i)
-            speakerIndices.add(output_patch_t{ i });
-
-        speakerBuffer.init(speakerIndices);
-        speakerBuffer.setNumSamples(bufferSize);
-    }
-
-    // if (stereoBuffer)
-    {
-        stereoBuffer.setSize(2, bufferSize);
-        stereoBuffer.clear();
-    }
+    stereoBuffer.setSize(2, bufferSize);
+    stereoBuffer.clear();
 }
 
 /** fill Source Buffers with pink noise, and calculate the peaks */

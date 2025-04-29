@@ -114,8 +114,6 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
 {
     ASSERT_AUDIO_THREAD;
 
-    // std::cout << "VbapSpatAlgorithm::process" << std::endl;
-
     auto const & gainInterpolation{ config.spatGainsInterpolation };
     //jassert (gainInterpolation == 0.f);
     auto const gainFactor{ std::pow(gainInterpolation, 0.1f) * 0.0099f + 0.99f };
@@ -146,8 +144,6 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
                 continue;
             }
 
-            // std::cout << "VbapSpatAlgorithm::process Speaker: " << speaker.key.get() << std::endl;
-
             auto & currentGain{ lastGains[speaker.key] };
             auto const & targetGain{ gains[speaker.key] };
             auto * outputSamples{ speakersBuffer[speaker.key].getWritePointer(0) };
@@ -169,14 +165,6 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
                 for (int sampleIndex{}; sampleIndex < numSamples; ++sampleIndex) {
                     currentGain += gainSlope;
                     outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
-
-                    DBG ("linear interpolation over buffer size; source " + juce::String (source.key.get ())
-                        + "\tspeaker " + juce::String (speaker.key.get ())
-                        + "\tinputSamples[" + juce::String (sampleIndex) + "]: " + juce::String (inputSamples[sampleIndex], 7)
-                        + "\tcurrentGain " + juce::String (currentGain, 7)
-                        + "\tgainSlope " + juce::String (gainSlope, 7)
-                        + "\toutputSamples[" + juce::String (sampleIndex) + "]: " + juce::String (outputSamples[sampleIndex], 7)
-                    );
                     jassert(outputSamples[sampleIndex] >= -1.f && outputSamples[sampleIndex] <= 1.f);
                 }
             } else {
@@ -196,15 +184,6 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
                 {
                     currentGain = targetGain + (currentGain - targetGain) * gainFactor;
                     outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
-
-                    // DBG("source not targeting silence" + juce::String(source.key.get())
-                    //    + "\tspeaker " + juce::String(speaker.key.get())
-                    //    + "\tinputSamples[" + juce::String (sampleIndex) + "]: " + juce::String (inputSamples[sampleIndex], 7)
-                    //    + "\tcurrentGain " + juce::String(currentGain, 7)
-                    //    + "\ttargetGain " + juce::String(targetGain, 7)
-                    //    + "\tgainFactor " + juce::String (gainFactor, 7)
-                    //    + "\toutputSamples["+ juce::String(sampleIndex)+ "]: " + juce::String(outputSamples[sampleIndex], 7)
-                    // );
                     jassert(outputSamples[sampleIndex] >= -1.f && outputSamples[sampleIndex] <= 1.f);
                 }
             }
