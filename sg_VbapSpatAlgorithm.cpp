@@ -115,6 +115,7 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
     ASSERT_AUDIO_THREAD;
 
     auto const & gainInterpolation{ config.spatGainsInterpolation };
+    //jassert (gainInterpolation == 0.f);
     auto const gainFactor{ std::pow(gainInterpolation, 0.1f) * 0.0099f + 0.99f };
 
     auto const & speakersAudioConfig{ altSpeakerConfig ? *altSpeakerConfig : config.speakersAudioConfig };
@@ -149,7 +150,7 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
             auto const gainDiff{ targetGain - currentGain };
             auto const gainSlope{ gainDiff / narrow<float>(numSamples) };
 
-            if (gainSlope == 0.0f || std::abs(gainDiff) < SMALL_GAIN) {
+            if (juce::approximatelyEqual(gainSlope, 0.f) || std::abs(gainDiff) < SMALL_GAIN) {
                 // no interpolation
                 currentGain = targetGain;
                 if (currentGain >= SMALL_GAIN) {
@@ -159,11 +160,20 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
             }
 
             // interpolation necessary
-            if (gainInterpolation == 0.0f) {
+            if (juce::approximatelyEqual (gainInterpolation, 0.f)) {
                 // linear interpolation over buffer size
                 for (int sampleIndex{}; sampleIndex < numSamples; ++sampleIndex) {
                     currentGain += gainSlope;
                     outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
+
+                    //DBG ("source " + juce::String (source.key.get ())
+                    //     + "\tspeaker " + juce::String (speaker.key.get ())
+                    //     + "\tinputSamples[" + juce::String (sampleIndex) + "]: " + juce::String (inputSamples[sampleIndex], 7)
+                    //     + "\tcurrentGain " + juce::String (currentGain, 7)
+                    //     + "\tgainSlope " + juce::String (gainSlope, 7)
+                    //     + "\toutputSamples[" + juce::String (sampleIndex) + "]: " + juce::String (outputSamples[sampleIndex], 7)
+                    //);
+                    jassert(outputSamples[sampleIndex] >= -1.f && outputSamples[sampleIndex] <= 1.f);
                 }
             } else {
                 // log interpolation with 1st order filter
@@ -172,14 +182,26 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
                     for (int sampleIndex{}; sampleIndex < numSamples && currentGain >= SMALL_GAIN; ++sampleIndex) {
                         currentGain = targetGain + (currentGain - targetGain) * gainFactor;
                         outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
+                        jassert(outputSamples[sampleIndex] >= -1.f && outputSamples[sampleIndex] <= 1.f);
                     }
                     continue;
                 }
 
                 // not targeting silence
-                for (int sampleIndex{}; sampleIndex < numSamples; ++sampleIndex) {
+                for (int sampleIndex{}; sampleIndex < numSamples; ++sampleIndex)
+                {
                     currentGain = targetGain + (currentGain - targetGain) * gainFactor;
                     outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
+
+                    //DBG("source " + juce::String(source.key.get())
+                    //    + "\tspeaker " + juce::String(speaker.key.get())
+                    //    + "\tinputSamples[" + juce::String (sampleIndex) + "]: " + juce::String (inputSamples[sampleIndex], 7)
+                    //    + "\tcurrentGain " + juce::String(currentGain, 7)
+                    //    + "\ttargetGain " + juce::String(targetGain, 7)
+                    //    + "\tgainFactor " + juce::String (gainFactor, 7)
+                    //    + "\toutputSamples["+ juce::String(sampleIndex)+ "]: " + juce::String(outputSamples[sampleIndex], 7)
+                    //);
+                    jassert(outputSamples[sampleIndex] >= -1.f && outputSamples[sampleIndex] <= 1.f);
                 }
             }
         }

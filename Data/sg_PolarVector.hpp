@@ -60,6 +60,12 @@ struct PolarVector {
     [[nodiscard]] constexpr PolarVector elevatedClipped(radians_t elevationDelta) const noexcept;
     [[nodiscard]] constexpr PolarVector pushed(float radiusDelta) const noexcept;
     [[nodiscard]] constexpr PolarVector pushedWithPositiveRadius(float radiusDelta) const noexcept;
+
+    juce::String toString() const noexcept
+    {
+        return juce::String{ "PolarVector(azimuth: " } + juce::String (azimuth.get()) + ", elevation: " + juce::String (elevation.get())
+               + ", length: " + juce::String (length) + ")";
+    }
 };
 
 //==============================================================================
@@ -75,7 +81,7 @@ constexpr PolarVector::PolarVector(radians_t const newAzimuth,
 //==============================================================================
 constexpr bool PolarVector::operator==(PolarVector const & other) const noexcept
 {
-    return azimuth == other.azimuth && elevation == other.elevation && length == other.length;
+    return azimuth == other.azimuth && elevation == other.elevation && juce::approximatelyEqual (length, other.length);
 }
 
 //==============================================================================

@@ -57,7 +57,10 @@ using triplet_list_t = std::vector<TripletData>;
 
 //==============================================================================
 /* Selects a vector base of a virtual source.
- * Calculates gain factors in that base. */
+ * Calculates gain factors in that base.
+ *
+ * This is called when a source is moved.
+ */
 static void computeGains(juce::Array<SpeakerSet> & sets,
                          SpeakersSpatGains & gains,
                          int const numSpeakers,
@@ -120,6 +123,7 @@ static void computeGains(juce::Array<SpeakerSet> & sets,
 #endif
     rawGains[sets[j].speakerNos[0].get() - 1] = sets[j].setGains[0];
     rawGains[sets[j].speakerNos[1].get() - 1] = sets[j].setGains[1];
+
     if (dim == 3) {
         rawGains[sets[j].speakerNos[2].get() - 1] = sets[j].setGains[2];
     }

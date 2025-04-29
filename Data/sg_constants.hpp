@@ -104,6 +104,8 @@ extern juce::File const DEFAULT_PROJECT_DIRECTORY;
 extern juce::File const DEFAULT_SPEAKER_SETUP_FILE;
 extern juce::File const BINAURAL_SPEAKER_SETUP_FILE;
 extern juce::File const STEREO_SPEAKER_SETUP_FILE;
+extern juce::File const DEFAULT_CUBE_PROJECT;
+extern juce::File const DEFAULT_CUBE_SPEAKER_SETUP;
 extern juce::File const MANUAL_FILE_EN;
 extern juce::File const MANUAL_FILE_FR;
 extern juce::File const ICON_SMALL_FILE;
