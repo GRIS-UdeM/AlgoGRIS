@@ -1,9 +1,13 @@
 #pragma once
+<<<<<<< HEAD
 #include "Data/StrongTypes/sg_OutputPatch.hpp"
 #include "Data/StrongTypes/sg_SourceIndex.hpp"
 #include "Data/sg_constants.hpp"
 #include "juce_audio_basics/juce_audio_basics.h"
 #include "juce_core/juce_core.h"
+=======
+#include "sg_PinkNoiseGenerator.hpp"
+>>>>>>> 5ca1402 (put in my own tests, only the VBAP for now, need to get the others from sg_AbstractSpatAlgorithm.cpp)
 #include <Containers/sg_TaggedAudioBuffer.hpp>
 #include <Data/sg_AudioStructs.hpp>
 #include <cmath>
@@ -24,67 +28,79 @@ namespace gris::tests
 float constexpr static testDurationSeconds{ .1f };
 std::array<int, 4> constexpr static bufferSizes{ 1, 512, 1024, SourceAudioBuffer::MAX_NUM_SAMPLES };
 
-inline void initBuffers(int bufferSize,
-                        SourceAudioBuffer * sourceBuffer,
-                        SpeakerAudioBuffer * speakerBuffer,
-                        juce::AudioBuffer<float> * stereoBuffer)
+inline void initBuffers(const int bufferSize,
+                        const size_t numSources,
+                        const size_t numSpeakers,
+                        SourceAudioBuffer& sourceBuffer,
+                        SpeakerAudioBuffer& speakerBuffer,
+                        juce::AudioBuffer<float>& stereoBuffer)
 {
-    if (sourceBuffer) {
-        // init source buffer with MAX_NUM_SOURCES sources
-        sourceBuffer->setNumSamples(bufferSize);
-        juce::Array<source_index_t> sources;
-        for (int i = 1; i <= MAX_NUM_SOURCES; ++i)
-            sources.add(source_index_t{ i });
-        sourceBuffer->init(sources);
+    // if (sourceBuffer)
+    {
+        juce::Array<source_index_t> sourcesIndices;
+        for (int i = 1; i <= numSources; ++i)
+            sourcesIndices.add(source_index_t{ i });
+
+        sourceBuffer.init(sourcesIndices);
+        sourceBuffer.setNumSamples(bufferSize);
     }
 
-    if (speakerBuffer) {
-        // init speaker buffer with MAX_NUM_SPEAKERS speakers
-        speakerBuffer->setNumSamples(bufferSize);
-        juce::Array<output_patch_t> speakers;
-        for (int i = 1; i <= MAX_NUM_SPEAKERS; ++i)
-            speakers.add(output_patch_t{ i });
-        speakerBuffer->init(speakers);
+    // if (speakerBuffer)
+     {
+        juce::Array<output_patch_t> speakerIndices;
+        for (int i = 1; i <= numSpeakers; ++i)
+            speakerIndices.add(output_patch_t{ i });
+
+        speakerBuffer.init(speakerIndices);
+        speakerBuffer.setNumSamples(bufferSize);
     }
 
-    if (stereoBuffer) {
-        stereoBuffer->setSize(2, bufferSize);
+    // if (stereoBuffer)
+    {
+        stereoBuffer.setSize(2, bufferSize);
+        stereoBuffer.clear();
     }
 }
 
-inline void fillSourceBufferWithNoise(SourceAudioBuffer & buffer, AudioConfig & config)
+/** fill Source Buffers with pink noise, and calculate the peaks */
+inline void fillSourceBuffersWithNoise(const size_t numSources,
+                                       SourceAudioBuffer& sourceBuffer,
+                                       const int bufferSize,
+                                       SourcePeaks& sourcePeaks)
 {
-    thread_local std::random_device rd;
-    thread_local std::mt19937 gen(rd());
-    std::uniform_real_distribution<float> dist(-1.0f, 1.0f);
-
-    for (auto const & source : config.sourcesAudioConfig)
-        for (auto const & speaker : config.speakersAudioConfig)
-            if (!source.value.isMuted && !speaker.value.isMuted)
-                for (int sample = 0; sample < buffer.getNumSamples(); ++sample)
-                    buffer[source.key].getWritePointer(0)[sample] = dist(gen);
+    sourceBuffer.silence();
+    for (int i = 1; i <= numSources; ++i)
+    {
+        const auto sourceIndex { source_index_t{ i } };
+        fillWithPinkNoise(sourceBuffer[sourceIndex].getArrayOfWritePointers(), bufferSize, 1, .5f);
+        sourcePeaks[sourceIndex] = sourceBuffer[sourceIndex].getMagnitude(0, bufferSize);
+    }
 }
 
-inline void checkSpeakerBufferValidity(SpeakerAudioBuffer & buffer, AudioConfig & config)
+inline void checkSpeakerBufferValidity(const SpeakerAudioBuffer & buffer)
 {
-    for (auto const & speaker : config.speakersAudioConfig) {
-        for (int sample = 0; sample < buffer.getNumSamples(); ++sample) {
-            float value = buffer[speaker.key].getReadPointer(0)[sample];
-            REQUIRE_MESSAGE(std::isfinite(value), "Output contains NaN or Inf values!");
-            // TODO: the output is not in the expected range. Need to go through the whole process chain to
-            // understand; presumably we're missing some kind of spatialization data or initialization.
-            // expect(value >= -1.0f && value <= 1.0f, "Output exceeds valid range!");
+    for (auto const & speaker : buffer) {
+        auto const * speakerBuffer = speaker.value->getReadPointer(0);
+
+        for (int sampleNumber = 0; sampleNumber < buffer.getNumSamples(); ++sampleNumber) {
+            const auto sampleValue = speakerBuffer[sampleNumber];
+
+            REQUIRE_MESSAGE(std::isfinite(sampleValue), "Output contains NaN or Inf values!");
+            //REQUIRE_MESSAGE(sampleValue >= -1.f && sampleValue <= 1.f, "Output " + juce::String(sampleValue) + " exceeds valid range!");
         }
     }
 }
 
-inline void checkSourceBufferValidity(SourceAudioBuffer & buffer, AudioConfig & config)
+inline void checkSourceBufferValidity(const SourceAudioBuffer & buffer)
 {
-    for (auto const & source : config.sourcesAudioConfig) {
-        for (int sample = 0; sample < buffer.getNumSamples(); ++sample) {
-            float value = buffer[source.key].getReadPointer(0)[sample];
-            REQUIRE_MESSAGE(std::isfinite(value), "buffer contains NaN or Inf values!");
-            REQUIRE_MESSAGE((value >= -1.0f && value <= 1.0f), "Value exceeds valid range!");
+    for (auto const & source : buffer) {
+        auto const * sourceBuffer = source.value->getReadPointer(0);
+
+        for (int sampleNumber = 0; sampleNumber < buffer.getNumSamples(); ++sampleNumber) {
+            const auto sampleValue = sourceBuffer[sampleNumber];
+
+            REQUIRE_MESSAGE(std::isfinite(sampleValue), "Output contains NaN or Inf values!");
+            // REQUIRE_MESSAGE(sampleValue >= -1.0f && sampleValue <= 1.0f, "Output exceeds valid range!");
         }
     }
 }

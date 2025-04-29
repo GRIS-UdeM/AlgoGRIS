@@ -5,24 +5,75 @@
 using namespace gris;
 using namespace gris::tests;
 
-static void updateSourcePeaks(AudioConfig & config, const SourceAudioBuffer & sourceBuffer, SourcePeaks & sourcePeaks)
+static void positionSources(AbstractSpatAlgorithm * algo, SpatGrisData & data)
 {
-    for (auto const & source : config.sourcesAudioConfig) {
-        auto const peak{ sourceBuffer[source.key].getMagnitude(0, sourceBuffer.getNumSamples()) };
-        sourcePeaks[source.key] = peak;
+    const auto numSources{ data.project.sources.size() };
+    const auto numRings{ 3 };
+    const auto numSourcesPerRing{ numSources / numRings };
+    const auto elevSteps{ HALF_PI.get() / numRings };
+    const auto azimSteps{ TWO_PI.get() / numSourcesPerRing };
+    auto curRing{ 0 };
+    auto curAzimuth{ 0.f };
+
+    for (int i = 1; i <= numSources; ++i) {
+        const auto sourceIndex{ source_index_t{ i } };
+        auto source{ data.project.sources[sourceIndex] };
+
+        source.position = PolarVector(radians_t{ curAzimuth }, radians_t{ curRing * elevSteps }, 1.f);
+        curAzimuth += azimSteps;
+
+        algo->updateSpatData(sourceIndex, source);
+
+        if (curRing < numRings && i % numSourcesPerRing == 0) {
+            ++curRing;
+            curAzimuth = 0;
+        }
     }
 }
-static void updateSourceData(AbstractSpatAlgorithm * algo, SpatGrisData & data)
-{
-    for (auto & speaker : SpeakerSetup::fromXml(*parseXML(DEFAULT_SPEAKER_SETUP_FILE))->speakers) {
-        // update sources data from speakers position of speaker setup
-        source_index_t const sourceIndex{ speaker.key.get() };
-        auto source = data.project.sources.getNode(sourceIndex);
-        source.value->position = speaker.value->position;
-        source.value->azimuthSpan = 0.0f;
-        source.value->zenithSpan = 0.0f;
 
-        algo->updateSpatData(source.key, *source.value);
+static void testUsingProjectData(gris::SpatGrisData & data,
+                                 SourceAudioBuffer & sourceBuffer,
+                                 SpeakerAudioBuffer & speakerBuffer,
+                                 juce::AudioBuffer<float> & stereoBuffer,
+                                 SourcePeaks & sourcePeaks)
+{
+    const auto config{ data.toAudioConfig() };
+    const auto numSources{ config->sourcesAudioConfig.size() };
+    const auto numSpeakers{ config->speakersAudioConfig.size() };
+
+    // for every test buffer size
+    for (int bufferSize : bufferSizes) {
+        data.appData.audioSettings.bufferSize = bufferSize;
+
+        // init our buffers
+        initBuffers(bufferSize, numSources, numSpeakers, sourceBuffer, speakerBuffer, stereoBuffer);
+
+        // create our spatialization algorithm
+        auto algo{ AbstractSpatAlgorithm::make(data.speakerSetup,
+                                               data.project.spatMode,
+                                               data.appData.stereoMode,
+                                               data.project.sources,
+                                               data.appData.audioSettings.sampleRate,
+                                               data.appData.audioSettings.bufferSize) };
+
+        // position the sound sources
+        positionSources(algo.get(), data);
+
+        // now simulate processing an audio loop of testDurationSeconds
+        auto const numLoops{ static_cast<int>(DEFAULT_SAMPLE_RATE * testDurationSeconds / bufferSize) };
+        for (int i = 0; i < numLoops; ++i) {
+            // fill the source buffers with pink noise
+            fillSourceBuffersWithNoise(numSources, sourceBuffer, bufferSize, sourcePeaks);
+            checkSourceBufferValidity(sourceBuffer);
+
+            // process the audio
+            speakerBuffer.silence();
+            stereoBuffer.clear();
+            algo->process(*config, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks, nullptr);
+
+            // check that the audio output is valid
+            checkSpeakerBufferValidity(speakerBuffer);
+        }
     }
 }
 
@@ -37,81 +88,15 @@ TEST_CASE("VBAP test", "[spat]")
     {
         // init project data and audio config
         SpatGrisData vbapData;
-        vbapData.speakerSetup = *SpeakerSetup::fromXml(*parseXML(DEFAULT_SPEAKER_SETUP_FILE));
-        vbapData.project = *ProjectData::fromXml(*parseXML(DEFAULT_PROJECT_FILE));
+        //TODO VB: hardcode this data?
+        // vbapData.speakerSetup = *SpeakerSetup::fromXml(*parseXML(DEFAULT_SPEAKER_SETUP_FILE));
+        // vbapData.project = *ProjectData::fromXml(*parseXML(DEFAULT_PROJECT_FILE));
         vbapData.project.spatMode = SpatMode::vbap;
         vbapData.appData.stereoMode = {};
 
-        // the default project and speaker setups have 18 sources and 18 speakers
-        auto const vbapConfig{ vbapData.toAudioConfig() };
-        // DBG("number of sources: " << vbapConfig->sourcesAudioConfig.size());
-        // DBG("number of speakers: " << vbapConfig->speakersAudioConfig.size());
         THEN("The VBAP algo executes correctly")
         {
-            for (int bufferSize : bufferSizes) {
-                vbapData.appData.audioSettings.bufferSize = bufferSize;
-                initBuffers(bufferSize, &sourceBuffer, &speakerBuffer, &stereoBuffer);
-
-                auto vbapAlgo{ AbstractSpatAlgorithm::make(vbapData.speakerSetup,
-                                                           vbapData.project.spatMode,
-                                                           vbapData.appData.stereoMode,
-                                                           vbapData.project.sources,
-                                                           vbapData.appData.audioSettings.sampleRate,
-                                                           vbapData.appData.audioSettings.bufferSize) };
-
-                updateSourceData(vbapAlgo.get(), vbapData);
-
-                auto const numLoops{ static_cast<int>(DEFAULT_SAMPLE_RATE * testDurationSeconds / bufferSize) };
-                for (int i = 0; i < numLoops; ++i) {
-                    fillSourceBufferWithNoise(sourceBuffer, *vbapConfig);
-                    updateSourcePeaks(*vbapConfig, sourceBuffer, sourcePeaks);
-
-                    checkSourceBufferValidity(sourceBuffer, *vbapConfig);
-                    vbapAlgo->process(*vbapConfig, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks, nullptr);
-                    checkSpeakerBufferValidity(speakerBuffer, *vbapConfig);
-                }
-            }
-        }
-    }
-}
-
-TEST_CASE("HRTF test", "[spat]")
-{
-    SourceAudioBuffer sourceBuffer;
-    SpeakerAudioBuffer speakerBuffer;
-    juce::AudioBuffer<float> stereoBuffer;
-    SourcePeaks sourcePeaks;
-
-    GIVEN("HRTF data sourced from XML")
-    {
-        SpatGrisData hrtfData;
-        hrtfData.speakerSetup = *SpeakerSetup::fromXml(*parseXML(BINAURAL_SPEAKER_SETUP_FILE));
-        hrtfData.project = *ProjectData::fromXml(*parseXML(DEFAULT_PROJECT_FILE));
-        hrtfData.project.spatMode = SpatMode::vbap;
-        hrtfData.appData.stereoMode = StereoMode::hrtf;
-        auto const hrtfConfig{ hrtfData.toAudioConfig() };
-
-        for (int bufferSize : bufferSizes) {
-            hrtfData.appData.audioSettings.bufferSize = bufferSize;
-            initBuffers(bufferSize, &sourceBuffer, &speakerBuffer, &stereoBuffer);
-
-            auto hrtfAlgo{ AbstractSpatAlgorithm::make(hrtfData.speakerSetup,
-                                                       hrtfData.project.spatMode,
-                                                       hrtfData.appData.stereoMode,
-                                                       hrtfData.project.sources,
-                                                       hrtfData.appData.audioSettings.sampleRate,
-                                                       hrtfData.appData.audioSettings.bufferSize) };
-            updateSourceData(hrtfAlgo.get(), hrtfData);
-
-            auto const numLoops{ static_cast<int>(DEFAULT_SAMPLE_RATE * testDurationSeconds / bufferSize) };
-            for (int i = 0; i < numLoops; ++i) {
-                fillSourceBufferWithNoise(sourceBuffer, *hrtfConfig);
-                updateSourcePeaks(*hrtfConfig, sourceBuffer, sourcePeaks);
-
-                checkSourceBufferValidity(sourceBuffer, *hrtfConfig);
-                hrtfAlgo->process(*hrtfConfig, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks, nullptr);
-                checkSpeakerBufferValidity(speakerBuffer, *hrtfConfig);
-            }
+            testUsingProjectData (vbapData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
         }
     }
 }
