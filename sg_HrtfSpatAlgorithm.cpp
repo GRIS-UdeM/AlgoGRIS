@@ -53,7 +53,7 @@ HrtfSpatAlgorithm::HrtfSpatAlgorithm(SpeakerSetup const & speakerSetup,
 {
     JUCE_ASSERT_MESSAGE_THREAD;
 
-    static auto const hrtfDir {juce::File::getCurrentWorkingDirectory ().getChildFile ("hrtf_compact")};
+    static auto const hrtfDir{ juce::File::getCurrentWorkingDirectory().getChildFile("hrtf_compact") };
     static auto const HRTF_FOLDER_0{ hrtfDir.getChildFile("elev0") };
     static auto const HRTF_FOLDER_40{ hrtfDir.getChildFile("elev40") };
     static auto const HRTF_FOLDER_80{ hrtfDir.getChildFile("elev80") };
@@ -90,22 +90,22 @@ HrtfSpatAlgorithm::HrtfSpatAlgorithm(SpeakerSetup const & speakerSetup,
     static auto const FILES = GET_HRTF_IR_FILES();
 
     // Init inner spat algorithm
-    const auto hrtfSpeakerSetupFile {juce::File::getCurrentWorkingDirectory ().getChildFile ("tests/util/BINAURAL_SPEAKER_SETUP.xml")};
+    const auto hrtfSpeakerSetupFile{ juce::File::getCurrentWorkingDirectory().getChildFile(
+        "tests/util/BINAURAL_SPEAKER_SETUP.xml") };
     auto const binauralXml{ juce::XmlDocument{ hrtfSpeakerSetupFile }.getDocumentElement() };
-    if (! binauralXml)
-    {
+    if (!binauralXml) {
         jassertfalse;
         return;
     }
 
     auto const binauralSpeakerSetup{ SpeakerSetup::fromXml(*binauralXml) };
-    if (! binauralSpeakerSetup)
-    {
+    if (!binauralSpeakerSetup) {
         jassertfalse;
         return;
     }
 
-    mHrtfData.speakersAudioConfig = binauralSpeakerSetup->toAudioConfig(44100.0); // TODO: find a way to update this number!
+    mHrtfData.speakersAudioConfig
+        = binauralSpeakerSetup->toAudioConfig(44100.0); // TODO: find a way to update this number!
     auto speakers = binauralSpeakerSetup->ordering;
 
     speakers.sort();
@@ -178,8 +178,8 @@ void HrtfSpatAlgorithm::process(AudioConfig const & config,
     hrtfBuffer.silence();
 
     if (mInnerAlgorithm)
-        mInnerAlgorithm->process(config, sourcesBuffer, hrtfBuffer, stereoBuffer,
-                                 sourcePeaks, &mHrtfData.speakersAudioConfig);
+        mInnerAlgorithm
+            ->process(config, sourcesBuffer, hrtfBuffer, stereoBuffer, sourcePeaks, &mHrtfData.speakersAudioConfig);
 
     auto const numSamples{ sourcesBuffer.getNumSamples() };
 
