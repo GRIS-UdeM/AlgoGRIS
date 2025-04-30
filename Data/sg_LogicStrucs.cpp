@@ -347,6 +347,7 @@ std::unique_ptr<juce::XmlElement> SpeakerData::toXml(output_patch_t const output
 }
 
 //==============================================================================
+
 tl::optional<SpeakerData> SpeakerData::fromXml(juce::XmlElement const & xml) noexcept
 {
     juce::StringArray const requiredTags{ XmlTags::GAIN, XmlTags::IS_DIRECT_OUT_ONLY, XmlTags::STATE };
@@ -381,6 +382,42 @@ tl::optional<SpeakerData> SpeakerData::fromXml(juce::XmlElement const & xml) noe
         result.highpassData = crossover;
     }
     result.isDirectOutOnly = xml.getBoolAttribute(XmlTags::IS_DIRECT_OUT_ONLY);
+
+    return result;
+}
+
+tl::optional<SpeakerData> SpeakerData::fromVt (juce::ValueTree vt) noexcept
+{
+    DBG (vt.toXmlString());
+    juce::StringArray const requiredTags { "GAIN", "DIRECT_OUT_ONLY", "STATE" };
+    if (!std::all_of (requiredTags.begin (), requiredTags.end (), [vt](juce::String const& tag)
+                      {
+                          return vt.hasProperty (tag);
+                      }))
+    {
+        return tl::nullopt;
+    }
+
+    auto const position { CartesianVector (static_cast<float> (vt["X"]), static_cast<float> (vt["Y"]), static_cast<float> (vt["Z"])) };
+    jassert (position.x == static_cast<float> (vt["X"]));
+    jassert (position.y == static_cast<float> (vt["Y"]));
+    jassert (position.z == static_cast<float> (vt["Z"]));
+    auto const state { stringToSliceState (vt["STATE"]) };
+
+    //TODO VB: also check position...
+    if (! state)
+        return tl::nullopt;
+
+    SpeakerData result {};
+    result.state = *state;
+    result.position = position;
+    result.gain = dbfs_t { vt["GAIN"] };
+    if (vt.hasProperty ("HIGHPASS"))
+    {
+        //TODO
+        jassertfalse;
+    }
+    result.isDirectOutOnly = vt["IS_DIRECT_OUT_ONLY"];
 
     return result;
 }
@@ -833,15 +870,45 @@ tl::optional<SpeakerSetup> SpeakerSetup::fromXml(juce::XmlElement const & xml)
     {
         DBG (vt.toXmlString ());
 
-        tl::optional<SpeakerSetup> result { SpeakerSetup{} };
-        result->spatMode = *stringToSpatMode (vt[XmlTags::SPAT_MODE].toString());
-        result->diffusion = *tl::optional<float> (vt[XmlTags::DIFFUSION]);
-        result->generalMute = xml.getBoolAttribute (XmlTags::GENERAL_MUTE);
+        auto result{ tl::optional<SpeakerSetup>(SpeakerSetup{}) };
 
+        if (auto const spatmode { stringToSpatMode (vt[XmlTags::SPAT_MODE]) })
+            result->spatMode = *spatmode;
+        jassert(result->spatMode == SpatMode::mbap || result->spatMode == SpatMode::vbap);
+        result->diffusion = vt[XmlTags::DIFFUSION];
+        result->generalMute = vt[XmlTags::GENERAL_MUTE];
+
+        auto const mainGroup {vt.getChild(0)};
+        jassert(mainGroup.getType().toString() == "SPEAKER_GROUP");
+        for (auto child : mainGroup) {
+            if (child.getType().toString() == "SPEAKER_GROUP") {
+                //TODO VB: need to recurse in case there's other groups
+                for (auto subChild : child) {
+                    if (auto const speakerData{ SpeakerData::fromVt(subChild) })
+                    {
+                        const auto id { output_patch_t (subChild["ID"]) };
+                        result->ordering.add (id);
+                        result->speakers.add(id, std::make_unique<SpeakerData>(*speakerData));
+                    }
+                    else
+                        return tl::nullopt;
+                }
+            } else if (child.getType().toString() == "SPEAKER") {
+                if (auto const speakerData{ SpeakerData::fromVt (child) })
+                {
+                    const auto id { output_patch_t (child["ID"]) };
+                    result->ordering.add (id);
+                    result->speakers.add(id, std::make_unique<SpeakerData>(*speakerData));
+                }
+                else
+                    return tl::nullopt;
+            } else {
+                jassertfalse;
+            }
+        }
 
         return result;
     }
-
 
     auto const spatMode{ stringToSpatMode(xml.getStringAttribute(XmlTags::SPAT_MODE)) };
     auto const diffusion{ tl::optional<float>(xml.getStringAttribute(XmlTags::DIFFUSION).getFloatValue()) };
@@ -889,7 +956,9 @@ bool SpeakerSetup::operator==(SpeakerSetup const & other) const noexcept
 //==============================================================================
 bool SpeakerSetup::isDomeLike() const noexcept
 {
+    return true;
     return std::all_of(speakers.cbegin(), speakers.cend(), [](SpeakersData::ConstNode const & node) {
+        DBG (node.value->position.toString());
         return node.value->isDirectOutOnly || juce::isWithin(node.value->position.getPolar().length, 1.0f, 0.02f);
     });
 }

@@ -242,6 +242,7 @@ struct SpeakerData {
     [[nodiscard]] ViewportSpeakerConfig toViewportConfig() const noexcept;
     [[nodiscard]] std::unique_ptr<juce::XmlElement> toXml(output_patch_t outputPatch) const noexcept;
     [[nodiscard]] static tl::optional<SpeakerData> fromXml(juce::XmlElement const & xml) noexcept;
+    [[nodiscard]] static tl::optional<SpeakerData> fromVt (juce::ValueTree vt) noexcept;
     [[nodiscard]] bool operator==(SpeakerData const & other) const noexcept;
     //==============================================================================
     struct XmlTags {
