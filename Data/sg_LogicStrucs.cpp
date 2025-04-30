@@ -828,6 +828,21 @@ std::unique_ptr<juce::XmlElement> SpeakerSetup::toXml() const
 //==============================================================================
 tl::optional<SpeakerSetup> SpeakerSetup::fromXml(juce::XmlElement const & xml)
 {
+    juce::ValueTree vt { juce::ValueTree::fromXml (xml) };
+    if (vt["VERSION"] == "4.0.0")
+    {
+        DBG (vt.toXmlString ());
+
+        tl::optional<SpeakerSetup> result { SpeakerSetup{} };
+        result->spatMode = *stringToSpatMode (vt[XmlTags::SPAT_MODE].toString());
+        result->diffusion = *tl::optional<float> (vt[XmlTags::DIFFUSION]);
+        result->generalMute = xml.getBoolAttribute (XmlTags::GENERAL_MUTE);
+
+
+        return result;
+    }
+
+
     auto const spatMode{ stringToSpatMode(xml.getStringAttribute(XmlTags::SPAT_MODE)) };
     auto const diffusion{ tl::optional<float>(xml.getStringAttribute(XmlTags::DIFFUSION).getFloatValue()) };
 
