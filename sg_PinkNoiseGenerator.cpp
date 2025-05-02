@@ -22,6 +22,8 @@
 #include "Data/StrongTypes/sg_Dbfs.hpp"
 #include "Data/sg_Narrow.hpp"
 
+#include <random>
+
 namespace
 {
 float pinkNoiseC0{};
@@ -32,6 +34,9 @@ float pinkNoiseC4{};
 float pinkNoiseC5{};
 float pinkNoiseC6{};
 
+std::random_device rd;
+std::mt19937_64 gen (rd ());
+std::uniform_real_distribution<float> dist (-1.f, 1.f);
 } // namespace
 
 namespace gris
@@ -39,13 +44,11 @@ namespace gris
 //==============================================================================
 void fillWithPinkNoise(float * const * samples, int const numSamples, int const numChannels, float const gain)
 {
-    static constexpr auto FAC{ 1.0f / (static_cast<float>(RAND_MAX) / 2.0f) };
     static constexpr dbfs_t CORRECTION_DB{ -18.2f };
-
     static auto const CORRECTION{ CORRECTION_DB.toGain() };
 
     for (int sampleIndex{}; sampleIndex < numSamples; ++sampleIndex) {
-        auto const rnd{ narrow<float>(rand()) * FAC - 1.0f };
+        auto const rnd{ dist (gen)};
         pinkNoiseC0 = pinkNoiseC0 * 0.99886f + rnd * 0.0555179f;
         pinkNoiseC1 = pinkNoiseC1 * 0.99332f + rnd * 0.0750759f;
         pinkNoiseC2 = pinkNoiseC2 * 0.96900f + rnd * 0.1538520f;

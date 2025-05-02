@@ -167,7 +167,6 @@ if(TARGET Catch2::Catch2WithMain)
     get_filename_component(_testname "${_filename}" NAME_WE)
     add_executable("${_testname}" "${_filename}")
     target_link_libraries("${_testname}" PRIVATE MainTest)
-    target_compile_options("${_testname}" PRIVATE -O0 -g)
     catch_discover_tests("${_testname}")
   endfunction()
 
