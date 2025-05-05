@@ -1,5 +1,4 @@
 #pragma once
-
 #include "Data/StrongTypes/sg_OutputPatch.hpp"
 #include "Data/StrongTypes/sg_SourceIndex.hpp"
 #include "Data/sg_constants.hpp"
