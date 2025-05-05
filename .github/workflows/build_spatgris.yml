@@ -8,7 +8,7 @@ on:
     branches: ['*']
 
 env:
-  SPATGRIS_REF: feat/unit-tests
+  SPATGRIS_REF: dev-sat
 
 jobs:
   Build-Ubuntu-Latest:
