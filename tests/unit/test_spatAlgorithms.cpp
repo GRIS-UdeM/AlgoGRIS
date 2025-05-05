@@ -88,11 +88,13 @@ TEST_CASE("VBAP test", "[spat]")
     {
         SpatGrisData vbapData;
 
-        const auto speakerSetupFile {juce::File::getCurrentWorkingDirectory ().getChildFile ("tests/util/default_speaker_setup.xml")};
+        const auto speakerSetupFile{ juce::File::getCurrentWorkingDirectory().getChildFile(
+            "tests/util/default_speaker_setup.xml") };
         if (const auto speakerSetup{ parseXML(speakerSetupFile) })
             vbapData.speakerSetup = *SpeakerSetup::fromXml(*speakerSetup);
 
-        const auto projectFile {juce::File::getCurrentWorkingDirectory ().getChildFile ("tests/util/default_preset.xml")};
+        const auto projectFile{ juce::File::getCurrentWorkingDirectory().getChildFile(
+            "tests/util/default_preset.xml") };
         if (const auto project{ parseXML(projectFile) })
             vbapData.project = *ProjectData::fromXml(*project);
 
@@ -101,7 +103,7 @@ TEST_CASE("VBAP test", "[spat]")
 
         THEN("The VBAP algo executes correctly")
         {
-            testUsingProjectData (vbapData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
+            testUsingProjectData(vbapData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
         }
     }
 }
@@ -117,11 +119,13 @@ TEST_CASE("HRTF test", "[spat]")
     {
         SpatGrisData hrtfData;
 
-        const auto hrtfSpeakerSetupFile {juce::File::getCurrentWorkingDirectory ().getChildFile ("tests/util/BINAURAL_SPEAKER_SETUP.xml")};
+        const auto hrtfSpeakerSetupFile{ juce::File::getCurrentWorkingDirectory().getChildFile(
+            "tests/util/BINAURAL_SPEAKER_SETUP.xml") };
         if (const auto hrtfSpeakerSetup{ parseXML(hrtfSpeakerSetupFile) })
             hrtfData.speakerSetup = *SpeakerSetup::fromXml(*hrtfSpeakerSetup);
 
-        const auto hrtfProjectFile {juce::File::getCurrentWorkingDirectory ().getChildFile ("tests/util/default_preset.xml")};
+        const auto hrtfProjectFile{ juce::File::getCurrentWorkingDirectory().getChildFile(
+            "tests/util/default_preset.xml") };
         if (const auto hrtfProject{ parseXML(hrtfProjectFile) })
             hrtfData.project = *ProjectData::fromXml(*hrtfProject);
 
@@ -130,7 +134,7 @@ TEST_CASE("HRTF test", "[spat]")
 
         THEN("The HRTF algo executes correctly")
         {
-            testUsingProjectData (hrtfData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
+            testUsingProjectData(hrtfData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
         }
     }
 }
@@ -146,11 +150,13 @@ TEST_CASE("MBAP test", "[spat]")
     {
         SpatGrisData mbapData;
 
-        const auto mbapSpeakerSetupFile {juce::File::getCurrentWorkingDirectory ().getChildFile ("tests/util/Cube_default_speaker_setup.xml")};
+        const auto mbapSpeakerSetupFile{ juce::File::getCurrentWorkingDirectory().getChildFile(
+            "tests/util/Cube_default_speaker_setup.xml") };
         if (const auto mbapSpeakerSetup{ parseXML(mbapSpeakerSetupFile) })
             mbapData.speakerSetup = *SpeakerSetup::fromXml(*mbapSpeakerSetup);
 
-        const auto mbapProjectFile {juce::File::getCurrentWorkingDirectory ().getChildFile ("tests/util/default_project18(8X2-Subs2).xml")};
+        const auto mbapProjectFile{ juce::File::getCurrentWorkingDirectory().getChildFile(
+            "tests/util/default_project18(8X2-Subs2).xml") };
         if (const auto project{ parseXML(mbapProjectFile) })
             mbapData.project = *ProjectData::fromXml(*project);
 
@@ -159,7 +165,7 @@ TEST_CASE("MBAP test", "[spat]")
 
         THEN("The MBAP algo executes correctly")
         {
-            testUsingProjectData (mbapData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
+            testUsingProjectData(mbapData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
         }
     }
 }
