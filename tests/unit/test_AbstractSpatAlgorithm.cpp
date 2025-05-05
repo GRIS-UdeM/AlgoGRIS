@@ -88,17 +88,18 @@ TEST_CASE("VBAP test", "[spat]")
 
     GIVEN("VBAP data sourced from XML")
     {
-        // init project data and audio config
         SpatGrisData vbapData;
-        // TODO VB: hardcode this data?
+
         const auto speakerSetupFile{ juce::File::getCurrentWorkingDirectory().getChildFile(
-            "default_speaker_setup.xml") };
-        std::cout << "Speaker setup file: " << speakerSetupFile.getFullPathName() << std::endl;
-        // this is what's printed:
-        // /Users/rymer/Documents/git/sat/GRIS/SpatGRIS/submodules/AlgoGRIS/default_speaker_setup.xml
+            "tests/util/default_speaker_setup.xml") };
         jassert(speakerSetupFile.existsAsFile());
         vbapData.speakerSetup = *SpeakerSetup::fromXml(*parseXML(speakerSetupFile));
-        // vbapData.project = *ProjectData::fromXml(*parseXML(DEFAULT_PROJECT_FILE));
+
+        const auto projectFile{ juce::File::getCurrentWorkingDirectory().getChildFile(
+            "tests/util/default_preset.xml") };
+        jassert(projectFile.existsAsFile());
+        vbapData.project = *ProjectData::fromXml(*parseXML(projectFile));
+
         vbapData.project.spatMode = SpatMode::vbap;
         vbapData.appData.stereoMode = {};
 
@@ -107,4 +108,5 @@ TEST_CASE("VBAP test", "[spat]")
             testUsingProjectData(vbapData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
         }
     }
+    std::cout << "vbap tests really all done\n";
 }
