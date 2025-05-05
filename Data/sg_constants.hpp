@@ -97,24 +97,6 @@ constexpr juce::Range<dbfs_t> LEGAL_PINK_NOISE_GAIN_RANGE{ dbfs_t{ -60.0f }, dbf
 constexpr auto SLICES_WIDTH = 25;
 constexpr auto SLICES_ID_BUTTON_HEIGHT = 17;
 
-extern juce::File const SPEAKER_TEMPLATES_DIR;
-extern juce::File const PROJECT_TEMPLATES_DIR;
-extern juce::File const CURRENT_WORKING_DIR;
-extern juce::File const SPLASH_SCREEN_FILE;
-extern juce::File const DEFAULT_PROJECT_FILE;
-extern juce::File const DEFAULT_PROJECT_DIRECTORY;
-extern juce::File const DEFAULT_SPEAKER_SETUP_FILE;
-extern juce::File const BINAURAL_SPEAKER_SETUP_FILE;
-extern juce::File const STEREO_SPEAKER_SETUP_FILE;
-extern juce::File const DEFAULT_CUBE_PROJECT;
-extern juce::File const DEFAULT_CUBE_SPEAKER_SETUP;
-extern juce::File const MANUAL_FILE_EN;
-extern juce::File const MANUAL_FILE_FR;
-extern juce::File const ICON_SMALL_FILE;
-extern juce::File const HRTF_FOLDER_0;
-extern juce::File const HRTF_FOLDER_40;
-extern juce::File const HRTF_FOLDER_80;
-
 extern juce::Colour const DEFAULT_SOURCE_COLOR;
 
 //==============================================================================
