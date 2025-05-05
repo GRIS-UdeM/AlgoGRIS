@@ -63,6 +63,7 @@ public:
         mBuffers.clear();
         for (auto const key : channels) {
             mBuffers.add(key, std::make_unique<juce::AudioBuffer<float>>(1, MAX_NUM_SAMPLES));
+            mBuffers[key].clear();
         }
     }
     //==============================================================================

@@ -23,6 +23,7 @@
 #include "sg_HrtfSpatAlgorithm.hpp"
 #include "sg_HybridSpatAlgorithm.hpp"
 #include "sg_MbapSpatAlgorithm.hpp"
+#include "sg_PinkNoiseGenerator.hpp"
 #include "sg_StereoSpatAlgorithm.hpp"
 #include "sg_VbapSpatAlgorithm.hpp"
 #include "juce_core/juce_core.h"
@@ -37,7 +38,6 @@
 
 namespace gris
 {
-//==============================================================================
 bool isOscThread()
 {
     auto * currentThread{ juce::Thread::getCurrentThread() };

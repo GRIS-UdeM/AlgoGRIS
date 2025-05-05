@@ -92,6 +92,11 @@ struct CartesianVector {
     [[nodiscard]] CartesianVector crossProduct(CartesianVector const & other) const noexcept;
     /** @return an XML representation of this vector. */
     [[nodiscard]] std::unique_ptr<juce::XmlElement> toXml() const noexcept;
+
+    juce::String toString() const noexcept
+    {
+        return "(" + juce::String{ x } + ", " + juce::String{ y } + ", " + juce::String{ z } + ")";
+    }
     //==============================================================================
     /** @return the CartesianVector encoded in an XML element. tl::nullopt if parsing fails. */
     [[nodiscard]] static tl::optional<CartesianVector> fromXml(juce::XmlElement const & xml);
@@ -221,7 +226,9 @@ template<typename T>
 static constexpr T sqrtNewtonRaphson(T const x, T const current, T const previous)
 {
     static_assert(std::is_floating_point_v<T>, "only works with floating point values");
-    return current == previous ? current : sqrtNewtonRaphson(x, static_cast<T>(0.5) * (current + x / current), current);
+    return juce::approximatelyEqual(current, previous)
+               ? current
+               : sqrtNewtonRaphson(x, static_cast<T>(0.5) * (current + x / current), current);
 }
 
 //==============================================================================

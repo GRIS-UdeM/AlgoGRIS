@@ -149,7 +149,7 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
             auto const gainDiff{ targetGain - currentGain };
             auto const gainSlope{ gainDiff / narrow<float>(numSamples) };
 
-            if (gainSlope == 0.0f || std::abs(gainDiff) < SMALL_GAIN) {
+            if (juce::approximatelyEqual(gainSlope, 0.f) || std::abs(gainDiff) < SMALL_GAIN) {
                 // no interpolation
                 currentGain = targetGain;
                 if (currentGain >= SMALL_GAIN) {
@@ -159,11 +159,12 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
             }
 
             // interpolation necessary
-            if (gainInterpolation == 0.0f) {
+            if (juce::approximatelyEqual(gainInterpolation, 0.f)) {
                 // linear interpolation over buffer size
                 for (int sampleIndex{}; sampleIndex < numSamples; ++sampleIndex) {
                     currentGain += gainSlope;
                     outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
+                    jassert(outputSamples[sampleIndex] >= -1.f && outputSamples[sampleIndex] <= 1.f);
                 }
             } else {
                 // log interpolation with 1st order filter
@@ -172,6 +173,7 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
                     for (int sampleIndex{}; sampleIndex < numSamples && currentGain >= SMALL_GAIN; ++sampleIndex) {
                         currentGain = targetGain + (currentGain - targetGain) * gainFactor;
                         outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
+                        jassert(outputSamples[sampleIndex] >= -1.f && outputSamples[sampleIndex] <= 1.f);
                     }
                     continue;
                 }
@@ -180,6 +182,7 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
                 for (int sampleIndex{}; sampleIndex < numSamples; ++sampleIndex) {
                     currentGain = targetGain + (currentGain - targetGain) * gainFactor;
                     outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
+                    jassert(outputSamples[sampleIndex] >= -1.f && outputSamples[sampleIndex] <= 1.f);
                 }
             }
         }

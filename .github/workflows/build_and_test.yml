@@ -1,6 +1,6 @@
 # Taken from https://github.com/sudara/pamplejuce/tree/main
 # But with most things removed as they aren't needed for a library
-name: Pamplejuce
+name: AlgoGRIS Build & Test
 
 on:
   workflow_dispatch: # lets you run a build from the UI

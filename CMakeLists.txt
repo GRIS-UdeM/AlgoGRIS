@@ -48,6 +48,8 @@ add_library(AlgoGRIS
   sg_HybridSpatAlgorithm.hpp
   sg_MbapSpatAlgorithm.cpp
   sg_MbapSpatAlgorithm.hpp
+  sg_PinkNoiseGenerator.cpp
+  sg_PinkNoiseGenerator.hpp
   sg_StereoSpatAlgorithm.cpp
   sg_StereoSpatAlgorithm.hpp
   sg_VbapSpatAlgorithm.cpp
@@ -165,9 +167,10 @@ if(TARGET Catch2::Catch2WithMain)
     get_filename_component(_testname "${_filename}" NAME_WE)
     add_executable("${_testname}" "${_filename}")
     target_link_libraries("${_testname}" PRIVATE MainTest)
+    target_compile_options("${_testname}" PRIVATE -O0)
     catch_discover_tests("${_testname}")
   endfunction()
 
   algogris_add_test("tests/unit/test_core.cpp")
-#  algogris_add_test("tests/unit/test_AbstractSpatAlgorithm.cpp")
+  algogris_add_test("tests/unit/test_spatAlgorithms.cpp")
 endif()

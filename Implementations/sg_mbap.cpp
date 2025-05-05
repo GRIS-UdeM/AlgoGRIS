@@ -171,7 +171,7 @@ static void computeGains(MbapField const & field, SourceData const & source, flo
 
     jassert(field.speakerPositions.size() == field.amplitudeMatrix.size());
 
-    for (int i{}; i < field.speakerPositions.size(); ++i) {
+    for (size_t i{}; i < static_cast<size_t>(field.speakerPositions.size()); ++i) {
         distFromSource = std::sqrt(
             std::pow(field.speakerPositions[i].getCartesian().x - source.position->getCartesian().x, 2.0f)
             + std::pow(field.speakerPositions[i].getCartesian().y - source.position->getCartesian().y, 2.0f)

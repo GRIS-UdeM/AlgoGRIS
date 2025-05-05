@@ -378,8 +378,8 @@ struct AppData {
     CartesianVector cameraPosition{ -0.5256794095039368f, -2.008379459381104f, 1.312143206596375f };
     juce::Point<int> speakerViewWindowPosition{};
     juce::Point<int> speakerViewWindowSize{};
-    juce::String lastSpeakerSetup{ DEFAULT_SPEAKER_SETUP_FILE.getFullPathName() };
-    juce::String lastProject{ DEFAULT_PROJECT_FILE.getFullPathName() };
+    juce::String lastSpeakerSetup{};
+    juce::String lastProject{};
     juce::String lastRecordingDirectory{
         juce::File::getSpecialLocation(juce::File::SpecialLocationType::userDesktopDirectory).getFullPathName()
     };
