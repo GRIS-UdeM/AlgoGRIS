@@ -69,10 +69,7 @@ public:
     [[nodiscard]] Position translatedY(float delta) const noexcept;
     [[nodiscard]] Position translatedZ(float delta) const noexcept;
 
-    juce::String toString() const noexcept
-    {
-        return mCartesian.toString() + "; polar: " + mPolar.toString();
-    }
+    juce::String toString() const noexcept { return mCartesian.toString() + "; polar: " + mPolar.toString(); }
 
 private:
     //==============================================================================

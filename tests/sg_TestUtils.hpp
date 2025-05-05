@@ -3,9 +3,9 @@
 #include "Data/StrongTypes/sg_OutputPatch.hpp"
 #include "Data/StrongTypes/sg_SourceIndex.hpp"
 #include "Data/sg_constants.hpp"
+#include "sg_PinkNoiseGenerator.hpp"
 #include "juce_audio_basics/juce_audio_basics.h"
 #include "juce_core/juce_core.h"
-#include "sg_PinkNoiseGenerator.hpp"
 #include <Containers/sg_TaggedAudioBuffer.hpp>
 #include <Data/sg_AudioStructs.hpp>
 #include <cmath>
@@ -29,9 +29,9 @@ std::array<int, 4> constexpr static bufferSizes{ 1, 512, 1024, SourceAudioBuffer
 inline void initBuffers(const int bufferSize,
                         const size_t numSources,
                         const size_t numSpeakers,
-                        SourceAudioBuffer& sourceBuffer,
-                        SpeakerAudioBuffer& speakerBuffer,
-                        juce::AudioBuffer<float>& stereoBuffer)
+                        SourceAudioBuffer & sourceBuffer,
+                        SpeakerAudioBuffer & speakerBuffer,
+                        juce::AudioBuffer<float> & stereoBuffer)
 {
     juce::Array<source_index_t> sourcesIndices;
     for (int i = 1; i <= numSources; ++i)
@@ -51,14 +51,13 @@ inline void initBuffers(const int bufferSize,
 
 /** fill Source Buffers with pink noise, and calculate the peaks */
 inline void fillSourceBuffersWithNoise(const size_t numSources,
-                                       SourceAudioBuffer& sourceBuffer,
+                                       SourceAudioBuffer & sourceBuffer,
                                        const int bufferSize,
-                                       SourcePeaks& sourcePeaks)
+                                       SourcePeaks & sourcePeaks)
 {
     sourceBuffer.silence();
-    for (int i = 1; i <= numSources; ++i)
-    {
-        const auto sourceIndex { source_index_t{ i } };
+    for (int i = 1; i <= numSources; ++i) {
+        const auto sourceIndex{ source_index_t{ i } };
         fillWithPinkNoise(sourceBuffer[sourceIndex].getArrayOfWritePointers(), bufferSize, 1, .5f);
         sourcePeaks[sourceIndex] = sourceBuffer[sourceIndex].getMagnitude(0, bufferSize);
     }
@@ -73,7 +72,8 @@ inline void checkSpeakerBufferValidity(const SpeakerAudioBuffer & buffer)
             const auto sampleValue = speakerBuffer[sampleNumber];
 
             REQUIRE_MESSAGE(std::isfinite(sampleValue), "Output contains NaN or Inf values!");
-            REQUIRE_MESSAGE((sampleValue >= -1.f && sampleValue <= 1.f), "Output " + juce::String(sampleValue) + " exceeds valid range!");
+            REQUIRE_MESSAGE((sampleValue >= -1.f && sampleValue <= 1.f),
+                            "Output " + juce::String(sampleValue) + " exceeds valid range!");
         }
     }
 }
