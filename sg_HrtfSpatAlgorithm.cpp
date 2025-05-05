@@ -145,7 +145,6 @@ HrtfSpatAlgorithm::HrtfSpatAlgorithm(SpeakerSetup const & speakerSetup,
     }
 
     fixDirectOutsIntoPlace(sources, speakerSetup, projectSpatMode);
-#endif
 }
 
 //==============================================================================
