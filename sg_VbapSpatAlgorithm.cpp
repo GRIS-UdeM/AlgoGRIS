@@ -159,7 +159,7 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
             }
 
             // interpolation necessary
-            if (juce::approximatelyEqual (gainInterpolation, 0.f)) {
+            if (juce::approximatelyEqual(gainInterpolation, 0.f)) {
                 // linear interpolation over buffer size
                 for (int sampleIndex{}; sampleIndex < numSamples; ++sampleIndex) {
                     currentGain += gainSlope;

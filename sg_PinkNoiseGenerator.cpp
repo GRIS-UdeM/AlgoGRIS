@@ -18,10 +18,8 @@
 */
 
 #include "sg_PinkNoiseGenerator.hpp"
-
 #include "Data/StrongTypes/sg_Dbfs.hpp"
 #include "Data/sg_Narrow.hpp"
-
 #include <random>
 
 namespace
@@ -35,8 +33,8 @@ float pinkNoiseC5{};
 float pinkNoiseC6{};
 
 std::random_device rd;
-std::mt19937_64 gen (rd ());
-std::uniform_real_distribution<float> dist (-1.f, 1.f);
+std::mt19937_64 gen(rd());
+std::uniform_real_distribution<float> dist(-1.f, 1.f);
 } // namespace
 
 namespace gris
@@ -48,7 +46,7 @@ void fillWithPinkNoise(float * const * samples, int const numSamples, int const 
     static auto const CORRECTION{ CORRECTION_DB.toGain() };
 
     for (int sampleIndex{}; sampleIndex < numSamples; ++sampleIndex) {
-        auto const rnd{ dist (gen)};
+        auto const rnd{ dist(gen) };
         pinkNoiseC0 = pinkNoiseC0 * 0.99886f + rnd * 0.0555179f;
         pinkNoiseC1 = pinkNoiseC1 * 0.99332f + rnd * 0.0750759f;
         pinkNoiseC2 = pinkNoiseC2 * 0.96900f + rnd * 0.1538520f;
