@@ -41,7 +41,7 @@ juce::String const SourceData::XmlTags::COLOUR = "COLOR";
 juce::String const SourceData::XmlTags::HYBRID_SPAT_MODE = "HYBRID_SPAT_MODE";
 juce::String const SourceData::XmlTags::MAIN_TAG_PREFIX = "SOURCE_";
 
-juce::String const SpeakerHighpassData::XmlTags::MAIN_TAG = "HIGHPASS";
+juce::String const SpeakerHighpassData::XmlTags::HIGHPASS = "HIGHPASS";
 juce::String const SpeakerHighpassData::XmlTags::FREQ = "FREQ";
 
 juce::String const SpeakerData::XmlTags::STATE = "STATE";
@@ -287,7 +287,7 @@ SpeakerHighpassConfig SpeakerHighpassData::toConfig(double const sampleRate) con
 //==============================================================================
 std::unique_ptr<juce::XmlElement> SpeakerHighpassData::toXml() const
 {
-    auto result{ std::make_unique<juce::XmlElement>(XmlTags::MAIN_TAG) };
+    auto result{ std::make_unique<juce::XmlElement>(XmlTags::HIGHPASS) };
     result->setAttribute(XmlTags::FREQ, freq.get());
     return result;
 }
@@ -295,7 +295,7 @@ std::unique_ptr<juce::XmlElement> SpeakerHighpassData::toXml() const
 //==============================================================================
 tl::optional<SpeakerHighpassData> SpeakerHighpassData::fromXml(juce::XmlElement const & xml)
 {
-    if (xml.getTagName() != XmlTags::MAIN_TAG || !xml.hasAttribute(XmlTags::FREQ)) {
+    if (xml.getTagName() != XmlTags::HIGHPASS || !xml.hasAttribute(XmlTags::FREQ)) {
         return tl::nullopt;
     }
 
@@ -368,7 +368,7 @@ tl::optional<SpeakerData> SpeakerData::fromXml(juce::XmlElement const & xml) noe
         return tl::nullopt;
     }
 
-    auto const * crossoverElement{ xml.getChildByName(SpeakerHighpassData::XmlTags::MAIN_TAG) };
+    auto const * crossoverElement{ xml.getChildByName(SpeakerHighpassData::XmlTags::HIGHPASS) };
 
     SpeakerData result{};
     result.state = *state;
@@ -386,35 +386,34 @@ tl::optional<SpeakerData> SpeakerData::fromXml(juce::XmlElement const & xml) noe
     return result;
 }
 
-tl::optional<SpeakerData> SpeakerData::fromVt (juce::ValueTree vt) noexcept
+tl::optional<SpeakerData> SpeakerData::fromVt(juce::ValueTree vt) noexcept
 {
-    DBG (vt.toXmlString());
-    juce::StringArray const requiredTags { "GAIN", "DIRECT_OUT_ONLY", "STATE" };
-    if (!std::all_of (requiredTags.begin (), requiredTags.end (), [vt](juce::String const& tag)
-                      {
-                          return vt.hasProperty (tag);
-                      }))
-    {
+    DBG(vt.toXmlString());
+    juce::StringArray const requiredTags{ "GAIN", "DIRECT_OUT_ONLY", "STATE" };
+    if (!std::all_of(requiredTags.begin(), requiredTags.end(), [vt](juce::String const & tag) {
+            return vt.hasProperty(tag);
+        })) {
         return tl::nullopt;
     }
 
-    auto const position { CartesianVector (static_cast<float> (vt["X"]), static_cast<float> (vt["Y"]), static_cast<float> (vt["Z"])) };
-    jassert (position.x == static_cast<float> (vt["X"]));
-    jassert (position.y == static_cast<float> (vt["Y"]));
-    jassert (position.z == static_cast<float> (vt["Z"]));
-    auto const state { stringToSliceState (vt["STATE"]) };
+    auto const position{
+        CartesianVector(static_cast<float>(vt["X"]), static_cast<float>(vt["Y"]), static_cast<float>(vt["Z"]))
+    };
+    jassert(position.x == static_cast<float>(vt["X"]));
+    jassert(position.y == static_cast<float>(vt["Y"]));
+    jassert(position.z == static_cast<float>(vt["Z"]));
+    auto const state{ stringToSliceState(vt["STATE"]) };
 
-    //TODO VB: also check position...
-    if (! state)
+    // TODO VB: also check position...
+    if (!state)
         return tl::nullopt;
 
-    SpeakerData result {};
+    SpeakerData result{};
     result.state = *state;
     result.position = position;
-    result.gain = dbfs_t { vt["GAIN"] };
-    if (vt.hasProperty ("HIGHPASS"))
-    {
-        //TODO
+    result.gain = dbfs_t{ vt["GAIN"] };
+    if (vt.hasProperty("HIGHPASS")) {
+        // TODO
         jassertfalse;
     }
     result.isDirectOutOnly = vt["IS_DIRECT_OUT_ONLY"];
@@ -865,42 +864,37 @@ std::unique_ptr<juce::XmlElement> SpeakerSetup::toXml() const
 //==============================================================================
 tl::optional<SpeakerSetup> SpeakerSetup::fromXml(juce::XmlElement const & xml)
 {
-    juce::ValueTree vt { juce::ValueTree::fromXml (xml) };
-    if (vt["VERSION"] == "4.0.0")
-    {
-        DBG (vt.toXmlString ());
+    juce::ValueTree vt{ juce::ValueTree::fromXml(xml) };
+    if (vt["VERSION"] == "4.0.0") {
+        DBG(vt.toXmlString());
 
         auto result{ tl::optional<SpeakerSetup>(SpeakerSetup{}) };
 
-        if (auto const spatmode { stringToSpatMode (vt[XmlTags::SPAT_MODE]) })
+        if (auto const spatmode{ stringToSpatMode(vt[XmlTags::SPAT_MODE]) })
             result->spatMode = *spatmode;
         jassert(result->spatMode == SpatMode::mbap || result->spatMode == SpatMode::vbap);
         result->diffusion = vt[XmlTags::DIFFUSION];
         result->generalMute = vt[XmlTags::GENERAL_MUTE];
 
-        auto const mainGroup {vt.getChild(0)};
+        auto const mainGroup{ vt.getChild(0) };
         jassert(mainGroup.getType().toString() == "SPEAKER_GROUP");
         for (auto child : mainGroup) {
             if (child.getType().toString() == "SPEAKER_GROUP") {
-                //TODO VB: need to recurse in case there's other groups
+                // TODO VB: need to recurse in case there's other groups
                 for (auto subChild : child) {
-                    if (auto const speakerData{ SpeakerData::fromVt(subChild) })
-                    {
-                        const auto id { output_patch_t (subChild["ID"]) };
-                        result->ordering.add (id);
+                    if (auto const speakerData{ SpeakerData::fromVt(subChild) }) {
+                        const auto id{ output_patch_t(subChild["ID"]) };
+                        result->ordering.add(id);
                         result->speakers.add(id, std::make_unique<SpeakerData>(*speakerData));
-                    }
-                    else
+                    } else
                         return tl::nullopt;
                 }
             } else if (child.getType().toString() == "SPEAKER") {
-                if (auto const speakerData{ SpeakerData::fromVt (child) })
-                {
-                    const auto id { output_patch_t (child["ID"]) };
-                    result->ordering.add (id);
+                if (auto const speakerData{ SpeakerData::fromVt(child) }) {
+                    const auto id{ output_patch_t(child["ID"]) };
+                    result->ordering.add(id);
                     result->speakers.add(id, std::make_unique<SpeakerData>(*speakerData));
-                }
-                else
+                } else
                     return tl::nullopt;
             } else {
                 jassertfalse;
@@ -958,7 +952,7 @@ bool SpeakerSetup::isDomeLike() const noexcept
 {
     return true;
     return std::all_of(speakers.cbegin(), speakers.cend(), [](SpeakersData::ConstNode const & node) {
-        DBG (node.value->position.toString());
+        DBG(node.value->position.toString());
         return node.value->isDirectOutOnly || juce::isWithin(node.value->position.getPolar().length, 1.0f, 0.02f);
     });
 }
