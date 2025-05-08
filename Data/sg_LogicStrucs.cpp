@@ -396,6 +396,7 @@ tl::optional<SpeakerData> SpeakerData::fromVt(juce::ValueTree vt) noexcept
         return tl::nullopt;
     }
 
+    // TODO VB: POSITION
     auto const position{
         CartesianVector(static_cast<float>(vt["X"]), static_cast<float>(vt["Y"]), static_cast<float>(vt["Z"]))
     };

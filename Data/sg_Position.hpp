@@ -69,7 +69,16 @@ public:
     [[nodiscard]] Position translatedY(float delta) const noexcept;
     [[nodiscard]] Position translatedZ(float delta) const noexcept;
 
-    juce::String toString() const noexcept { return mCartesian.toString() + "; polar: " + mPolar.toString(); }
+    juce::String toString() const noexcept { return mCartesian.toString(); }
+
+    static tl::optional<Position> fromString(const juce::String & str) noexcept
+    {
+        if (auto const cartesian{ CartesianVector::fromString(str) })
+            return Position{ *cartesian };
+
+        jassertfalse;
+        return {};
+    }
 
 private:
     //==============================================================================
@@ -87,3 +96,22 @@ constexpr bool Position::operator==(Position const & other) const noexcept
 static_assert(std::is_trivially_destructible_v<Position>);
 
 } // namespace gris
+
+//==============================================================================
+
+namespace juce
+{
+template<>
+struct VariantConverter<gris::Position> final {
+    static gris::Position fromVar(const juce::var & v)
+    {
+        if (auto const position{ gris::Position::fromString(v.toString()) })
+            return *position;
+
+        jassertfalse;
+        return {};
+    }
+
+    static juce::var toVar(const gris::Position & position) { return position.toString(); }
+};
+} // namespace juce

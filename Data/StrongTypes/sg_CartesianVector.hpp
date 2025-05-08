@@ -97,6 +97,29 @@ struct CartesianVector {
     {
         return "(" + juce::String{ x } + ", " + juce::String{ y } + ", " + juce::String{ z } + ")";
     }
+
+    static tl::optional<CartesianVector> fromString(const juce::String & str) noexcept
+    {
+        auto const trimmed = str.trim();
+        auto const commaIndex = trimmed.indexOfChar(',');
+        auto const secondCommaIndex = trimmed.indexOfChar(',', commaIndex + 1);
+
+        if (commaIndex < 0 || secondCommaIndex < 0) {
+            jassertfalse;
+            return {};
+        }
+        auto const xStr = trimmed.substring(1, commaIndex).trim();
+        auto const yStr = trimmed.substring(commaIndex + 1, secondCommaIndex).trim();
+        auto const zStr = trimmed.substring(secondCommaIndex + 1, trimmed.length() - 1).trim();
+
+        if (xStr.isEmpty() || yStr.isEmpty() || zStr.isEmpty()) {
+            jassertfalse;
+            return {};
+        }
+
+        return CartesianVector{ xStr.getFloatValue(), yStr.getFloatValue(), zStr.getFloatValue() };
+    }
+
     //==============================================================================
     /** @return the CartesianVector encoded in an XML element. tl::nullopt if parsing fails. */
     [[nodiscard]] static tl::optional<CartesianVector> fromXml(juce::XmlElement const & xml);
