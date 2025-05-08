@@ -38,7 +38,7 @@ struct PolarVector;
 struct CartesianVector {
     //==============================================================================
     struct XmlTags {
-        static juce::String const MAIN_TAG;
+        static juce::String const POSITION;
         static juce::String const X;
         static juce::String const Y;
         static juce::String const Z;
@@ -93,32 +93,9 @@ struct CartesianVector {
     /** @return an XML representation of this vector. */
     [[nodiscard]] std::unique_ptr<juce::XmlElement> toXml() const noexcept;
 
-    juce::String toString() const noexcept
-    {
-        return "(" + juce::String{ x } + ", " + juce::String{ y } + ", " + juce::String{ z } + ")";
-    }
+    juce::String toString() const noexcept;
 
-    static tl::optional<CartesianVector> fromString(const juce::String & str) noexcept
-    {
-        auto const trimmed = str.trim();
-        auto const commaIndex = trimmed.indexOfChar(',');
-        auto const secondCommaIndex = trimmed.indexOfChar(',', commaIndex + 1);
-
-        if (commaIndex < 0 || secondCommaIndex < 0) {
-            jassertfalse;
-            return {};
-        }
-        auto const xStr = trimmed.substring(1, commaIndex).trim();
-        auto const yStr = trimmed.substring(commaIndex + 1, secondCommaIndex).trim();
-        auto const zStr = trimmed.substring(secondCommaIndex + 1, trimmed.length() - 1).trim();
-
-        if (xStr.isEmpty() || yStr.isEmpty() || zStr.isEmpty()) {
-            jassertfalse;
-            return {};
-        }
-
-        return CartesianVector{ xStr.getFloatValue(), yStr.getFloatValue(), zStr.getFloatValue() };
-    }
+    static tl::optional<CartesianVector> fromString(const juce::String & str) noexcept;
 
     //==============================================================================
     /** @return the CartesianVector encoded in an XML element. tl::nullopt if parsing fails. */

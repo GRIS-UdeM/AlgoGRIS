@@ -34,6 +34,8 @@ class Position
     CartesianVector mCartesian{};
 
 public:
+    enum class Coordinate { x = 0, y, z, azimuth, elevation, radius };
+
     //==============================================================================
     Position() = default;
     explicit Position(PolarVector const & polar) : mPolar(polar), mCartesian(CartesianVector{ polar }) {}

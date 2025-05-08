@@ -352,7 +352,7 @@ tl::optional<SpeakerData> SpeakerData::fromXml(juce::XmlElement const & xml) noe
 {
     juce::StringArray const requiredTags{ XmlTags::GAIN, XmlTags::IS_DIRECT_OUT_ONLY, XmlTags::STATE };
 
-    auto const * positionElement{ xml.getChildByName(CartesianVector::XmlTags::MAIN_TAG) };
+    auto const * positionElement{ xml.getChildByName(CartesianVector::XmlTags::POSITION) };
 
     if (positionElement == nullptr
         || !std::all_of(requiredTags.begin(), requiredTags.end(), [&](juce::String const & tag) {
@@ -396,25 +396,17 @@ tl::optional<SpeakerData> SpeakerData::fromVt(juce::ValueTree vt) noexcept
         return tl::nullopt;
     }
 
-    // TODO VB: POSITION
-    auto const position{
-        CartesianVector(static_cast<float>(vt["X"]), static_cast<float>(vt["Y"]), static_cast<float>(vt["Z"]))
-    };
-    jassert(position.x == static_cast<float>(vt["X"]));
-    jassert(position.y == static_cast<float>(vt["Y"]));
-    jassert(position.z == static_cast<float>(vt["Z"]));
+    // TODO: also do a variant converter?
     auto const state{ stringToSliceState(vt["STATE"]) };
-
-    // TODO VB: also check position...
     if (!state)
         return tl::nullopt;
 
     SpeakerData result{};
     result.state = *state;
-    result.position = position;
+    result.position = juce::VariantConverter<Position>::fromVar(vt["CARTESIAN_POSITION"]);
     result.gain = dbfs_t{ vt["GAIN"] };
     if (vt.hasProperty("HIGHPASS")) {
-        // TODO
+        // TODO VB
         jassertfalse;
     }
     result.isDirectOutOnly = vt["IS_DIRECT_OUT_ONLY"];
@@ -803,7 +795,7 @@ tl::optional<AppData> AppData::fromXml(juce::XmlElement const & xml)
         return tl::nullopt;
     }
 
-    auto const * cameraPositionElement{ cameraElement->getChildByName(CartesianVector::XmlTags::MAIN_TAG) };
+    auto const * cameraPositionElement{ cameraElement->getChildByName(CartesianVector::XmlTags::POSITION) };
     if (!cameraPositionElement) {
         return tl::nullopt;
     }

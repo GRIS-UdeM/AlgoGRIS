@@ -29,7 +29,7 @@
 
 namespace gris
 {
-juce::String const CartesianVector::XmlTags::MAIN_TAG = "POSITION";
+juce::String const CartesianVector::XmlTags::POSITION = "POSITION";
 juce::String const CartesianVector::XmlTags::X = "X";
 juce::String const CartesianVector::XmlTags::Y = "Y";
 juce::String const CartesianVector::XmlTags::Z = "Z";
@@ -68,11 +68,72 @@ CartesianVector CartesianVector::crossProduct(CartesianVector const & other) con
 //==============================================================================
 std::unique_ptr<juce::XmlElement> CartesianVector::toXml() const noexcept
 {
-    auto result{ std::make_unique<juce::XmlElement>(XmlTags::MAIN_TAG) };
+    auto result{ std::make_unique<juce::XmlElement>(XmlTags::POSITION) };
     result->setAttribute(XmlTags::X, x);
     result->setAttribute(XmlTags::Y, y);
     result->setAttribute(XmlTags::Z, z);
     return result;
+}
+
+juce::String CartesianVector::toString() const noexcept
+{
+    return "(" + juce::String{ x } + ", " + juce::String{ y } + ", " + juce::String{ z } + ")";
+}
+
+tl::optional<CartesianVector> CartesianVector::fromString(const juce::String & str) noexcept
+{
+    auto trimmed = str.trim();
+
+#if 0
+
+    DBG ("str: " << str);
+    int first = str.indexOfChar (',');  // Should be 10
+    int second = str.indexOfChar (',', first + 1);  // Should be ~20
+    DBG ("first: " << first);
+    DBG ("second: " << second);
+    DBG ("char at first: " << str[first]); // Should be ','
+    DBG ("after first: " << str.substring (first + 1)); // Should start with " 0.707107, ..."
+
+    auto const commaIndex = trimmed.indexOfChar (',');
+    auto const secondCommaIndex = trimmed.indexOfChar (',', commaIndex + 1);
+
+    if (commaIndex < 0 || secondCommaIndex < 0) {
+        jassertfalse;
+        return {};
+    }
+    auto const xStr = trimmed.substring (1, commaIndex).trim ();
+    auto const yStr = trimmed.substring (commaIndex + 1, secondCommaIndex).trim ();
+    auto const zStr = trimmed.substring (secondCommaIndex + 1, trimmed.length () - 1).trim ();
+
+    if (xStr.isEmpty () || yStr.isEmpty () || zStr.isEmpty ()) {
+        jassertfalse;
+        return {};
+    }
+
+    return CartesianVector { xStr.getFloatValue (), yStr.getFloatValue (), zStr.getFloatValue () };
+#else
+
+    // Remove the parentheses
+    trimmed = trimmed.fromFirstOccurrenceOf("(", false, false).upToLastOccurrenceOf(")", false, false);
+
+    // Split the string into tokens
+    juce::StringArray tokens;
+    tokens.addTokens(trimmed, ",", "\""); // split by commas
+
+    // Convert to floats
+    if (tokens.size() == 3) {
+        float x = tokens[0].trim().getFloatValue();
+        float y = tokens[1].trim().getFloatValue();
+        float z = tokens[2].trim().getFloatValue();
+
+        DBG("x = " << x << ", y = " << y << ", z = " << z);
+        return CartesianVector{ x, y, z };
+    } else {
+        DBG("Unexpected number of tokens: " << tokens.size());
+        return {};
+    }
+
+#endif
 }
 
 //==============================================================================
