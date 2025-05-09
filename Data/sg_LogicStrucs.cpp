@@ -388,7 +388,7 @@ tl::optional<SpeakerData> SpeakerData::fromXml(juce::XmlElement const & xml) noe
 
 tl::optional<SpeakerData> SpeakerData::fromVt(juce::ValueTree vt) noexcept
 {
-    DBG(vt.toXmlString());
+    // DBG(vt.toXmlString());
     juce::StringArray const requiredTags{ "GAIN", "DIRECT_OUT_ONLY", "STATE" };
     if (!std::all_of(requiredTags.begin(), requiredTags.end(), [vt](juce::String const & tag) {
             return vt.hasProperty(tag);
@@ -945,7 +945,7 @@ bool SpeakerSetup::isDomeLike() const noexcept
 {
     return true;
     return std::all_of(speakers.cbegin(), speakers.cend(), [](SpeakersData::ConstNode const & node) {
-        DBG(node.value->position.toString());
+        // DBG(node.value->position.toString());
         return node.value->isDirectOutOnly || juce::isWithin(node.value->position.getPolar().length, 1.0f, 0.02f);
     });
 }
