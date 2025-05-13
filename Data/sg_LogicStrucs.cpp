@@ -403,7 +403,8 @@ tl::optional<SpeakerData> SpeakerData::fromVt(juce::ValueTree vt) noexcept
 
     SpeakerData result{};
     result.state = *state;
-    result.position = juce::VariantConverter<Position>::fromVar(vt["CARTESIAN_POSITION"]);
+
+    result.position = getAbsoluteSpeakerPosition(vt);
     result.gain = dbfs_t{ vt["GAIN"] };
     if (vt.hasProperty("HIGHPASS")) {
         // TODO VB
@@ -412,6 +413,20 @@ tl::optional<SpeakerData> SpeakerData::fromVt(juce::ValueTree vt) noexcept
     result.isDirectOutOnly = vt["IS_DIRECT_OUT_ONLY"];
 
     return result;
+}
+
+Position SpeakerData::getAbsoluteSpeakerPosition(juce::ValueTree speakerVt)
+{
+    // get parent position
+    auto const speakerGroup{ speakerVt.getParent() };
+    jassert(speakerGroup.isValid() && speakerGroup.getType().toString() == "SPEAKER_GROUP");
+    Position parentPosition = { juce::VariantConverter<Position>::fromVar(speakerGroup["CARTESIAN_POSITION"]) };
+
+    // get speaker position and offset it by the group center
+    Position newSpeakerPosition{ juce::VariantConverter<Position>::fromVar(speakerVt["CARTESIAN_POSITION"]) };
+    return Position{ CartesianVector{ parentPosition.getCartesian().x + newSpeakerPosition.getCartesian().x,
+                                      parentPosition.getCartesian().y + newSpeakerPosition.getCartesian().y,
+                                      parentPosition.getCartesian().z + newSpeakerPosition.getCartesian().z } };
 }
 
 //==============================================================================
