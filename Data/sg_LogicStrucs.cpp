@@ -421,18 +421,13 @@ Position SpeakerData::getAbsoluteSpeakerPosition(juce::ValueTree speakerVt)
     auto const speakerGroup{ speakerVt.getParent() };
     jassert(speakerGroup.isValid() && speakerGroup.getType().toString() == "SPEAKER_GROUP");
     Position parentPosition = { juce::VariantConverter<Position>::fromVar(speakerGroup["CARTESIAN_POSITION"]) };
-    DBG(parentPosition.toString());
 
     // get speaker position and offset it by the group center
     Position newSpeakerPosition{ juce::VariantConverter<Position>::fromVar(speakerVt["CARTESIAN_POSITION"]) };
-    DBG(newSpeakerPosition.toString());
 
-    Position pos = Position{ CartesianVector{ parentPosition.getCartesian().x + newSpeakerPosition.getCartesian().x,
-                                              parentPosition.getCartesian().y + newSpeakerPosition.getCartesian().y,
-                                              parentPosition.getCartesian().z + newSpeakerPosition.getCartesian().z } };
-
-    DBG(pos.toString());
-    return pos;
+    return Position{ CartesianVector{ parentPosition.getCartesian().x + newSpeakerPosition.getCartesian().x,
+                                      parentPosition.getCartesian().y + newSpeakerPosition.getCartesian().y,
+                                      parentPosition.getCartesian().z + newSpeakerPosition.getCartesian().z } };
 }
 
 //==============================================================================
