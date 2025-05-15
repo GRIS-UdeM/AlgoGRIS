@@ -959,6 +959,7 @@ bool SpeakerSetup::operator==(SpeakerSetup const & other) const noexcept
 //==============================================================================
 bool SpeakerSetup::isDomeLike() const noexcept
 {
+    // TODO VB!!!
     return true;
     return std::all_of(speakers.cbegin(), speakers.cend(), [](SpeakersData::ConstNode const & node) {
         // DBG(node.value->position.toString());
