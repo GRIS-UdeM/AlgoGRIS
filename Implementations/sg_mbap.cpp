@@ -108,6 +108,7 @@ static MbapField initField(std::vector<Position> speakers)
 /* Pre-compute the 3 dimensional matrix of amplitude for the speakers. */
 static void computeMatrix(MbapField & field)
 {
+    DBG("computeMatrix");
     static auto constexpr H_SIZE = MBAP_MATRIX_SIZE / 2;
 
     for (size_t i{}; i < field.speakerPositions.size(); ++i) {
@@ -118,8 +119,11 @@ static void computeMatrix(MbapField & field)
         for (size_t x{}; x < MBAP_MATRIX_SIZE; ++x) {
             for (size_t y{}; y < MBAP_MATRIX_SIZE; ++y) {
                 for (size_t z{}; z < MBAP_MATRIX_SIZE; ++z) {
+                    // auto dist2 = std::hypot(x - px, y - py, z - pz);
                     auto dist = std::sqrt(std::pow(narrow<float>(x) - px, 2.0f) + std::pow(narrow<float>(y) - py, 2.0f)
                                           + std::pow(narrow<float>(z) - pz, 2.0f));
+                    // jassert (juce::approximatelyEqual (dist, dist2));
+
                     dist = std::pow(std::pow(10.0f, 1.0f / 20), dist);          // root-power ratio
                     field.amplitudeMatrix[i][x][y][z] = 1.0f / std::sqrt(dist); // inverse square law
                 }
