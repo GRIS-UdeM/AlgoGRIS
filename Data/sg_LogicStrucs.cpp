@@ -889,7 +889,6 @@ tl::optional<SpeakerSetup> SpeakerSetup::fromXml(juce::XmlElement const & xml)
         jassert(mainGroup.getType().toString() == "SPEAKER_GROUP");
         for (auto child : mainGroup) {
             if (child.getType().toString() == "SPEAKER_GROUP") {
-                // TODO VB: need to recurse in case there's other groups
                 for (auto subChild : child) {
                     if (auto const speakerData{ SpeakerData::fromVt(subChild) }) {
                         const auto id{ output_patch_t(subChild["ID"]) };
