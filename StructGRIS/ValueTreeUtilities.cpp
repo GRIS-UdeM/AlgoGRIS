@@ -16,7 +16,7 @@
 */
 
 #include "ValueTreeUtilities.hpp"
-#include <Data/sg_Position.hpp>
+#include "../Data/sg_Position.hpp"
 
 namespace gris
 {

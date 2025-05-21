@@ -103,6 +103,9 @@ add_library(AlgoGRIS
   Implementations/sg_vbap.cpp
   Implementations/sg_vbap.hpp
 
+  StructGRIS/ValueTreeUtilities.cpp
+  StructGRIS/ValueTreeUtilities.hpp
+
   tl/optional.hpp
 )
 
