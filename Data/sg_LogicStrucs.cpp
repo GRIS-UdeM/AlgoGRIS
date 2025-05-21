@@ -32,9 +32,7 @@
 #include <cstdint>
 #include <memory>
 #include <utility>
-
-// TODO VB: move this to StructGRIS
-#include "../../../Source/UI/ValueTreeUtilities.hpp"
+#include "../StructGRIS/ValueTreeUtilities.hpp"
 
 namespace gris
 {
