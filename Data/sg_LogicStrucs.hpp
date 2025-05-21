@@ -381,6 +381,8 @@ struct AppData {
     CartesianVector cameraPosition{ -0.5256794095039368f, -2.008379459381104f, 1.312143206596375f };
     juce::Point<int> speakerViewWindowPosition{};
     juce::Point<int> speakerViewWindowSize{};
+
+    /** The full path to the last loaded speaker setup file. */
     juce::String lastSpeakerSetup{};
     juce::String lastProject{};
     juce::String lastRecordingDirectory{
@@ -422,6 +424,9 @@ using SpeakersOrdering = juce::Array<output_patch_t>;
 
 //==============================================================================
 struct SpeakerSetup {
+    // for now this is doubled data, but in time it will replace/supplement the rest of the data in here
+    juce::ValueTree speakerSetupValueTree;
+
     SpeakersData speakers{};
     SpeakersOrdering ordering{};
     SpatMode spatMode{};

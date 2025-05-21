@@ -33,6 +33,9 @@
 #include <memory>
 #include <utility>
 
+// TODO VB: move this to StructGRIS
+#include "../../../Source/UI/ValueTreeUtilities.hpp"
+
 namespace gris
 {
 juce::String const SourceData::XmlTags::STATE = "STATE";
@@ -873,17 +876,20 @@ std::unique_ptr<juce::XmlElement> SpeakerSetup::toXml() const
 //==============================================================================
 tl::optional<SpeakerSetup> SpeakerSetup::fromXml(juce::XmlElement const & xml)
 {
-    juce::ValueTree vt{ juce::ValueTree::fromXml(xml) };
+    juce::ValueTree vt{ convertSpeakerSetup(juce::ValueTree::fromXml(xml)) };
+
     if (vt["VERSION"] == "4.0.0") {
         DBG(vt.toXmlString());
 
-        auto result{ tl::optional<SpeakerSetup>(SpeakerSetup{}) };
+        auto speakerSetup{ tl::optional<SpeakerSetup>(SpeakerSetup{}) };
+        speakerSetup->speakerSetupValueTree = vt;
 
+        // TODO: this is all duplicated data that should ultimately be moved to value tree logic
         if (auto const spatmode{ stringToSpatMode(vt[XmlTags::SPAT_MODE]) })
-            result->spatMode = *spatmode;
-        jassert(result->spatMode == SpatMode::mbap || result->spatMode == SpatMode::vbap);
-        result->diffusion = vt[XmlTags::DIFFUSION];
-        result->generalMute = vt[XmlTags::GENERAL_MUTE];
+            speakerSetup->spatMode = *spatmode;
+        jassert(speakerSetup->spatMode == SpatMode::mbap || speakerSetup->spatMode == SpatMode::vbap);
+        speakerSetup->diffusion = vt[XmlTags::DIFFUSION];
+        speakerSetup->generalMute = vt[XmlTags::GENERAL_MUTE];
 
         auto const mainGroup{ vt.getChild(0) };
         jassert(mainGroup.getType().toString() == "SPEAKER_GROUP");
@@ -892,16 +898,16 @@ tl::optional<SpeakerSetup> SpeakerSetup::fromXml(juce::XmlElement const & xml)
                 for (auto subChild : child) {
                     if (auto const speakerData{ SpeakerData::fromVt(subChild) }) {
                         const auto id{ output_patch_t(subChild["ID"]) };
-                        result->ordering.add(id);
-                        result->speakers.add(id, std::make_unique<SpeakerData>(*speakerData));
+                        speakerSetup->ordering.add(id);
+                        speakerSetup->speakers.add(id, std::make_unique<SpeakerData>(*speakerData));
                     } else
                         return tl::nullopt;
                 }
             } else if (child.getType().toString() == "SPEAKER") {
                 if (auto const speakerData{ SpeakerData::fromVt(child) }) {
                     const auto id{ output_patch_t(child["ID"]) };
-                    result->ordering.add(id);
-                    result->speakers.add(id, std::make_unique<SpeakerData>(*speakerData));
+                    speakerSetup->ordering.add(id);
+                    speakerSetup->speakers.add(id, std::make_unique<SpeakerData>(*speakerData));
                 } else
                     return tl::nullopt;
             } else {
@@ -909,8 +915,11 @@ tl::optional<SpeakerSetup> SpeakerSetup::fromXml(juce::XmlElement const & xml)
             }
         }
 
-        return result;
+        return speakerSetup;
     }
+
+    // TODO VB: we never get here right?
+    jassertfalse;
 
     auto const spatMode{ stringToSpatMode(xml.getStringAttribute(XmlTags::SPAT_MODE)) };
     auto const diffusion{ tl::optional<float>(xml.getStringAttribute(XmlTags::DIFFUSION).getFloatValue()) };
