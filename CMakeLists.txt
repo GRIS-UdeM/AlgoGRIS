@@ -176,4 +176,5 @@ if(TARGET Catch2::Catch2WithMain)
 
   algogris_add_test("tests/unit/test_core.cpp")
   algogris_add_test("tests/unit/test_spatAlgorithms.cpp")
+  algogris_add_test("tests/unit/test_speaker_setup_conversion.cpp")
 endif()
