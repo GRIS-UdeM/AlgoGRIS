@@ -1,29 +1,32 @@
 #include <catch2/catch_all.hpp>
 #include "../../StructGRIS/ValueTreeUtilities.hpp"
 
+void checkSpeakerSetupConversion(juce::File setupDir, std::string version, std::string speakerSetupPath)
+{
+    SECTION(std::string("Converting speaker setup ") + version)
+    {
+        auto const speakerSetupFile = setupDir.getChildFile(speakerSetupPath);
+        REQUIRE(speakerSetupFile.exists());
+
+        auto const vt = gris::convertSpeakerSetup(juce::ValueTree::fromXml(speakerSetupFile.loadFileAsString()));
+        REQUIRE(vt.isValid());
+        REQUIRE(vt[gris::VERSION] == gris::CURRENT_SPEAKER_SETUP_VERSION);
+    }
+}
+
 TEST_CASE("Speaker Setup Conversion", "[core]")
 {
     auto const algogrisDir{ juce::File::getCurrentWorkingDirectory() };
-    std::cout << "algogrisDir: " << algogrisDir.getFullPathName() << "\n";
+    // std::cout << "algogrisDir: " << algogrisDir.getFullPathName() << "\n";
     REQUIRE(algogrisDir.exists());
 
     auto const setupDir{ algogrisDir.getChildFile("../../Resources/templates/Speaker setups") };
-    std::cout << "templateDir: " << setupDir.getFullPathName() << "\n";
+    // std::cout << "templateDir: " << setupDir.getFullPathName() << "\n";
     REQUIRE(setupDir.exists());
 
-    GIVEN("Speaker Setup Version 3.1.14")
-    {
-        auto const speakerSetupFile = setupDir.getChildFile("CUBE/Cube_default_speaker_setup.xml");
-        std::cout << "speakerSetupFile: " << speakerSetupFile.getFullPathName() << "\n";
-        REQUIRE(speakerSetupFile.exists());
-
-        THEN("Check Conversion")
-        {
-            auto const vt = gris::convertSpeakerSetup(juce::ValueTree::fromXml(speakerSetupFile.loadFileAsString()));
-            REQUIRE(vt.isValid());
-            REQUIRE(vt["VERSION"].toString() == "4.0.0");
-        }
-    }
+    const auto version = "3.1.14";
+    const auto speakerSetupPath = "CUBE/Cube_default_speaker_setup.xml";
+    checkSpeakerSetupConversion(setupDir, version, speakerSetupPath);
 
     // GIVEN("Speaker Setup Version 3.3.7")
     // {
