@@ -95,6 +95,7 @@ TEST_CASE("VBAP test", "[spat]")
 
         const auto projectFile{ juce::File::getCurrentWorkingDirectory().getChildFile(
             "tests/util/default_preset.xml") };
+        std::cout << "full path for projectFile: " << projectFile.getFullPathName() << "\n";
         if (const auto project{ parseXML(projectFile) })
             vbapData.project = *ProjectData::fromXml(*project);
 
