@@ -17,7 +17,7 @@ void checkSpeakerSetupConversion(const juce::File & setupDir, std::string && ver
 
 TEST_CASE("Speaker Setup Conversion", "[core]")
 {
-    auto const speakerSetupDir{ juce::File::getCurrentWorkingDirectory().getChildFile("tests/temp") };
+    auto const speakerSetupDir{ juce::File::getCurrentWorkingDirectory().getChildFile("../tests/temp") };
     std::cout << "full path for speakerSetupDir: " << speakerSetupDir.getFullPathName() << "\n";
     REQUIRE(speakerSetupDir.exists());
 

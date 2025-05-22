@@ -89,12 +89,12 @@ TEST_CASE("VBAP test", "[spat]")
         SpatGrisData vbapData;
 
         const auto speakerSetupFile{ juce::File::getCurrentWorkingDirectory().getChildFile(
-            "tests/util/default_speaker_setup.xml") };
+            "../tests/util/default_speaker_setup.xml") };
         if (const auto speakerSetup{ parseXML(speakerSetupFile) })
             vbapData.speakerSetup = *SpeakerSetup::fromXml(*speakerSetup);
 
         const auto projectFile{ juce::File::getCurrentWorkingDirectory().getChildFile(
-            "tests/util/default_preset.xml") };
+            "../tests/util/default_preset.xml") };
         std::cout << "full path for projectFile: " << projectFile.getFullPathName() << "\n";
         if (const auto project{ parseXML(projectFile) })
             vbapData.project = *ProjectData::fromXml(*project);
@@ -121,12 +121,12 @@ TEST_CASE("HRTF test", "[spat]")
         SpatGrisData hrtfData;
 
         const auto hrtfSpeakerSetupFile{ juce::File::getCurrentWorkingDirectory().getChildFile(
-            "tests/util/BINAURAL_SPEAKER_SETUP.xml") };
+            "../tests/util/BINAURAL_SPEAKER_SETUP.xml") };
         if (const auto hrtfSpeakerSetup{ parseXML(hrtfSpeakerSetupFile) })
             hrtfData.speakerSetup = *SpeakerSetup::fromXml(*hrtfSpeakerSetup);
 
         const auto hrtfProjectFile{ juce::File::getCurrentWorkingDirectory().getChildFile(
-            "tests/util/default_preset.xml") };
+            "../tests/util/default_preset.xml") };
         if (const auto hrtfProject{ parseXML(hrtfProjectFile) })
             hrtfData.project = *ProjectData::fromXml(*hrtfProject);
 
@@ -152,12 +152,12 @@ TEST_CASE("MBAP test", "[spat]")
         SpatGrisData mbapData;
 
         const auto mbapSpeakerSetupFile{ juce::File::getCurrentWorkingDirectory().getChildFile(
-            "tests/util/Cube_default_speaker_setup.xml") };
+            "../tests/util/Cube_default_speaker_setup.xml") };
         if (const auto mbapSpeakerSetup{ parseXML(mbapSpeakerSetupFile) })
             mbapData.speakerSetup = *SpeakerSetup::fromXml(*mbapSpeakerSetup);
 
         const auto mbapProjectFile{ juce::File::getCurrentWorkingDirectory().getChildFile(
-            "tests/util/default_project18(8X2-Subs2).xml") };
+            "../tests/util/default_project18(8X2-Subs2).xml") };
         if (const auto project{ parseXML(mbapProjectFile) })
             mbapData.project = *ProjectData::fromXml(*project);
 
