@@ -82,7 +82,7 @@ static SpatGrisData getSpatGrisDataFromFiles(const std::string & projectFilename
 {
     SpatGrisData spatGrisData;
 
-    //hack to get around the pipeline having a different path than other places
+    // hack to get around the pipeline having a different path than other places
     auto utilDir = juce::File::getCurrentWorkingDirectory();
     if (utilDir.getFileName() == "build")
         utilDir = utilDir.getParentDirectory();
@@ -90,7 +90,7 @@ static SpatGrisData getSpatGrisDataFromFiles(const std::string & projectFilename
 
     // make sure project file exists
     const auto projectFile{ utilDir.getChildFile(projectFilename) };
-    std::cout << "full path for projectFile: " << projectFile.getFullPathName() << "\n";
+    // std::cout << "full path for projectFile: " << projectFile.getFullPathName() << "\n";
     REQUIRE(projectFile.existsAsFile());
 
     // make sure project file opens correctly
@@ -101,7 +101,7 @@ static SpatGrisData getSpatGrisDataFromFiles(const std::string & projectFilename
 
     // make sure speaker setup file exists
     const auto speakerSetupFile{ utilDir.getChildFile(speakerSetupFilename) };
-    std::cout << "full path for speakerSetupFile: " << speakerSetupFile.getFullPathName() << "\n";
+    // std::cout << "full path for speakerSetupFile: " << speakerSetupFile.getFullPathName() << "\n";
     REQUIRE(speakerSetupFile.existsAsFile());
 
     // make sure speaker setup opens correctly
