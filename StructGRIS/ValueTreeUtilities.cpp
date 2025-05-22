@@ -51,6 +51,7 @@ void copyProperties(const juce::ValueTree & source, juce::ValueTree & dest)
 // TODO VB: this will need unit tests -- and can this be constexpr
 juce::ValueTree convertSpeakerSetup(const juce::ValueTree & oldSpeakerSetup)
 {
+    // std::cout << "INSIDE convertSpeakerSetup\n";
     // DOME EXAMPLE
     /*<SPEAKER_SETUP VERSION = "3.1.14" SPAT_MODE = "Dome" DIFFUSION = "0.0" GENERAL_MUTE = "0">
         <SPEAKER_1 STATE = "normal" GAIN = "0.0" DIRECT_OUT_ONLY = "0">
@@ -75,6 +76,7 @@ juce::ValueTree convertSpeakerSetup(const juce::ValueTree & oldSpeakerSetup)
 
     // TODO VB: handle default speaker setup and all legacy types
     if (oldSpeakerSetup.getType() != SPEAKER_SETUP) {
+        // std::cout << "issue in convertSpeakerSetup\n";
         // this function should  probably return an optional and here it should be empty
         // jassertfalse;
         DBG(oldSpeakerSetup.toXmlString());
