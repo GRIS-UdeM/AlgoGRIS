@@ -127,6 +127,26 @@ juce::ValueTree convertSpeakerSetup(const juce::ValueTree & oldSpeakerSetup)
     return newVt;
 }
 
+struct MyUnitTest : public juce::UnitTest {
+    MyUnitTest() : juce::UnitTest("MyUnitTest") {}
+
+    void initialise() override {}
+
+    void runTest() override
+    {
+        beginTest("running first test");
+        float value{ .5f };
+        expect(value >= -1.0f && value <= 1.0f, "Value exceeds valid range!");
+    }
+
+    void shutdown() override {}
+};
+
+#if JUCE_DEBUG
+// This will automatically create an instance of the test class and add it to the list of tests to be run.
+static MyUnitTest myUnitTest;
+#endif
+
 juce::ValueTree getTopParent(const juce::ValueTree & vt)
 {
     auto parent = vt.getParent();
