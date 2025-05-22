@@ -91,7 +91,7 @@ HrtfSpatAlgorithm::HrtfSpatAlgorithm(SpeakerSetup const & speakerSetup,
 
     // Init inner spat algorithm
     const auto hrtfSpeakerSetupFile{ juce::File::getCurrentWorkingDirectory().getChildFile(
-        "tests/util/BINAURAL_SPEAKER_SETUP.xml") };
+        "../tests/util/BINAURAL_SPEAKER_SETUP.xml") };
     auto const binauralXml{ juce::XmlDocument{ hrtfSpeakerSetupFile }.getDocumentElement() };
     if (!binauralXml) {
         jassertfalse;
@@ -156,7 +156,8 @@ void HrtfSpatAlgorithm::updateSpatData(source_index_t const sourceIndex, SourceD
         return;
     }
 
-    mInnerAlgorithm->updateSpatData(sourceIndex, sourceData);
+    if (mInnerAlgorithm)
+        mInnerAlgorithm->updateSpatData(sourceIndex, sourceData);
 }
 
 //==============================================================================
