@@ -88,7 +88,7 @@ juce::ValueTree convertSpeakerSetup(const juce::ValueTree & oldSpeakerSetup)
     // DBG (oldSpeakerSetup.toXmlString ());
 
     // get outta here if the version is already up to date
-    if (oldSpeakerSetup.getProperty(VERSION) == CURRENT_SPEAKER_SETUP_VERSION)
+    if (oldSpeakerSetup[VERSION] == CURRENT_SPEAKER_SETUP_VERSION)
         return oldSpeakerSetup;
 
     // create new value tree and copy root properties into it
