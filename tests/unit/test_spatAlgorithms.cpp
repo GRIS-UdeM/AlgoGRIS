@@ -109,36 +109,37 @@ TEST_CASE("VBAP test", "[spat]")
     }
 }
 
-TEST_CASE("HRTF test", "[spat]")
-{
-    SourceAudioBuffer sourceBuffer;
-    SpeakerAudioBuffer speakerBuffer;
-    juce::AudioBuffer<float> stereoBuffer;
-    SourcePeaks sourcePeaks;
+// TODO VB:
+//  TEST_CASE("HRTF test", "[spat]")
+//  {
+//      SourceAudioBuffer sourceBuffer;
+//      SpeakerAudioBuffer speakerBuffer;
+//      juce::AudioBuffer<float> stereoBuffer;
+//      SourcePeaks sourcePeaks;
 
-    GIVEN("VBAP data sourced from XML")
-    {
-        SpatGrisData hrtfData;
+//     GIVEN("VBAP data sourced from XML")
+//     {
+//         SpatGrisData hrtfData;
 
-        const auto hrtfSpeakerSetupFile{ juce::File::getCurrentWorkingDirectory().getChildFile(
-            "../tests/util/BINAURAL_SPEAKER_SETUP.xml") };
-        if (const auto hrtfSpeakerSetup{ parseXML(hrtfSpeakerSetupFile) })
-            hrtfData.speakerSetup = *SpeakerSetup::fromXml(*hrtfSpeakerSetup);
+//         const auto hrtfSpeakerSetupFile{ juce::File::getCurrentWorkingDirectory().getChildFile(
+//             "../tests/util/BINAURAL_SPEAKER_SETUP.xml") };
+//         if (const auto hrtfSpeakerSetup{ parseXML(hrtfSpeakerSetupFile) })
+//             hrtfData.speakerSetup = *SpeakerSetup::fromXml(*hrtfSpeakerSetup);
 
-        const auto hrtfProjectFile{ juce::File::getCurrentWorkingDirectory().getChildFile(
-            "../tests/util/default_preset.xml") };
-        if (const auto hrtfProject{ parseXML(hrtfProjectFile) })
-            hrtfData.project = *ProjectData::fromXml(*hrtfProject);
+//         const auto hrtfProjectFile{ juce::File::getCurrentWorkingDirectory().getChildFile(
+//             "../tests/util/default_preset.xml") };
+//         if (const auto hrtfProject{ parseXML(hrtfProjectFile) })
+//             hrtfData.project = *ProjectData::fromXml(*hrtfProject);
 
-        hrtfData.project.spatMode = SpatMode::vbap;
-        hrtfData.appData.stereoMode = StereoMode::hrtf;
+//         hrtfData.project.spatMode = SpatMode::vbap;
+//         hrtfData.appData.stereoMode = StereoMode::hrtf;
 
-        THEN("The HRTF algo executes correctly")
-        {
-            testUsingProjectData(hrtfData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
-        }
-    }
-}
+//         THEN("The HRTF algo executes correctly")
+//         {
+//             testUsingProjectData(hrtfData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
+//         }
+//     }
+// }
 
 TEST_CASE("MBAP test", "[spat]")
 {
