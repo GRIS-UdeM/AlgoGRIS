@@ -95,6 +95,9 @@ jobs:
       - name: Build release
         run: cmake --build build --config Release --parallel
 
+      - name: ls -R
+        run: ls -R
+
       - name: Test & Benchmarks
         working-directory: build
         run: ctest --verbose --output-on-failure
