@@ -916,7 +916,7 @@ tl::optional<SpeakerSetup> SpeakerSetup::fromXml(juce::XmlElement const & xml)
         return speakerSetup;
     }
 
-    // TODO VB: we never get here right?
+    // TODO VB: we do get here if upon booting the app, the last speaker setup we loaded is now gone
     jassertfalse;
 
     auto const spatMode{ stringToSpatMode(xml.getStringAttribute(XmlTags::SPAT_MODE)) };
