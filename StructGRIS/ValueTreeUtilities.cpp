@@ -66,7 +66,7 @@ juce::ValueTree convertSpeakerSetup(const juce::ValueTree & oldSpeakerSetup)
 
     // create and append the main speaker group node
     auto mainSpeakerGroup = juce::ValueTree(SPEAKER_GROUP);
-    mainSpeakerGroup.setProperty(ID, "Main", nullptr);
+    mainSpeakerGroup.setProperty(ID, MAIN_SPEAKER_GROUP, nullptr);
     mainSpeakerGroup.setProperty(CARTESIAN_POSITION, juce::VariantConverter<Position>::toVar(Position{}), nullptr);
     newVt.appendChild(mainSpeakerGroup, nullptr);
 

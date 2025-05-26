@@ -64,11 +64,14 @@ juce::ValueTree getTopParent(const juce::ValueTree & vt);
 
 // Speaker setup identifiers
 const auto CURRENT_SPEAKER_SETUP_VERSION = "4.0.0";
+const juce::Identifier VERSION{ "VERSION" };
 const juce::Identifier SPAT_MODE{ "SPAT_MODE" };
 const juce::Identifier SPEAKER_SETUP{ "SPEAKER_SETUP" };
 const juce::Identifier SPEAKER_GROUP{ "SPEAKER_GROUP" };
+const auto MAIN_SPEAKER_GROUP{ "MAIN_SPEAKER_GROUP" };
 const juce::Identifier SPEAKER{ "SPEAKER" };
-const juce::Identifier VERSION{ "VERSION" };
+
+// TODO VB: should we have a different ID for speakers and speaker groups?
 const juce::Identifier ID{ "ID" };
 const juce::Identifier NEXT_ID{ "NEXT_ID" };
 const juce::Identifier UUID{ "UUID" };

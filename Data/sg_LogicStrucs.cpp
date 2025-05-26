@@ -307,6 +307,18 @@ tl::optional<SpeakerHighpassData> SpeakerHighpassData::fromXml(juce::XmlElement 
 }
 
 //==============================================================================
+tl::optional<SpeakerHighpassData> SpeakerHighpassData::fromVt(juce::ValueTree const & vt) noexcept
+{
+    if (!vt.hasProperty(FREQ))
+        return tl::nullopt;
+
+    SpeakerHighpassData result;
+    result.freq = hz_t{ vt[FREQ] };
+
+    return result;
+}
+
+//==============================================================================
 bool SpeakerHighpassData::operator==(SpeakerHighpassData const & other) const noexcept
 {
     return other.freq == freq;
@@ -389,46 +401,52 @@ tl::optional<SpeakerData> SpeakerData::fromXml(juce::XmlElement const & xml) noe
 
 tl::optional<SpeakerData> SpeakerData::fromVt(juce::ValueTree vt) noexcept
 {
-    // DBG(vt.toXmlString());
-    juce::StringArray const requiredTags{ "GAIN", "DIRECT_OUT_ONLY", "STATE" };
-    if (!std::all_of(requiredTags.begin(), requiredTags.end(), [vt](juce::String const & tag) {
-            return vt.hasProperty(tag);
+    juce::Array<juce::Identifier> const requiredTags{ STATE, CARTESIAN_POSITION, GAIN, DIRECT_OUT_ONLY };
+    if (!std::all_of(requiredTags.begin(), requiredTags.end(), [vt](juce::Identifier const & identifier) {
+            return vt.hasProperty(identifier);
         })) {
         return tl::nullopt;
     }
 
-    // TODO: also do a variant converter?
-    auto const state{ stringToSliceState(vt["STATE"]) };
+    SpeakerData result{};
+
+    auto const state{ stringToSliceState(vt[STATE]) };
     if (!state)
         return tl::nullopt;
-
-    SpeakerData result{};
     result.state = *state;
 
-    result.position = getAbsoluteSpeakerPosition(vt);
-    result.gain = dbfs_t{ vt["GAIN"] };
-    if (vt.hasProperty("HIGHPASS")) {
-        // TODO VB
-        jassertfalse;
-    }
-    result.isDirectOutOnly = vt["IS_DIRECT_OUT_ONLY"];
+    if (auto const speakerPosition{ SpeakerData::getAbsoluteSpeakerPosition(vt) })
+        result.position = *speakerPosition;
+    else
+        return tl::nullopt;
+
+    result.gain = dbfs_t{ vt[GAIN] };
+
+    if (vt.hasProperty(FREQ))
+        result.highpassData = SpeakerHighpassData::fromVt(vt);
+
+    result.isDirectOutOnly = vt[DIRECT_OUT_ONLY];
 
     return result;
 }
 
-Position SpeakerData::getAbsoluteSpeakerPosition(juce::ValueTree speakerVt)
+tl::optional<Position> SpeakerData::getAbsoluteSpeakerPosition(juce::ValueTree speakerVt)
 {
     // get parent position
     auto const speakerGroup{ speakerVt.getParent() };
-    jassert(speakerGroup.isValid() && speakerGroup.getType().toString() == "SPEAKER_GROUP");
-    Position parentPosition = { juce::VariantConverter<Position>::fromVar(speakerGroup["CARTESIAN_POSITION"]) };
+    if (!speakerVt.isValid() || !speakerVt.hasProperty(CARTESIAN_POSITION) || !speakerGroup.isValid()
+        || !speakerGroup.hasProperty(CARTESIAN_POSITION) || speakerGroup.getType() != SPEAKER_GROUP) {
+        jassertfalse;
+        return tl::nullopt;
+    }
 
     // get speaker position and offset it by the group center
-    Position newSpeakerPosition{ juce::VariantConverter<Position>::fromVar(speakerVt["CARTESIAN_POSITION"]) };
+    Position speakerPosition{ juce::VariantConverter<Position>::fromVar(speakerVt[CARTESIAN_POSITION]) };
+    Position parentPosition = { juce::VariantConverter<Position>::fromVar(speakerGroup[CARTESIAN_POSITION]) };
 
-    return Position{ CartesianVector{ parentPosition.getCartesian().x + newSpeakerPosition.getCartesian().x,
-                                      parentPosition.getCartesian().y + newSpeakerPosition.getCartesian().y,
-                                      parentPosition.getCartesian().z + newSpeakerPosition.getCartesian().z } };
+    return Position{ CartesianVector{ parentPosition.getCartesian().x + speakerPosition.getCartesian().x,
+                                      parentPosition.getCartesian().y + speakerPosition.getCartesian().y,
+                                      parentPosition.getCartesian().z + speakerPosition.getCartesian().z } };
 }
 
 //==============================================================================
@@ -876,7 +894,7 @@ tl::optional<SpeakerSetup> SpeakerSetup::fromXml(juce::XmlElement const & xml)
 {
     juce::ValueTree vt{ convertSpeakerSetup(juce::ValueTree::fromXml(xml)) };
 
-    if (vt["VERSION"] == "4.0.0") {
+    if (vt[VERSION] == CURRENT_SPEAKER_SETUP_VERSION) {
         auto speakerSetup{ tl::optional<SpeakerSetup>(SpeakerSetup{}) };
         speakerSetup->speakerSetupValueTree = vt;
 
@@ -888,20 +906,20 @@ tl::optional<SpeakerSetup> SpeakerSetup::fromXml(juce::XmlElement const & xml)
         speakerSetup->generalMute = vt[XmlTags::GENERAL_MUTE];
 
         auto const mainGroup{ vt.getChild(0) };
-        jassert(mainGroup.getType().toString() == "SPEAKER_GROUP");
+        jassert(mainGroup.getType() == SPEAKER_GROUP);
         for (auto child : mainGroup) {
-            if (child.getType().toString() == "SPEAKER_GROUP") {
+            if (child.getType() == SPEAKER_GROUP) {
                 for (auto subChild : child) {
                     if (auto const speakerData{ SpeakerData::fromVt(subChild) }) {
-                        const auto id{ output_patch_t(subChild["ID"]) };
+                        const auto id{ output_patch_t(subChild[ID]) };
                         speakerSetup->ordering.add(id);
                         speakerSetup->speakers.add(id, std::make_unique<SpeakerData>(*speakerData));
                     } else
                         return tl::nullopt;
                 }
-            } else if (child.getType().toString() == "SPEAKER") {
+            } else if (child.getType() == SPEAKER) {
                 if (auto const speakerData{ SpeakerData::fromVt(child) }) {
-                    const auto id{ output_patch_t(child["ID"]) };
+                    const auto id{ output_patch_t(child[ID]) };
                     speakerSetup->ordering.add(id);
                     speakerSetup->speakers.add(id, std::make_unique<SpeakerData>(*speakerData));
                 } else

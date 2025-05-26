@@ -220,6 +220,7 @@ struct SpeakerHighpassData {
     [[nodiscard]] SpeakerHighpassConfig toConfig(double sampleRate) const;
     [[nodiscard]] std::unique_ptr<juce::XmlElement> toXml() const;
     [[nodiscard]] static tl::optional<SpeakerHighpassData> fromXml(juce::XmlElement const & xml);
+    [[nodiscard]] static tl::optional<SpeakerHighpassData> fromVt(juce::ValueTree const & vt) noexcept;
     [[nodiscard]] bool operator==(SpeakerHighpassData const & other) const noexcept;
     //==============================================================================
     struct XmlTags {
@@ -243,7 +244,7 @@ struct SpeakerData {
     [[nodiscard]] std::unique_ptr<juce::XmlElement> toXml(output_patch_t outputPatch) const noexcept;
     [[nodiscard]] static tl::optional<SpeakerData> fromXml(juce::XmlElement const & xml) noexcept;
     [[nodiscard]] static tl::optional<SpeakerData> fromVt(juce::ValueTree vt) noexcept;
-    static Position getAbsoluteSpeakerPosition(juce::ValueTree vt);
+    static tl::optional<Position> getAbsoluteSpeakerPosition(juce::ValueTree vt);
 
     [[nodiscard]] bool operator==(SpeakerData const & other) const noexcept;
     //==============================================================================
