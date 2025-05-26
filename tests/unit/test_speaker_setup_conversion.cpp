@@ -11,13 +11,12 @@ void checkSpeakerSetupConversion(const std::string & version, const std::string 
             speakerSetupDir = speakerSetupDir.getParentDirectory();
         speakerSetupDir = speakerSetupDir.getChildFile("tests/temp");
         REQUIRE(speakerSetupDir.exists());
-        // std::cout << "full path for speakerSetupDir: " << speakerSetupDir.getFullPathName() << "\n";
 
         // now get the speaker setup file and make sure it also exists
         auto const speakerSetupFile = speakerSetupDir.getChildFile(speakerSetupPath);
         REQUIRE(speakerSetupFile.exists());
-        // std::cout << "converting " << speakerSetupFile.getFileName() << "\n";
 
+        // do the conversion and make sure it's valid
         auto const vt = gris::convertSpeakerSetup(juce::ValueTree::fromXml(speakerSetupFile.loadFileAsString()));
         REQUIRE(vt.isValid());
         REQUIRE(vt[gris::VERSION] == gris::CURRENT_SPEAKER_SETUP_VERSION);

@@ -20,7 +20,6 @@
 
 namespace gris
 {
-
 /** This simply copies properties from one valuetree to another, nothing else. */
 void copyProperties(const juce::ValueTree & source, juce::ValueTree & dest)
 {
@@ -51,13 +50,8 @@ void copyProperties(const juce::ValueTree & source, juce::ValueTree & dest)
 juce::ValueTree convertSpeakerSetup(const juce::ValueTree & oldSpeakerSetup)
 {
     if (oldSpeakerSetup.getType() != SPEAKER_SETUP) {
-        // TODO VB: this function should  probably return an optional and here it should be empty
-        // jassertfalse;
-        DBG(oldSpeakerSetup.toXmlString());
-        // so I don't know how many forking versions of speaker setups there are but this function deals with one of
-        // them. probably better to use that forking function and create a VT from the speaker setup data?
-        //  or maybe/probably there's already a function that does this
-        // readLegacySpeakerSetup
+        // invalid speaker setup!
+        jassertfalse;
         return {};
     }
 
@@ -82,7 +76,7 @@ juce::ValueTree convertSpeakerSetup(const juce::ValueTree & oldSpeakerSetup)
             || speaker.getChild(0).getType().toString() != "POSITION") {
             // corrupted file? Speakers must have a type that starts with SPEAKER_ and have a POSITION child
             jassertfalse;
-            continue; // should we continue or return here?
+            return {};
         }
 
         auto newSpeaker = juce::ValueTree{ SPEAKER };
@@ -97,7 +91,6 @@ juce::ValueTree convertSpeakerSetup(const juce::ValueTree & oldSpeakerSetup)
         mainSpeakerGroup.appendChild(newSpeaker, nullptr);
     }
 
-    // DBG (newVt.toXmlString());
     return newVt;
 }
 

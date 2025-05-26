@@ -877,8 +877,6 @@ tl::optional<SpeakerSetup> SpeakerSetup::fromXml(juce::XmlElement const & xml)
     juce::ValueTree vt{ convertSpeakerSetup(juce::ValueTree::fromXml(xml)) };
 
     if (vt["VERSION"] == "4.0.0") {
-        DBG(vt.toXmlString());
-
         auto speakerSetup{ tl::optional<SpeakerSetup>(SpeakerSetup{}) };
         speakerSetup->speakerSetupValueTree = vt;
 
