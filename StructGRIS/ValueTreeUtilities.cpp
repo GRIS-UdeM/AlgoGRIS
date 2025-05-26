@@ -20,15 +20,40 @@
 
 namespace gris
 {
-/** This simply copies properties from one valuetree to another, nothing else. */
-void copyProperties(const juce::ValueTree & source, juce::ValueTree & dest)
+bool convertProperties(const juce::ValueTree & source, juce::ValueTree & dest)
 {
-    // these are the only types of sources we're expecting here
-    jassert(source.getType().toString().contains("SPEAKER_")
-            || source.getType().toString() == CartesianVector::XmlTags::POSITION
-            || source.getType().toString() == "HIGHPASS");
+    juce::String sourceType = source.getType().toString();
 
-    if (source.getType().toString() == CartesianVector::XmlTags::POSITION) {
+    if (sourceType == "SPEAKER_SETUP") {
+        if (!source.hasProperty(SPAT_MODE) || !source.hasProperty("DIFFUSION") || !source.hasProperty("GENERAL_MUTE")) {
+            jassertfalse;
+            return false;
+        }
+
+        dest.setProperty(SPAT_MODE, source[SPAT_MODE], nullptr);
+        dest.setProperty(SPEAKER_SETUP_VERSION, CURRENT_SPEAKER_SETUP_VERSION, nullptr);
+        dest.setProperty("DIFFUSION", source["DIFFUSION"], nullptr);
+        dest.setProperty("GENERAL_MUTE", source["GENERAL_MUTE"], nullptr);
+        return true;
+    }
+    if (sourceType.contains("SPEAKER_")) {
+        if (!source.hasProperty(STATE) || !source.hasProperty(GAIN) || !source.hasProperty(DIRECT_OUT_ONLY)) {
+            jassertfalse;
+            return false;
+        }
+
+        dest.setProperty(STATE, source[STATE], nullptr);
+        dest.setProperty(GAIN, source[GAIN], nullptr);
+        dest.setProperty(DIRECT_OUT_ONLY, source[DIRECT_OUT_ONLY], nullptr);
+        return true;
+
+    } else if (sourceType == CartesianVector::XmlTags::POSITION) {
+        if (!source.hasProperty(CartesianVector::XmlTags::X) || !source.hasProperty(CartesianVector::XmlTags::Y)
+            || !source.hasProperty(CartesianVector::XmlTags::Z)) {
+            jassertfalse;
+            return false;
+        }
+
         auto const x = source[CartesianVector::XmlTags::X];
         auto const y = source[CartesianVector::XmlTags::Y];
         auto const z = source[CartesianVector::XmlTags::Z];
@@ -37,14 +62,27 @@ void copyProperties(const juce::ValueTree & source, juce::ValueTree & dest)
                          juce::VariantConverter<Position>::toVar(Position{ CartesianVector{ x, y, z } }),
                          nullptr);
 
-        return;
+        return true;
+
+    } else if (sourceType == "HIGHPASS") {
+        if (!source.hasProperty(FREQ)) {
+            jassertfalse;
+            return false;
+        }
+
+        dest.setProperty(FREQ, source[FREQ], nullptr);
+        return true;
     }
 
-    for (int i = 0; i < source.getNumProperties(); ++i) {
-        auto const propertyName = source.getPropertyName(i);
-        auto const propertyValue = source.getProperty(propertyName);
-        dest.setProperty(propertyName, propertyValue, nullptr);
-    }
+    // unsupported type
+    jassertfalse;
+    return false;
+
+    // for (int i = 0; i < source.getNumProperties(); ++i) {
+    //     auto const propertyName = source.getPropertyName(i);
+    //     auto const propertyValue = source.getProperty(propertyName);
+    //     dest.setProperty(propertyName, propertyValue, nullptr);
+    // }
 };
 
 juce::ValueTree convertSpeakerSetup(const juce::ValueTree & oldSpeakerSetup)
@@ -56,17 +94,19 @@ juce::ValueTree convertSpeakerSetup(const juce::ValueTree & oldSpeakerSetup)
     }
 
     // get outta here if the version is already up to date
-    if (oldSpeakerSetup[VERSION] == CURRENT_SPEAKER_SETUP_VERSION)
+    if (oldSpeakerSetup[SPEAKER_SETUP_VERSION] == CURRENT_SPEAKER_SETUP_VERSION)
         return oldSpeakerSetup;
 
     // create new value tree and copy root properties into it
     auto newVt = juce::ValueTree(SPEAKER_SETUP);
-    copyProperties(oldSpeakerSetup, newVt);
-    newVt.setProperty(VERSION, CURRENT_SPEAKER_SETUP_VERSION, nullptr);
+    if (!convertProperties(oldSpeakerSetup, newVt))
+        return {};
+
+    newVt.setProperty(SPEAKER_SETUP_VERSION, CURRENT_SPEAKER_SETUP_VERSION, nullptr);
 
     // create and append the main speaker group node
     auto mainSpeakerGroup = juce::ValueTree(SPEAKER_GROUP);
-    mainSpeakerGroup.setProperty(ID, MAIN_SPEAKER_GROUP, nullptr);
+    mainSpeakerGroup.setProperty(SPEAKER_GROUP_NAME, MAIN_SPEAKER_GROUP_NAME, nullptr);
     mainSpeakerGroup.setProperty(CARTESIAN_POSITION, juce::VariantConverter<Position>::toVar(Position{}), nullptr);
     newVt.appendChild(mainSpeakerGroup, nullptr);
 
@@ -81,12 +121,15 @@ juce::ValueTree convertSpeakerSetup(const juce::ValueTree & oldSpeakerSetup)
 
         auto newSpeaker = juce::ValueTree{ SPEAKER };
         const auto speakerId = speaker.getType().toString().removeCharacters("SPEAKER_");
-        newSpeaker.setProperty("ID", speakerId, nullptr);
+        newSpeaker.setProperty(SPEAKER_PATCH_ID, speakerId, nullptr);
 
         // copy properties for the speaker and its children
-        copyProperties(speaker, newSpeaker);
+        if (!convertProperties(speaker, newSpeaker))
+            return {};
+
         for (const auto child : speaker)
-            copyProperties(child, newSpeaker);
+            if (!convertProperties(child, newSpeaker))
+                return {};
 
         mainSpeakerGroup.appendChild(newSpeaker, nullptr);
     }

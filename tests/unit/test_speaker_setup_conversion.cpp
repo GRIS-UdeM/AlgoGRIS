@@ -19,7 +19,7 @@ void checkSpeakerSetupConversion(const std::string & version, const std::string 
         // do the conversion and make sure it's valid
         auto const vt = gris::convertSpeakerSetup(juce::ValueTree::fromXml(speakerSetupFile.loadFileAsString()));
         REQUIRE(vt.isValid());
-        REQUIRE(vt[gris::VERSION] == gris::CURRENT_SPEAKER_SETUP_VERSION);
+        REQUIRE(vt[gris::SPEAKER_SETUP_VERSION] == gris::CURRENT_SPEAKER_SETUP_VERSION);
     }
 }
 

@@ -894,8 +894,9 @@ tl::optional<SpeakerSetup> SpeakerSetup::fromXml(juce::XmlElement const & xml)
 {
     juce::ValueTree vt{ convertSpeakerSetup(juce::ValueTree::fromXml(xml)) };
 
-    if (vt[VERSION] == CURRENT_SPEAKER_SETUP_VERSION) {
+    if (vt[SPEAKER_SETUP_VERSION] == CURRENT_SPEAKER_SETUP_VERSION) {
         auto speakerSetup{ tl::optional<SpeakerSetup>(SpeakerSetup{}) };
+        // TODO VB: this is what we need to set below if the conversion failed
         speakerSetup->speakerSetupValueTree = vt;
 
         // TODO: this is all duplicated data that should ultimately be moved to value tree logic
@@ -911,7 +912,7 @@ tl::optional<SpeakerSetup> SpeakerSetup::fromXml(juce::XmlElement const & xml)
             if (child.getType() == SPEAKER_GROUP) {
                 for (auto subChild : child) {
                     if (auto const speakerData{ SpeakerData::fromVt(subChild) }) {
-                        const auto id{ output_patch_t(subChild[ID]) };
+                        const auto id{ output_patch_t(subChild[SPEAKER_PATCH_ID]) };
                         speakerSetup->ordering.add(id);
                         speakerSetup->speakers.add(id, std::make_unique<SpeakerData>(*speakerData));
                     } else
@@ -919,7 +920,7 @@ tl::optional<SpeakerSetup> SpeakerSetup::fromXml(juce::XmlElement const & xml)
                 }
             } else if (child.getType() == SPEAKER) {
                 if (auto const speakerData{ SpeakerData::fromVt(child) }) {
-                    const auto id{ output_patch_t(child[ID]) };
+                    const auto id{ output_patch_t(child[SPEAKER_PATCH_ID]) };
                     speakerSetup->ordering.add(id);
                     speakerSetup->speakers.add(id, std::make_unique<SpeakerData>(*speakerData));
                 } else
@@ -933,6 +934,7 @@ tl::optional<SpeakerSetup> SpeakerSetup::fromXml(juce::XmlElement const & xml)
     }
 
     // TODO VB: we do get here if upon booting the app, the last speaker setup we loaded is now gone
+    // the data below is probably ok, but we'll def have a mismatch between the value tree data and this
     jassertfalse;
 
     auto const spatMode{ stringToSpatMode(xml.getStringAttribute(XmlTags::SPAT_MODE)) };
