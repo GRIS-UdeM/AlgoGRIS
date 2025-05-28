@@ -65,12 +65,12 @@ bool convertProperties(const juce::ValueTree & source, juce::ValueTree & dest)
         return true;
 
     } else if (sourceType == "HIGHPASS") {
-        if (!source.hasProperty(FREQ)) {
+        if (!source.hasProperty("FREQ")) {
             jassertfalse;
             return false;
         }
 
-        dest.setProperty(FREQ, source[FREQ], nullptr);
+        dest.setProperty(HIGHPASS_FREQ, source["FREQ"], nullptr);
         return true;
     }
 

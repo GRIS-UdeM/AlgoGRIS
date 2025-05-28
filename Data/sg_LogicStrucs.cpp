@@ -309,11 +309,11 @@ tl::optional<SpeakerHighpassData> SpeakerHighpassData::fromXml(juce::XmlElement 
 //==============================================================================
 tl::optional<SpeakerHighpassData> SpeakerHighpassData::fromVt(juce::ValueTree const & vt) noexcept
 {
-    if (!vt.hasProperty(FREQ))
+    if (!vt.hasProperty(HIGHPASS_FREQ))
         return tl::nullopt;
 
     SpeakerHighpassData result;
-    result.freq = hz_t{ vt[FREQ] };
+    result.freq = hz_t{ vt[HIGHPASS_FREQ] };
 
     return result;
 }
@@ -422,7 +422,9 @@ tl::optional<SpeakerData> SpeakerData::fromVt(juce::ValueTree vt) noexcept
 
     result.gain = dbfs_t{ vt[GAIN] };
 
-    if (vt.hasProperty(FREQ))
+    // deprecated property name
+    jassert(!vt.hasProperty("FREQ"));
+    if (vt.hasProperty(HIGHPASS_FREQ))
         result.highpassData = SpeakerHighpassData::fromVt(vt);
 
     result.isDirectOutOnly = vt[DIRECT_OUT_ONLY];

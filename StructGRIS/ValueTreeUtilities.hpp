@@ -53,6 +53,6 @@ const juce::Identifier NEXT_SPEAKER_PATCH_ID{ "NEXT_SPEAKER_PATCH_ID" };
 const juce::Identifier STATE{ "STATE" };
 const juce::Identifier CARTESIAN_POSITION{ "CARTESIAN_POSITION" };
 const juce::Identifier GAIN{ "GAIN" };
-const juce::Identifier FREQ{ "FREQ" };
+const juce::Identifier HIGHPASS_FREQ{ "HIGHPASS_FREQ" };
 const juce::Identifier DIRECT_OUT_ONLY{ "DIRECT_OUT_ONLY" };
 } // namespace gris
