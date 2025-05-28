@@ -1,9 +1,10 @@
 #include <catch2/catch_all.hpp>
+#include "../../Data/sg_LegacySpatFileFormat.hpp"
 #include "../../StructGRIS/ValueTreeUtilities.hpp"
 
-void checkSpeakerSetupConversion(const std::string & version, const std::string & speakerSetupPath)
+void checkSpeakerSetupConversion(const std::string & version, const std::string & speakerSetupName)
 {
-    SECTION("Converting speaker setup " + speakerSetupPath + " with version " + version)
+    SECTION("Converting speaker setup " + speakerSetupName + " with version " + version)
     {
         // get the speaker setup directory. The build hack is because the pipeline uses that as current directory
         auto speakerSetupDir = juce::File::getCurrentWorkingDirectory();
@@ -13,11 +14,20 @@ void checkSpeakerSetupConversion(const std::string & version, const std::string 
         REQUIRE(speakerSetupDir.exists());
 
         // now get the speaker setup file and make sure it also exists
-        auto const speakerSetupFile = speakerSetupDir.getChildFile(speakerSetupPath);
+        auto const speakerSetupFile = speakerSetupDir.getChildFile(speakerSetupName);
         REQUIRE(speakerSetupFile.exists());
 
         // do the conversion and make sure it's valid
-        auto const vt = gris::convertSpeakerSetup(juce::ValueTree::fromXml(speakerSetupFile.loadFileAsString()));
+        auto const vt = [&version, &speakerSetupFile]() {
+            if (version == "0") {
+                auto const savedElement{ juce::XmlDocument{ speakerSetupFile }.getDocumentElement() };
+                auto speakerSetup{ gris::readLegacySpeakerSetup(*savedElement) };
+                return gris::SpeakerSetup::toVt(*speakerSetup);
+            } else {
+                return gris::convertSpeakerSetup(juce::ValueTree::fromXml(speakerSetupFile.loadFileAsString()));
+            }
+        }();
+
         REQUIRE(vt.isValid());
         REQUIRE(vt[gris::SPEAKER_SETUP_VERSION] == gris::CURRENT_SPEAKER_SETUP_VERSION);
     }
@@ -39,4 +49,5 @@ TEST_CASE("Speaker Setup Conversion", "[core]")
     checkSpeakerSetupConversion("3.3.6", "Cube24(8-8-8)Subs2 Studio PANaroma.xml");
     checkSpeakerSetupConversion("3.3.6", "Dome20(8-6-4-2)Sub4 Lakefield Icosa.xml");
     checkSpeakerSetupConversion("3.3.7", "Dome32(4X8)Subs4 SubMix.xml");
+    checkSpeakerSetupConversion("0", "default_speaker_setup.xml");
 }

@@ -360,6 +360,24 @@ std::unique_ptr<juce::XmlElement> SpeakerData::toXml(output_patch_t const output
 }
 
 //==============================================================================
+juce::ValueTree SpeakerData::toVt(output_patch_t const outputPatch) const noexcept
+{
+    juce::ValueTree result(SPEAKER);
+
+    result.setProperty(SPEAKER_PATCH_ID, outputPatch.get(), nullptr);
+    result.setProperty(STATE, sliceStateToString(state), nullptr);
+    result.setProperty(CARTESIAN_POSITION, juce::VariantConverter<Position>::toVar(position), nullptr);
+    result.setProperty(GAIN, gain.get(), nullptr);
+
+    if (highpassData)
+        result.setProperty(HIGHPASS_FREQ, highpassData->freq.get(), nullptr);
+
+    result.setProperty(DIRECT_OUT_ONLY, isDirectOutOnly, nullptr);
+
+    return result;
+}
+
+//==============================================================================
 
 tl::optional<SpeakerData> SpeakerData::fromXml(juce::XmlElement const & xml) noexcept
 {
@@ -892,87 +910,85 @@ std::unique_ptr<juce::XmlElement> SpeakerSetup::toXml() const
 }
 
 //==============================================================================
+juce::ValueTree SpeakerSetup::toVt(const SpeakerSetup & legacySpeakerSetup)
+{
+    juce::ValueTree speakerSetup(SPEAKER_SETUP);
+
+    // if you edit any of this, you probably also need to edit convertProperties() in ValueTreeUtilities
+    speakerSetup.setProperty(SPEAKER_SETUP_VERSION, CURRENT_SPEAKER_SETUP_VERSION, nullptr);
+    speakerSetup.setProperty(SPAT_MODE, spatModeToString(legacySpeakerSetup.spatMode), nullptr);
+    speakerSetup.setProperty(DIFFUSION, legacySpeakerSetup.diffusion, nullptr);
+    speakerSetup.setProperty(GENERAL_MUTE, legacySpeakerSetup.generalMute, nullptr);
+
+    // and if you edit any of this, you probably also need to edit convertSpeakerSetup in ValueTreeUtilities
+    // create and append the main speaker group node
+    auto mainSpeakerGroup = juce::ValueTree(SPEAKER_GROUP);
+    mainSpeakerGroup.setProperty(SPEAKER_GROUP_NAME, MAIN_SPEAKER_GROUP_NAME, nullptr);
+    mainSpeakerGroup.setProperty(CARTESIAN_POSITION, juce::VariantConverter<Position>::toVar(Position{}), nullptr);
+    speakerSetup.appendChild(mainSpeakerGroup, nullptr);
+
+    for (auto const outputPatch : legacySpeakerSetup.ordering)
+        mainSpeakerGroup.appendChild(legacySpeakerSetup.speakers[outputPatch].toVt(outputPatch), nullptr);
+
+    return speakerSetup;
+}
+
+//==============================================================================
 tl::optional<SpeakerSetup> SpeakerSetup::fromXml(juce::XmlElement const & xml)
 {
+    // first check if this is a legacy speaker setup
+    auto const spatMode{ stringToSpatMode(xml.getStringAttribute(XmlTags::SPAT_MODE)) };
+    if (xml.getTagName() != XmlTags::MAIN_TAG || !spatMode) {
+        auto speakerSetup{ readLegacySpeakerSetup(xml) };
+        speakerSetup->speakerSetupValueTree = SpeakerSetup::toVt(*speakerSetup);
+        return speakerSetup;
+    }
+
+    // if it's not legacy, convert it here, and get outta here if the conversion failed
     juce::ValueTree vt{ convertSpeakerSetup(juce::ValueTree::fromXml(xml)) };
+    if (vt[SPEAKER_SETUP_VERSION] != CURRENT_SPEAKER_SETUP_VERSION) {
+        jassertfalse;
+        return {};
+    }
 
-    if (vt[SPEAKER_SETUP_VERSION] == CURRENT_SPEAKER_SETUP_VERSION) {
-        auto speakerSetup{ tl::optional<SpeakerSetup>(SpeakerSetup{}) };
-        // TODO VB: this is what we need to set below if the conversion failed
-        speakerSetup->speakerSetupValueTree = vt;
+    // value tree conversion succeeded, now fill a SpeakerSetup
+    auto speakerSetup{ tl::optional<SpeakerSetup>(SpeakerSetup{}) };
+    speakerSetup->speakerSetupValueTree = vt;
 
-        // TODO: this is all duplicated data that should ultimately be moved to value tree logic
-        if (auto const spatmode{ stringToSpatMode(vt[XmlTags::SPAT_MODE]) })
-            speakerSetup->spatMode = *spatmode;
-        jassert(speakerSetup->spatMode == SpatMode::mbap || speakerSetup->spatMode == SpatMode::vbap);
-        speakerSetup->diffusion = vt[XmlTags::DIFFUSION];
-        speakerSetup->generalMute = vt[XmlTags::GENERAL_MUTE];
+    if (auto const spatmode{ stringToSpatMode(vt[XmlTags::SPAT_MODE]) })
+        speakerSetup->spatMode = *spatmode;
+    jassert(speakerSetup->spatMode == SpatMode::mbap || speakerSetup->spatMode == SpatMode::vbap);
 
-        auto const mainGroup{ vt.getChild(0) };
-        jassert(mainGroup.getType() == SPEAKER_GROUP);
-        for (auto child : mainGroup) {
-            if (child.getType() == SPEAKER_GROUP) {
-                for (auto subChild : child) {
-                    if (auto const speakerData{ SpeakerData::fromVt(subChild) }) {
-                        const auto id{ output_patch_t(subChild[SPEAKER_PATCH_ID]) };
-                        speakerSetup->ordering.add(id);
-                        speakerSetup->speakers.add(id, std::make_unique<SpeakerData>(*speakerData));
-                    } else
-                        return tl::nullopt;
-                }
-            } else if (child.getType() == SPEAKER) {
-                if (auto const speakerData{ SpeakerData::fromVt(child) }) {
-                    const auto id{ output_patch_t(child[SPEAKER_PATCH_ID]) };
+    speakerSetup->diffusion = vt[XmlTags::DIFFUSION];
+    speakerSetup->generalMute = vt[XmlTags::GENERAL_MUTE];
+
+    auto const mainGroup{ vt.getChild(0) };
+    jassert(mainGroup.getType() == SPEAKER_GROUP);
+
+    for (auto child : mainGroup) {
+        if (child.getType() == SPEAKER_GROUP) {
+            for (auto subChild : child) {
+                if (auto const speakerData{ SpeakerData::fromVt(subChild) }) {
+                    const auto id{ output_patch_t(subChild[SPEAKER_PATCH_ID]) };
                     speakerSetup->ordering.add(id);
                     speakerSetup->speakers.add(id, std::make_unique<SpeakerData>(*speakerData));
                 } else
                     return tl::nullopt;
-            } else {
-                jassertfalse;
             }
-        }
-
-        return speakerSetup;
-    }
-
-    // TODO VB: we do get here if upon booting the app, the last speaker setup we loaded is now gone
-    // the data below is probably ok, but we'll def have a mismatch between the value tree data and this
-    jassertfalse;
-
-    auto const spatMode{ stringToSpatMode(xml.getStringAttribute(XmlTags::SPAT_MODE)) };
-    auto const diffusion{ tl::optional<float>(xml.getStringAttribute(XmlTags::DIFFUSION).getFloatValue()) };
-
-    if (xml.getTagName() != XmlTags::MAIN_TAG || !spatMode) {
-        return readLegacySpeakerSetup(xml);
-    }
-
-    tl::optional<SpeakerSetup> result{ SpeakerSetup{} };
-    result->spatMode = *spatMode;
-    result->diffusion = *diffusion;
-    result->generalMute = xml.getBoolAttribute(XmlTags::GENERAL_MUTE);
-
-    // Speaker setup spatialization mode is either vbap or mbap.
-    if (result->spatMode != SpatMode::mbap)
-        result->spatMode = SpatMode::vbap;
-
-    for (auto const * speaker : xml.getChildIterator()) {
-        auto const tagName{ speaker->getTagName() };
-        if (!tagName.startsWith(SpeakerData::XmlTags::MAIN_TAG_PREFIX)) {
+        } else if (child.getType() == SPEAKER) {
+            if (auto const speakerData{ SpeakerData::fromVt(child) }) {
+                const auto id{ output_patch_t(child[SPEAKER_PATCH_ID]) };
+                speakerSetup->ordering.add(id);
+                speakerSetup->speakers.add(id, std::make_unique<SpeakerData>(*speakerData));
+            } else
+                return tl::nullopt;
+        } else {
+            jassertfalse;
             return tl::nullopt;
         }
-        output_patch_t const outputPatch{
-            tagName.substring(SpeakerData::XmlTags::MAIN_TAG_PREFIX.length()).getIntValue()
-        };
-        result->ordering.add(outputPatch);
-        auto const speakerData{ SpeakerData::fromXml(*speaker) };
-        if (!speakerData) {
-            return tl::nullopt;
-        }
-
-        result->speakers.add(outputPatch, std::make_unique<SpeakerData>(*speakerData));
     }
 
-    return result;
+    return speakerSetup;
 }
 
 //==============================================================================

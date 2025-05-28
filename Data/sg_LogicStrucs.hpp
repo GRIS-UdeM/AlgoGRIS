@@ -242,6 +242,7 @@ struct SpeakerData {
     [[nodiscard]] SpeakerAudioConfig toConfig(bool soloMode, double sampleRate) const noexcept;
     [[nodiscard]] ViewportSpeakerConfig toViewportConfig() const noexcept;
     [[nodiscard]] std::unique_ptr<juce::XmlElement> toXml(output_patch_t outputPatch) const noexcept;
+    [[nodiscard]] juce::ValueTree toVt(output_patch_t outputPatch) const noexcept;
     [[nodiscard]] static tl::optional<SpeakerData> fromXml(juce::XmlElement const & xml) noexcept;
     [[nodiscard]] static tl::optional<SpeakerData> fromVt(juce::ValueTree vt) noexcept;
     static tl::optional<Position> getAbsoluteSpeakerPosition(juce::ValueTree vt);
@@ -441,6 +442,7 @@ struct SpeakerSetup {
     [[nodiscard]] bool isDomeLike() const noexcept;
     [[nodiscard]] SpeakersAudioConfig toAudioConfig(double sampleRate) const noexcept;
     [[nodiscard]] int numOfSpatializedSpeakers() const noexcept;
+    [[nodiscard]] static juce::ValueTree toVt(const SpeakerSetup & legacySpeakerSetup);
     //==============================================================================
     struct XmlTags {
         static juce::String const MAIN_TAG;

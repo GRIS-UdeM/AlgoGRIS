@@ -22,21 +22,21 @@ namespace gris
 {
 bool convertProperties(const juce::ValueTree & source, juce::ValueTree & dest)
 {
-    juce::String sourceType = source.getType().toString();
+    auto const sourceType = source.getType().toString();
 
-    if (sourceType == "SPEAKER_SETUP") {
-        if (!source.hasProperty(SPAT_MODE) || !source.hasProperty("DIFFUSION") || !source.hasProperty("GENERAL_MUTE")) {
+    if (sourceType == SPEAKER_SETUP.toString()) {
+        if (!source.hasProperty(SPAT_MODE) || !source.hasProperty(DIFFUSION) || !source.hasProperty(GENERAL_MUTE)) {
             jassertfalse;
             return false;
         }
 
-        dest.setProperty(SPAT_MODE, source[SPAT_MODE], nullptr);
         dest.setProperty(SPEAKER_SETUP_VERSION, CURRENT_SPEAKER_SETUP_VERSION, nullptr);
-        dest.setProperty("DIFFUSION", source["DIFFUSION"], nullptr);
-        dest.setProperty("GENERAL_MUTE", source["GENERAL_MUTE"], nullptr);
+        dest.setProperty(SPAT_MODE, source[SPAT_MODE], nullptr);
+        dest.setProperty(DIFFUSION, source[DIFFUSION], nullptr);
+        dest.setProperty(GENERAL_MUTE, source[GENERAL_MUTE], nullptr);
         return true;
-    }
-    if (sourceType.contains("SPEAKER_")) {
+
+    } else if (sourceType.contains("SPEAKER_")) {
         if (!source.hasProperty(STATE) || !source.hasProperty(GAIN) || !source.hasProperty(DIRECT_OUT_ONLY)) {
             jassertfalse;
             return false;
@@ -77,12 +77,6 @@ bool convertProperties(const juce::ValueTree & source, juce::ValueTree & dest)
     // unsupported type
     jassertfalse;
     return false;
-
-    // for (int i = 0; i < source.getNumProperties(); ++i) {
-    //     auto const propertyName = source.getPropertyName(i);
-    //     auto const propertyValue = source.getProperty(propertyName);
-    //     dest.setProperty(propertyName, propertyValue, nullptr);
-    // }
 };
 
 juce::ValueTree convertSpeakerSetup(const juce::ValueTree & oldSpeakerSetup)
@@ -101,8 +95,6 @@ juce::ValueTree convertSpeakerSetup(const juce::ValueTree & oldSpeakerSetup)
     auto newVt = juce::ValueTree(SPEAKER_SETUP);
     if (!convertProperties(oldSpeakerSetup, newVt))
         return {};
-
-    newVt.setProperty(SPEAKER_SETUP_VERSION, CURRENT_SPEAKER_SETUP_VERSION, nullptr);
 
     // create and append the main speaker group node
     auto mainSpeakerGroup = juce::ValueTree(SPEAKER_GROUP);
