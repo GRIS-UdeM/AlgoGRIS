@@ -49,10 +49,10 @@ constexpr auto DEFAULT_OSC_INPUT_PORT = 18032;
 constexpr auto MAX_OSC_INPUT_PORT = 65535;
 
 //==============================================================================
-/** The classical states of a mixing slice (input or output). */
-enum class SliceState { normal, muted, solo };
-[[nodiscard]] juce::String sliceStateToString(SliceState state);
-[[nodiscard]] tl::optional<SliceState> stringToSliceState(juce::String const & string);
+/** I/O state of a speaker, whether it's muted, soloed, or just normal */
+enum class SpeakerIOState { normal, muted, solo };
+[[nodiscard]] juce::String IOStateToString(SpeakerIOState state);
+[[nodiscard]] tl::optional<SpeakerIOState> stringToIOState(juce::String const & string);
 
 //==============================================================================
 /** Attenuation Bypass State. Invalid is here to keep project file compatiblity */
@@ -187,7 +187,7 @@ struct ViewportData {
  * COLD
  */
 struct SourceData {
-    SliceState state{};                // normal / muted / solo
+    SpeakerIOState state{};            // normal / muted / solo
     tl::optional<Position> position{}; // tl::nullopt if the source is inactive
     float azimuthSpan{};
     float zenithSpan{};
@@ -231,7 +231,7 @@ struct SpeakerHighpassData {
 
 //==============================================================================
 struct SpeakerData {
-    SliceState state{};
+    SpeakerIOState state{};
     Position position{ PolarVector{ radians_t{ 0.0f }, radians_t{ 0.0f }, 1.0f } };
     dbfs_t gain{};
     tl::optional<SpeakerHighpassData> highpassData{};

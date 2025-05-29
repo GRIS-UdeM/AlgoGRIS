@@ -37,12 +37,12 @@ bool convertProperties(const juce::ValueTree & source, juce::ValueTree & dest)
         return true;
 
     } else if (sourceType.contains("SPEAKER_")) {
-        if (!source.hasProperty(STATE) || !source.hasProperty(GAIN) || !source.hasProperty(DIRECT_OUT_ONLY)) {
+        if (!source.hasProperty("STATE") || !source.hasProperty(GAIN) || !source.hasProperty(DIRECT_OUT_ONLY)) {
             jassertfalse;
             return false;
         }
 
-        dest.setProperty(STATE, source[STATE], nullptr);
+        dest.setProperty(IO_STATE, source["STATE"], nullptr);
         dest.setProperty(GAIN, source[GAIN], nullptr);
         dest.setProperty(DIRECT_OUT_ONLY, source[DIRECT_OUT_ONLY], nullptr);
         return true;
@@ -92,15 +92,17 @@ juce::ValueTree convertSpeakerSetup(const juce::ValueTree & oldSpeakerSetup)
         return oldSpeakerSetup;
 
     // create new value tree and copy root properties into it
-    auto newVt = juce::ValueTree(SPEAKER_SETUP);
-    if (!convertProperties(oldSpeakerSetup, newVt))
+    auto newSpeakerSetupVt = juce::ValueTree(SPEAKER_SETUP);
+    if (!convertProperties(oldSpeakerSetup, newSpeakerSetupVt))
         return {};
+    newSpeakerSetupVt.setProperty(UUID, juce::Uuid().toString(), nullptr);
 
     // create and append the main speaker group node
     auto mainSpeakerGroup = juce::ValueTree(SPEAKER_GROUP);
     mainSpeakerGroup.setProperty(SPEAKER_GROUP_NAME, MAIN_SPEAKER_GROUP_NAME, nullptr);
     mainSpeakerGroup.setProperty(CARTESIAN_POSITION, juce::VariantConverter<Position>::toVar(Position{}), nullptr);
-    newVt.appendChild(mainSpeakerGroup, nullptr);
+    mainSpeakerGroup.setProperty(UUID, juce::Uuid().toString(), nullptr);
+    newSpeakerSetupVt.appendChild(mainSpeakerGroup, nullptr);
 
     // then add all speakers to the main group
     for (const auto & speaker : oldSpeakerSetup) {
@@ -123,10 +125,11 @@ juce::ValueTree convertSpeakerSetup(const juce::ValueTree & oldSpeakerSetup)
             if (!convertProperties(child, newSpeaker))
                 return {};
 
+        newSpeaker.setProperty(UUID, juce::Uuid().toString(), nullptr);
         mainSpeakerGroup.appendChild(newSpeaker, nullptr);
     }
 
-    return newVt;
+    return newSpeakerSetupVt;
 }
 
 juce::ValueTree getTopParent(const juce::ValueTree & vt)

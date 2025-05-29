@@ -29,6 +29,20 @@ void checkSpeakerSetupConversion(const std::string & version, const std::string 
         }();
 
         REQUIRE(vt.isValid());
+
+        // Recursively check that all ValueTree nodes have a UUID property
+        std::function<void(const juce::ValueTree &)> checkAllTreeUUIDs;
+        checkAllTreeUUIDs = [&](const juce::ValueTree & tree) {
+            if (!tree.hasProperty("UUID")) {
+                DBG(tree.toXmlString());
+                jassertfalse;
+            }
+            REQUIRE(tree.hasProperty("UUID"));
+            for (int i = 0; i < tree.getNumChildren(); ++i)
+                checkAllTreeUUIDs(tree.getChild(i));
+        };
+        checkAllTreeUUIDs(vt);
+
         REQUIRE(vt[gris::SPEAKER_SETUP_VERSION] == gris::CURRENT_SPEAKER_SETUP_VERSION);
     }
 }

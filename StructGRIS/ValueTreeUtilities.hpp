@@ -54,8 +54,7 @@ const juce::Identifier SPEAKER{ "SPEAKER" };
 const juce::Identifier SPEAKER_PATCH_ID{ "SPEAKER_PATCH_ID" };
 const juce::Identifier NEXT_SPEAKER_PATCH_ID{ "NEXT_SPEAKER_PATCH_ID" };
 
-// TODO VB: Use IO_STATE
-const juce::Identifier STATE{ "STATE" };
+const juce::Identifier IO_STATE{ "IO_STATE" };
 const juce::Identifier CARTESIAN_POSITION{ "CARTESIAN_POSITION" };
 const juce::Identifier GAIN{ "GAIN" };
 const juce::Identifier HIGHPASS_FREQ{ "HIGHPASS_FREQ" };
