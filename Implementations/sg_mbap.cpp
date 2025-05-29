@@ -108,7 +108,6 @@ static MbapField initField(std::vector<Position> speakers)
 /* Pre-compute the 3 dimensional matrix of amplitude for the speakers. */
 static void computeMatrix(MbapField & field)
 {
-    DBG("computeMatrix");
     static auto constexpr H_SIZE = MBAP_MATRIX_SIZE / 2;
 
     for (size_t i{}; i < field.speakerPositions.size(); ++i) {

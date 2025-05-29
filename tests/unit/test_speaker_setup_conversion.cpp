@@ -34,7 +34,6 @@ void checkSpeakerSetupConversion(const std::string & version, const std::string 
         std::function<void(const juce::ValueTree &)> checkAllTreeUUIDs;
         checkAllTreeUUIDs = [&](const juce::ValueTree & tree) {
             if (!tree.hasProperty("UUID")) {
-                DBG(tree.toXmlString());
                 jassertfalse;
             }
             REQUIRE(tree.hasProperty("UUID"));
