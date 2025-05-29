@@ -453,7 +453,7 @@ tl::optional<SpeakerData> SpeakerData::fromVt(juce::ValueTree vt) noexcept
 
 tl::optional<Position> SpeakerData::getAbsoluteSpeakerPosition(juce::ValueTree speakerVt)
 {
-    // get parent position
+    // get parent group position
     auto const speakerGroup{ speakerVt.getParent() };
     if (!speakerVt.isValid() || !speakerVt.hasProperty(CARTESIAN_POSITION) || !speakerGroup.isValid()
         || !speakerGroup.hasProperty(CARTESIAN_POSITION) || speakerGroup.getType() != SPEAKER_GROUP) {
@@ -463,7 +463,7 @@ tl::optional<Position> SpeakerData::getAbsoluteSpeakerPosition(juce::ValueTree s
 
     // get speaker position and offset it by the group center
     Position speakerPosition{ juce::VariantConverter<Position>::fromVar(speakerVt[CARTESIAN_POSITION]) };
-    Position parentPosition = { juce::VariantConverter<Position>::fromVar(speakerGroup[CARTESIAN_POSITION]) };
+    Position parentPosition{ juce::VariantConverter<Position>::fromVar(speakerGroup[CARTESIAN_POSITION]) };
 
     return Position{ CartesianVector{ parentPosition.getCartesian().x + speakerPosition.getCartesian().x,
                                       parentPosition.getCartesian().y + speakerPosition.getCartesian().y,

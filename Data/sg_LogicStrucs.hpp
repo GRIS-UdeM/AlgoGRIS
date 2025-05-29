@@ -245,6 +245,8 @@ struct SpeakerData {
     [[nodiscard]] juce::ValueTree toVt(output_patch_t outputPatch) const noexcept;
     [[nodiscard]] static tl::optional<SpeakerData> fromXml(juce::XmlElement const & xml) noexcept;
     [[nodiscard]] static tl::optional<SpeakerData> fromVt(juce::ValueTree vt) noexcept;
+
+    /** This returns the position of the speaker with regards to the origin even if the speaker is inside a group. */
     static tl::optional<Position> getAbsoluteSpeakerPosition(juce::ValueTree vt);
 
     [[nodiscard]] bool operator==(SpeakerData const & other) const noexcept;
