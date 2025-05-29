@@ -246,7 +246,15 @@ struct SpeakerData {
     [[nodiscard]] static tl::optional<SpeakerData> fromXml(juce::XmlElement const & xml) noexcept;
     [[nodiscard]] static tl::optional<SpeakerData> fromVt(juce::ValueTree vt) noexcept;
 
-    /** This returns the position of the speaker with regards to the origin even if the speaker is inside a group. */
+    /**
+     * @brief Returns the absolute position of a speaker from a given ValueTree.
+     *
+     * This function extracts and returns the absolute position of a speaker with regards to the origin,
+     * even if the speaker is inside a group, from the provided ValueTree.
+     *
+     * @param vt The ValueTree containing the speaker data.
+     * @return tl::optional<Position> The absolute position if available, otherwise tl::nullopt.
+     */
     static tl::optional<Position> getAbsoluteSpeakerPosition(juce::ValueTree vt);
 
     [[nodiscard]] bool operator==(SpeakerData const & other) const noexcept;

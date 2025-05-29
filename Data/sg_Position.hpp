@@ -34,6 +34,11 @@ class Position
     CartesianVector mCartesian{};
 
 public:
+    /**
+     * @brief Represents a single part/unit of a full Position.
+     *
+     * Used to specify which coordinate or component of a Position is being referenced or modified.
+     */
     enum class Coordinate { x = 0, y, z, azimuth, elevation, radius };
 
     //==============================================================================
@@ -43,7 +48,10 @@ public:
     ~Position() = default;
     SG_DEFAULT_COPY_AND_MOVE(Position)
     //==============================================================================
-    [[nodiscard]] constexpr auto const & getPolar() const noexcept { return mPolar; }
+    [[nodiscard]] constexpr auto const & getPolar() const noexcept
+    {
+        return mPolar;
+    }
     [[nodiscard]] constexpr auto const & getCartesian() const noexcept { return mCartesian; }
     //==============================================================================
     [[nodiscard]] constexpr bool operator==(Position const & other) const noexcept;
@@ -103,6 +111,12 @@ static_assert(std::is_trivially_destructible_v<Position>);
 
 namespace juce
 {
+/**
+ * @brief VariantConverter specialization for gris::Position.
+ *
+ * Provides conversion between juce::var and gris::Position for serialization and deserialization, which is especially
+ * useful to save/restore data from a ValueTree.
+ */
 template<>
 struct VariantConverter<gris::Position> final {
     static gris::Position fromVar(const juce::var & v)
