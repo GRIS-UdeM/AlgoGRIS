@@ -36,13 +36,11 @@ juce::ValueTree getTopParent(const juce::ValueTree & vt);
 
 // Speaker setup identifiers
 const juce::Identifier SPEAKER_SETUP{ "SPEAKER_SETUP" };
-// TODO VB: we should be using SPAT_GRIS_VERSION instead of SPEAKER_SETUP_VERSION
 const juce::Identifier SPEAKER_SETUP_VERSION{ "SPEAKER_SETUP_VERSION" };
 const auto CURRENT_SPEAKER_SETUP_VERSION = "4.0.0";
 const juce::Identifier SPAT_MODE{ "SPAT_MODE" };
 const juce::Identifier UUID{ "UUID" };
 
-// TODO VB: rename
 const juce::Identifier DIFFUSION{ "DIFFUSION" };
 const juce::Identifier GENERAL_MUTE{ "GENERAL_MUTE" };
 
