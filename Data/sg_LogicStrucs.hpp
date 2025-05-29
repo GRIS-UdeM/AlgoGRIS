@@ -49,10 +49,15 @@ constexpr auto DEFAULT_OSC_INPUT_PORT = 18032;
 constexpr auto MAX_OSC_INPUT_PORT = 65535;
 
 //==============================================================================
+// TODO: rename SliceState to SpeakerIOState to better reflect its purpose
 /** I/O state of a speaker, whether it's muted, soloed, or just normal */
-enum class SpeakerIOState { normal, muted, solo };
-[[nodiscard]] juce::String IOStateToString(SpeakerIOState state);
-[[nodiscard]] tl::optional<SpeakerIOState> stringToIOState(juce::String const & string);
+enum class SliceState { normal, muted, solo };
+
+// TODO: rename sliceStateToString() to IOStateToString() to better reflect its purpose
+[[nodiscard]] juce::String sliceStateToString(SliceState state);
+
+// TODO: rename stringToSliceState() to stringToIOState() to better reflect its purpose
+[[nodiscard]] tl::optional<SliceState> stringToSliceState(juce::String const & string);
 
 //==============================================================================
 /** Attenuation Bypass State. Invalid is here to keep project file compatiblity */
@@ -187,7 +192,7 @@ struct ViewportData {
  * COLD
  */
 struct SourceData {
-    SpeakerIOState state{};            // normal / muted / solo
+    SliceState state{};                // normal / muted / solo
     tl::optional<Position> position{}; // tl::nullopt if the source is inactive
     float azimuthSpan{};
     float zenithSpan{};
@@ -231,7 +236,7 @@ struct SpeakerHighpassData {
 
 //==============================================================================
 struct SpeakerData {
-    SpeakerIOState state{};
+    SliceState state{};
     Position position{ PolarVector{ radians_t{ 0.0f }, radians_t{ 0.0f }, 1.0f } };
     dbfs_t gain{};
     tl::optional<SpeakerHighpassData> highpassData{};

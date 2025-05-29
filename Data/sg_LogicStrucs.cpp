@@ -113,14 +113,14 @@ juce::String const SpeakerSetup::XmlTags::DIFFUSION = "DIFFUSION";
 juce::String const SpeakerSetup::XmlTags::GENERAL_MUTE = "GENERAL_MUTE";
 
 //==============================================================================
-juce::String IOStateToString(SpeakerIOState const state)
+juce::String sliceStateToString(SliceState const state)
 {
     switch (state) {
-    case SpeakerIOState::muted:
+    case SliceState::muted:
         return "muted";
-    case SpeakerIOState::solo:
+    case SliceState::solo:
         return "solo";
-    case SpeakerIOState::normal:
+    case SliceState::normal:
         return "normal";
     }
     jassertfalse;
@@ -128,16 +128,16 @@ juce::String IOStateToString(SpeakerIOState const state)
 }
 
 //==============================================================================
-tl::optional<SpeakerIOState> stringToIOState(juce::String const & string)
+tl::optional<SliceState> stringToSliceState(juce::String const & string)
 {
     if (string == "muted") {
-        return SpeakerIOState::muted;
+        return SliceState::muted;
     }
     if (string == "solo") {
-        return SpeakerIOState::solo;
+        return SliceState::solo;
     }
     if (string == "normal") {
-        return SpeakerIOState::normal;
+        return SliceState::normal;
     }
     return tl::nullopt;
 }
@@ -174,7 +174,7 @@ SourceAudioConfig SourceData::toConfig(bool const soloMode) const
 {
     SourceAudioConfig result;
     result.directOut = directOut;
-    result.isMuted = soloMode ? state != SpeakerIOState::solo : state == SpeakerIOState::muted;
+    result.isMuted = soloMode ? state != SliceState::solo : state == SliceState::muted;
     return result;
 }
 
@@ -198,7 +198,7 @@ std::unique_ptr<juce::XmlElement> SourceData::toXml(source_index_t const index) 
 {
     auto result{ std::make_unique<juce::XmlElement>(XmlTags::MAIN_TAG_PREFIX + juce::String{ index.get() }) };
 
-    result->setAttribute(XmlTags::STATE, IOStateToString(state));
+    result->setAttribute(XmlTags::STATE, sliceStateToString(state));
     if (directOut) {
         result->setAttribute(XmlTags::DIRECT_OUT, directOut->get());
     }
@@ -224,7 +224,7 @@ tl::optional<SourceData> SourceData::fromXml(juce::XmlElement const & xml)
         return tl::nullopt;
     }
 
-    auto const state{ stringToIOState(xml.getStringAttribute(XmlTags::STATE)) };
+    auto const state{ stringToSliceState(xml.getStringAttribute(XmlTags::STATE)) };
 
     if (!state) {
         return tl::nullopt;
@@ -330,7 +330,7 @@ SpeakerAudioConfig SpeakerData::toConfig(bool const soloMode, double const sampl
     auto const getHighpassConfig = [&](SpeakerHighpassData const & data) { return data.toConfig(sampleRate); };
 
     SpeakerAudioConfig result;
-    result.isMuted = soloMode ? state != SpeakerIOState::solo : state == SpeakerIOState::muted;
+    result.isMuted = soloMode ? state != SliceState::solo : state == SliceState::muted;
     result.gain = gain.toGain();
     result.highpassConfig = highpassData.map(getHighpassConfig);
     result.isDirectOutOnly = isDirectOutOnly;
@@ -348,7 +348,7 @@ std::unique_ptr<juce::XmlElement> SpeakerData::toXml(output_patch_t const output
 {
     auto result{ std::make_unique<juce::XmlElement>(XmlTags::MAIN_TAG_PREFIX + juce::String{ outputPatch.get() }) };
 
-    result->setAttribute(XmlTags::STATE, IOStateToString(state));
+    result->setAttribute(XmlTags::STATE, sliceStateToString(state));
     result->addChildElement(position.getCartesian().toXml().release());
     result->setAttribute(XmlTags::GAIN, gain.get());
     if (highpassData) {
@@ -365,7 +365,7 @@ juce::ValueTree SpeakerData::toVt(output_patch_t const outputPatch) const noexce
     juce::ValueTree speakerVt(SPEAKER);
 
     speakerVt.setProperty(SPEAKER_PATCH_ID, outputPatch.get(), nullptr);
-    speakerVt.setProperty(IO_STATE, IOStateToString(state), nullptr);
+    speakerVt.setProperty(IO_STATE, sliceStateToString(state), nullptr);
     speakerVt.setProperty(CARTESIAN_POSITION, juce::VariantConverter<Position>::toVar(position), nullptr);
     speakerVt.setProperty(GAIN, gain.get(), nullptr);
 
@@ -394,7 +394,7 @@ tl::optional<SpeakerData> SpeakerData::fromXml(juce::XmlElement const & xml) noe
     }
 
     auto const position{ CartesianVector::fromXml(*positionElement) };
-    auto const state{ stringToIOState(xml.getStringAttribute(XmlTags::STATE)) };
+    auto const state{ stringToSliceState(xml.getStringAttribute(XmlTags::STATE)) };
 
     if (!position || !state) {
         return tl::nullopt;
@@ -429,7 +429,7 @@ tl::optional<SpeakerData> SpeakerData::fromVt(juce::ValueTree vt) noexcept
 
     SpeakerData result{};
 
-    auto const state{ stringToIOState(vt[IO_STATE]) };
+    auto const state{ stringToSliceState(vt[IO_STATE]) };
     if (!state)
         return tl::nullopt;
     result.state = *state;
@@ -1015,7 +1015,7 @@ SpeakersAudioConfig SpeakerSetup::toAudioConfig(double const sampleRate) const n
     auto result{ std::make_unique<SpeakersAudioConfig>() };
 
     auto const isAtLeastOnSpeakerSolo{ std::any_of(speakers.cbegin(), speakers.cend(), [](auto const node) {
-        return node.value->state == SpeakerIOState::solo;
+        return node.value->state == SliceState::solo;
     }) };
 
     for (auto const speaker : speakers) {
@@ -1045,18 +1045,18 @@ std::unique_ptr<AudioConfig> SpatGrisData::toAudioConfig() const
     auto const isAtLeastOneSourceSolo{ std::any_of(
         project.sources.cbegin(),
         project.sources.cend(),
-        [](auto const node) { return node.value->state == SpeakerIOState::solo; }) };
+        [](auto const node) { return node.value->state == SliceState::solo; }) };
 
     auto const isValidDirectOut = [&](SourceData const & source) {
         if (!source.directOut) {
             return false;
         }
 
-        if (source.state == SpeakerIOState::muted) {
+        if (source.state == SliceState::muted) {
             return false;
         }
 
-        if (isAtLeastOneSourceSolo && source.state != SpeakerIOState::solo) {
+        if (isAtLeastOneSourceSolo && source.state != SliceState::solo) {
             return false;
         }
 
