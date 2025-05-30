@@ -56,6 +56,7 @@ struct CartesianVector {
     //==============================================================================
     [[nodiscard]] constexpr bool operator==(CartesianVector const & other) const noexcept;
     [[nodiscard]] constexpr bool operator!=(CartesianVector const & other) const noexcept;
+    [[nodiscard]] constexpr CartesianVector operator+(CartesianVector const & other) const noexcept;
     [[nodiscard]] constexpr CartesianVector operator-(CartesianVector const & other) const noexcept;
     [[nodiscard]] constexpr CartesianVector operator/(float scalar) const noexcept;
     [[nodiscard]] constexpr CartesianVector operator-() const noexcept;
@@ -126,6 +127,13 @@ constexpr bool CartesianVector::operator!=(CartesianVector const & other) const 
 constexpr CartesianVector CartesianVector::operator-(CartesianVector const & other) const noexcept
 {
     CartesianVector const result{ x - other.x, y - other.y, z - other.z };
+    return result;
+}
+
+//==============================================================================
+constexpr CartesianVector CartesianVector::operator+(CartesianVector const & other) const noexcept
+{
+    CartesianVector const result{ x + other.x, y + other.y, z + other.z };
     return result;
 }
 
