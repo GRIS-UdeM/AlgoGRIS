@@ -83,10 +83,7 @@ static SpatGrisData getSpatGrisDataFromFiles(const std::string & projectFilename
     SpatGrisData spatGrisData;
 
     // hack to get around the pipeline having a different path than other places
-    auto utilDir = juce::File::getCurrentWorkingDirectory();
-    if (utilDir.getFileName() == "build")
-        utilDir = utilDir.getParentDirectory();
-    utilDir = utilDir.getChildFile("tests/util");
+    auto utilDir = getTestsDir().getChildFile("util");
 
     // make sure project file exists
     const auto projectFile{ utilDir.getChildFile(projectFilename) };

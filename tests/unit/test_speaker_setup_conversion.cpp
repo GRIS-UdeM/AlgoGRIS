@@ -1,16 +1,17 @@
+#include "../sg_TestUtils.hpp"
 #include <catch2/catch_all.hpp>
 #include "../../Data/sg_LegacySpatFileFormat.hpp"
 #include "../../StructGRIS/ValueTreeUtilities.hpp"
+
+using namespace gris;
+using namespace gris::tests;
 
 void checkSpeakerSetupConversion(const std::string & version, const std::string & speakerSetupName)
 {
     SECTION("Converting speaker setup " + speakerSetupName + " with version " + version)
     {
         // get the speaker setup directory. The build hack is because the pipeline uses that as current directory
-        auto speakerSetupDir = juce::File::getCurrentWorkingDirectory();
-        if (speakerSetupDir.getFileName() == "build")
-            speakerSetupDir = speakerSetupDir.getParentDirectory();
-        speakerSetupDir = speakerSetupDir.getChildFile("tests/temp");
+        auto speakerSetupDir = getTestsDir().getChildFile("temp");
         REQUIRE(speakerSetupDir.exists());
 
         // now get the speaker setup file and make sure it also exists
