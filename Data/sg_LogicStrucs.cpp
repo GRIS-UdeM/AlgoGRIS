@@ -462,9 +462,14 @@ tl::optional<Position> SpeakerData::getAbsoluteSpeakerPosition(juce::ValueTree s
     }
 
     // get speaker position and offset it by the group center
-    Position speakerPosition{ juce::VariantConverter<Position>::fromVar(speakerVt[CARTESIAN_POSITION]) };
-    Position parentPosition{ juce::VariantConverter<Position>::fromVar(speakerGroup[CARTESIAN_POSITION]) };
+    auto const speakerPosition{ juce::VariantConverter<Position>::fromVar(speakerVt[CARTESIAN_POSITION]) };
+    auto const parentPosition{ juce::VariantConverter<Position>::fromVar(speakerGroup[CARTESIAN_POSITION]) };
 
+    return getAbsoluteSpeakerPosition(speakerPosition, parentPosition);
+}
+
+tl::optional<Position> SpeakerData::getAbsoluteSpeakerPosition(Position speakerPosition, Position parentPosition)
+{
     return Position{ CartesianVector{ parentPosition.getCartesian().x + speakerPosition.getCartesian().x,
                                       parentPosition.getCartesian().y + speakerPosition.getCartesian().y,
                                       parentPosition.getCartesian().z + speakerPosition.getCartesian().z } };

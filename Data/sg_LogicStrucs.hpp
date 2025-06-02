@@ -262,6 +262,16 @@ struct SpeakerData {
      */
     static tl::optional<Position> getAbsoluteSpeakerPosition(juce::ValueTree vt);
 
+    /**
+     * @brief Computes the absolute position of a speaker given its local position and the position of its parent.
+     *
+     * @param localSpeakerPosition The position of the speaker relative to its parent.
+     * @param parentPosition The absolute position of the parent.
+     * @return tl::optional<Position> The absolute position of the speaker if calculation is possible, otherwise
+     * tl::nullopt.
+     */
+    static tl::optional<Position> getAbsoluteSpeakerPosition(Position localSpeakerPosition, Position parentPosition);
+
     [[nodiscard]] bool operator==(SpeakerData const & other) const noexcept;
     //==============================================================================
     struct XmlTags {
