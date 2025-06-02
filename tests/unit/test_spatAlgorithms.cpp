@@ -38,6 +38,7 @@ static void testUsingProjectData(gris::SpatGrisData & data,
                                  juce::AudioBuffer<float> & stereoBuffer,
                                  SourcePeaks & sourcePeaks)
 {
+#if ENABLE_TESTS
     const auto config{ data.toAudioConfig() };
     const auto numSources{ config->sourcesAudioConfig.size() };
     const auto numSpeakers{ config->speakersAudioConfig.size() };
@@ -76,6 +77,7 @@ static void testUsingProjectData(gris::SpatGrisData & data,
             checkSpeakerBufferValidity(speakerBuffer);
         }
     }
+#endif
 }
 
 static void benchmarkUsingProjectData(std::string testName,
@@ -85,6 +87,7 @@ static void benchmarkUsingProjectData(std::string testName,
                                       juce::AudioBuffer<float> & stereoBuffer,
                                       SourcePeaks & sourcePeaks)
 {
+#if ENABLE_BENCHMARKS
     const auto config{ data.toAudioConfig() };
     const auto numSources{ config->sourcesAudioConfig.size() };
     const auto numSpeakers{ config->speakersAudioConfig.size() };
@@ -125,6 +128,7 @@ static void benchmarkUsingProjectData(std::string testName,
 
     // check that the audio output is valid
     checkSpeakerBufferValidity(speakerBuffer);
+#endif
 }
 
 static SpatGrisData getSpatGrisDataFromFiles(const std::string & projectFilename,
