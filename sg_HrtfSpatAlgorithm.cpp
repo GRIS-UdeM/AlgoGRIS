@@ -41,19 +41,7 @@
 #include <array>
 #include <cstddef>
 #include <memory>
-
-// TODO copie de getTestsDir dans gris::tests
-juce::File getUtilDir()
-{
-    auto dir = juce::File::getCurrentWorkingDirectory();
-    if (dir.getFileName() == "build")
-        dir = dir.getParentDirectory();
-    dir = dir.getChildFile("tests/util");
-
-    jassert(dir.exists());
-
-    return dir;
-}
+#include "StructGRIS/ValueTreeUtilities.hpp"
 
 namespace gris
 {
@@ -103,8 +91,7 @@ HrtfSpatAlgorithm::HrtfSpatAlgorithm(SpeakerSetup const & speakerSetup,
     static auto const FILES = GET_HRTF_IR_FILES();
 
     // Init inner spat algorithm
-    auto const utilDir{ getUtilDir() };
-    auto const hrtfSpeakerSetupFile{ utilDir.getChildFile("BINAURAL_SPEAKER_SETUP.xml") };
+    auto const hrtfSpeakerSetupFile{ getCurDir().getChildFile("tests/util/BINAURAL_SPEAKER_SETUP.xml") };
     if (!hrtfSpeakerSetupFile.existsAsFile()) {
         jassertfalse;
         return;

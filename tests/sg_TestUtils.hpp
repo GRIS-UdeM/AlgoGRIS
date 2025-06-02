@@ -29,28 +29,6 @@ float constexpr static testDurationSeconds{ .1f };
 std::array<int, 4> constexpr static bufferSizes{ 1, 512, 1024, SourceAudioBuffer::MAX_NUM_SAMPLES };
 
 /**
- * @brief Returns the directory containing the test files.
- *
- * This function navigates from the current working directory to the "tests/" directory.
- * It asserts and requires that the "tests/" directory exists.
- *
- * @return juce::File The directory containing the test files. This might not exist if we could not find the test
- * directory.
- */
-juce::File getTestsDir()
-{
-    auto dir = juce::File::getCurrentWorkingDirectory();
-    if (dir.getFileName() == "build")
-        dir = dir.getParentDirectory();
-    dir = dir.getChildFile("tests/");
-
-    jassert(dir.exists());
-    REQUIRE_MESSAGE(dir.exists(), "The tests directory does not exist!");
-
-    return dir;
-}
-
-/**
  * @brief Initializes source, speaker, and stereo audio buffers for testing.
  *
  * @param bufferSize Number of samples per buffer.

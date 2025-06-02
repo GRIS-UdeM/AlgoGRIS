@@ -20,6 +20,15 @@
 
 namespace gris
 {
+juce::File getCurDir()
+{
+    auto dir = juce::File::getCurrentWorkingDirectory();
+    if (dir.getFileName() == "build" || dir.getFileName() == "Builds")
+        dir = dir.getParentDirectory();
+
+    return dir;
+}
+
 bool convertProperties(const juce::ValueTree & source, juce::ValueTree & dest)
 {
     auto const sourceType = source.getType().toString();

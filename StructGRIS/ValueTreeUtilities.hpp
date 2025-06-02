@@ -20,6 +20,13 @@
 
 namespace gris
 {
+/**
+ * @brief Returns the current working directory, or its parent if the current directory is the build/Builds
+ * directory. This is useful because juce returns different directories as the working directory on the pipeline vs
+ * locally.
+ */
+juce::File getCurDir();
+
 /** Converts properties between versions of Speaker Setups.
  * Returns true if the conversion was successful, false if something unexpected happened.
  */

@@ -1,6 +1,7 @@
 #include <catch2/catch_all.hpp>
 #include <tests/sg_TestUtils.hpp>
 #include <sg_AbstractSpatAlgorithm.hpp>
+#include "../../StructGRIS/ValueTreeUtilities.hpp"
 
 using namespace gris;
 using namespace gris::tests;
@@ -83,7 +84,7 @@ static SpatGrisData getSpatGrisDataFromFiles(const std::string & projectFilename
     SpatGrisData spatGrisData;
 
     // hack to get around the pipeline having a different path than other places
-    auto utilDir = getTestsDir().getChildFile("util");
+    auto utilDir = getCurDir().getChildFile("tests/util");
 
     // make sure project file exists
     const auto projectFile{ utilDir.getChildFile(projectFilename) };
