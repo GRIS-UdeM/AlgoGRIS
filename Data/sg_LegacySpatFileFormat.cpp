@@ -44,7 +44,13 @@ tl::optional<SpeakerSetup> readLegacySpeakerSetup(juce::XmlElement const & xml)
         return tl::nullopt;
     }
 
-    auto const spatMode{ static_cast<SpatMode>(xml.getIntAttribute("SpatMode")) };
+    auto const spatMode = [&]() {
+        auto const spatModeInt{ xml.getIntAttribute("SpatMode") };
+        if (spatModeInt == 3)
+            return SpatMode::vbap;
+        return static_cast<SpatMode>(spatModeInt);
+    }();
+
     if (spatMode != SpatMode::mbap && spatMode != SpatMode::vbap) {
         jassertfalse;
         return tl::nullopt;

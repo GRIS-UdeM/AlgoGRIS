@@ -124,33 +124,6 @@ TEST_CASE("VBAP test", "[spat]")
     testUsingProjectData(vbapData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
 }
 
-TEST_CASE("HRTF test", "[spat]")
-{
-    SpatGrisData hrtfData = getSpatGrisDataFromFiles("default_preset.xml", "BINAURAL_SPEAKER_SETUP.xml");
-    hrtfData.project.spatMode = SpatMode::vbap;
-    hrtfData.appData.stereoMode = StereoMode::hrtf;
-
-    SourceAudioBuffer sourceBuffer;
-    SpeakerAudioBuffer speakerBuffer;
-    juce::AudioBuffer<float> stereoBuffer;
-    SourcePeaks sourcePeaks;
-    testUsingProjectData(hrtfData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
-}
-
-// TODO: this test currently fails
-// TEST_CASE("Stereo speaker test", "[spat]")
-// {
-//     SpatGrisData stereoData = getSpatGrisDataFromFiles("default_preset.xml", "STEREO_SPEAKER_SETUP.xml");
-//     stereoData.project.spatMode = SpatMode::vbap;
-//     stereoData.appData.stereoMode = StereoMode::stereo;
-
-//     SourceAudioBuffer sourceBuffer;
-//     SpeakerAudioBuffer speakerBuffer;
-//     juce::AudioBuffer<float> stereoBuffer;
-//     SourcePeaks sourcePeaks;
-//     testUsingProjectData(stereoData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
-// }
-
 TEST_CASE("MBAP test", "[spat]")
 {
     SpatGrisData mbapData
@@ -164,4 +137,30 @@ TEST_CASE("MBAP test", "[spat]")
     juce::AudioBuffer<float> stereoBuffer;
     SourcePeaks sourcePeaks;
     testUsingProjectData(mbapData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
+}
+
+TEST_CASE("HRTF test", "[spat]")
+{
+    SpatGrisData hrtfData = getSpatGrisDataFromFiles("default_preset.xml", "BINAURAL_SPEAKER_SETUP.xml");
+    hrtfData.project.spatMode = SpatMode::vbap;
+    hrtfData.appData.stereoMode = StereoMode::hrtf;
+
+    SourceAudioBuffer sourceBuffer;
+    SpeakerAudioBuffer speakerBuffer;
+    juce::AudioBuffer<float> stereoBuffer;
+    SourcePeaks sourcePeaks;
+    testUsingProjectData(hrtfData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
+}
+
+TEST_CASE("Stereo speaker", "[spat]")
+{
+    SpatGrisData stereoData = getSpatGrisDataFromFiles("default_preset.xml", "STEREO_SPEAKER_SETUP.xml");
+    stereoData.project.spatMode = SpatMode::vbap;
+    stereoData.appData.stereoMode = StereoMode::stereo;
+
+    SourceAudioBuffer sourceBuffer;
+    SpeakerAudioBuffer speakerBuffer;
+    juce::AudioBuffer<float> stereoBuffer;
+    SourcePeaks sourcePeaks;
+    testUsingProjectData(stereoData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
 }
