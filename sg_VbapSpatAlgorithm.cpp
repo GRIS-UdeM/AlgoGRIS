@@ -145,9 +145,11 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
 
             auto & currentGain{ lastGains[speaker.key] };
             auto const & targetGain{ gains[speaker.key] };
-            auto * outputSamples{ speakersBuffer[speaker.key].getWritePointer(0) };
+
             auto const gainDiff{ targetGain - currentGain };
             auto const gainSlope{ gainDiff / narrow<float>(numSamples) };
+
+            auto* outputSamples { speakersBuffer[speaker.key].getWritePointer (0) };
 
             if (juce::approximatelyEqual(gainSlope, 0.f) || std::abs(gainDiff) < SMALL_GAIN) {
                 // no interpolation
