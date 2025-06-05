@@ -54,7 +54,12 @@ HrtfSpatAlgorithm::HrtfSpatAlgorithm(SpeakerSetup const & speakerSetup,
 {
     JUCE_ASSERT_MESSAGE_THREAD;
 
-    static auto const hrtfDir{ juce::File::getCurrentWorkingDirectory().getChildFile("hrtf_compact") };
+    static auto const hrtfDir{ getCurDir ().getChildFile("hrtf_compact") };
+    if (!hrtfDir.exists())
+    {
+        jassertfalse;
+        return;
+    }
     static auto const HRTF_FOLDER_0{ hrtfDir.getChildFile("elev0") };
     static auto const HRTF_FOLDER_40{ hrtfDir.getChildFile("elev40") };
     static auto const HRTF_FOLDER_80{ hrtfDir.getChildFile("elev80") };
