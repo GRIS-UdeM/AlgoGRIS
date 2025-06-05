@@ -78,6 +78,55 @@ static void testUsingProjectData(gris::SpatGrisData & data,
     }
 }
 
+static void benchmarkUsingProjectData(std::string testName,
+                                      gris::SpatGrisData & data,
+                                      SourceAudioBuffer & sourceBuffer,
+                                      SpeakerAudioBuffer & speakerBuffer,
+                                      juce::AudioBuffer<float> & stereoBuffer,
+                                      SourcePeaks & sourcePeaks)
+{
+    const auto config{ data.toAudioConfig() };
+    const auto numSources{ config->sourcesAudioConfig.size() };
+    const auto numSpeakers{ config->speakersAudioConfig.size() };
+    const auto bufferSize{ 512 };
+    data.appData.audioSettings.bufferSize = bufferSize;
+
+    // init our buffers
+    initBuffers(bufferSize, numSources, numSpeakers, sourceBuffer, speakerBuffer, stereoBuffer);
+
+    // create our spatialization algorithm
+    auto algo{ AbstractSpatAlgorithm::make(data.speakerSetup,
+                                           data.project.spatMode,
+                                           data.appData.stereoMode,
+                                           data.project.sources,
+                                           data.appData.audioSettings.sampleRate,
+                                           data.appData.audioSettings.bufferSize) };
+
+    // position the sound sources
+    positionSources(algo.get(), data);
+
+    // now simulate processing an audio loop of testDurationSeconds
+    auto const numLoops{ static_cast<int>(DEFAULT_SAMPLE_RATE * testDurationSeconds / bufferSize) };
+
+    // fill the source buffers with pink noise
+    fillSourceBuffersWithNoise(numSources, sourceBuffer, bufferSize, sourcePeaks);
+    checkSourceBufferValidity(sourceBuffer);
+
+    // process the audio
+    speakerBuffer.silence();
+    stereoBuffer.clear();
+    BENCHMARK("processing loop")
+    {
+        // catch2 will run this benchmark section in a loop, so we need to clear the output buffers before each run
+        speakerBuffer.silence();
+        stereoBuffer.clear();
+        algo->process(*config, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks, nullptr);
+    };
+
+    // check that the audio output is valid
+    checkSpeakerBufferValidity(speakerBuffer);
+}
+
 static SpatGrisData getSpatGrisDataFromFiles(const std::string & projectFilename,
                                              const std::string & speakerSetupFilename)
 {
@@ -122,6 +171,7 @@ TEST_CASE("VBAP test", "[spat]")
     juce::AudioBuffer<float> stereoBuffer;
     SourcePeaks sourcePeaks;
     testUsingProjectData(vbapData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
+    benchmarkUsingProjectData("vbap benchmark", vbapData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
 }
 
 TEST_CASE("MBAP test", "[spat]")
@@ -137,6 +187,7 @@ TEST_CASE("MBAP test", "[spat]")
     juce::AudioBuffer<float> stereoBuffer;
     SourcePeaks sourcePeaks;
     testUsingProjectData(mbapData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
+    benchmarkUsingProjectData("mbap benchmark", mbapData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
 }
 
 TEST_CASE("HRTF test", "[spat]")
