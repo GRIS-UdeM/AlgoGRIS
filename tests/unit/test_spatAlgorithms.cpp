@@ -121,6 +121,7 @@ static void benchmarkUsingProjectData(std::string testName,
 #if ENABLE_CATCH2_BENCHMARKS
     BENCHMARK("processing loop")
 #else
+    std::cout << testName << "\n";
     for (int i = 0; i < 1000; ++i)
 #endif
     {
