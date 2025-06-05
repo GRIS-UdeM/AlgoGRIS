@@ -26,6 +26,9 @@ juce::File getCurDir()
     if (dir.getFileName() == "build" || dir.getFileName() == "Builds")
         dir = dir.getParentDirectory();
 
+    if (dir.getFileName() == "Debug" || dir.getFileName() == "Release" || dir.getFileName() == "RelWithDebInfo")
+        dir = dir.getParentDirectory().getParentDirectory();
+
     return dir;
 }
 
