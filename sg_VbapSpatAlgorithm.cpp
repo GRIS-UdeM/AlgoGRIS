@@ -162,30 +162,58 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
 
             // interpolation necessary
             if (juce::approximatelyEqual(gainInterpolation, 0.f)) {
+#if SIMD_INTERPOLATION
                 // linear interpolation over buffer size
                 for (int sampleIndex{}; sampleIndex < numSamples; ++sampleIndex) {
                     currentGain += gainSlope;
-                    outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
-                    jassert(outputSamples[sampleIndex] >= -1.f && outputSamples[sampleIndex] <= 1.f);
+                    gainRamp[sampleIndex] = currentGain;
                 }
+                juce::FloatVectorOperations::addWithMultiply (outputSamples, inputSamples, gainRamp, numSamples);
+
+#else
+                // linear interpolation over buffer size
+                for (int sampleIndex {}; sampleIndex < numSamples; ++sampleIndex) {
+                    currentGain += gainSlope;
+                    outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
+                    jassert (outputSamples[sampleIndex] >= -1.f && outputSamples[sampleIndex] <= 1.f);
+                }
+#endif
             } else {
                 // log interpolation with 1st order filter
                 if (targetGain < SMALL_GAIN) {
+#if SIMD_INTERPOLATION
                     // targeting silence
                     for (int sampleIndex{}; sampleIndex < numSamples && currentGain >= SMALL_GAIN; ++sampleIndex) {
                         currentGain = targetGain + (currentGain - targetGain) * gainFactor;
-                        outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
-                        jassert(outputSamples[sampleIndex] >= -1.f && outputSamples[sampleIndex] <= 1.f);
+                        gainRamp[sampleIndex] = currentGain;
                     }
+                    juce::FloatVectorOperations::addWithMultiply (outputSamples, inputSamples, gainRamp, numSamples);
+#else
+                    // targeting silence
+                    for (int sampleIndex {}; sampleIndex < numSamples && currentGain >= SMALL_GAIN; ++sampleIndex) {
+                        currentGain = targetGain + (currentGain - targetGain) * gainFactor;
+                        outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
+                        jassert (outputSamples[sampleIndex] >= -1.f && outputSamples[sampleIndex] <= 1.f);
+                    }
+#endif
                     continue;
                 }
 
+#if SIMD_INTERPOLATION
                 // not targeting silence
                 for (int sampleIndex{}; sampleIndex < numSamples; ++sampleIndex) {
                     currentGain = targetGain + (currentGain - targetGain) * gainFactor;
-                    outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
-                    jassert(outputSamples[sampleIndex] >= -1.f && outputSamples[sampleIndex] <= 1.f);
+                    gainRamp[sampleIndex] = currentGain;
                 }
+                juce::FloatVectorOperations::addWithMultiply (outputSamples, inputSamples, gainRamp, numSamples);
+#else
+                // not targeting silence
+                for (int sampleIndex {}; sampleIndex < numSamples; ++sampleIndex) {
+                    currentGain = targetGain + (currentGain - targetGain) * gainFactor;
+                    outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
+                    jassert (outputSamples[sampleIndex] >= -1.f && outputSamples[sampleIndex] <= 1.f);
+                }
+#endif
             }
         }
     }

@@ -35,6 +35,8 @@
 #include "tl/optional.hpp"
 #include <memory>
 
+#define SIMD_INTERPOLATION 0
+
 namespace gris
 {
 VbapType getVbapType(SpeakersData const & speakers);
@@ -52,6 +54,7 @@ class VbapSpatAlgorithm final : public AbstractSpatAlgorithm
 {
     std::unique_ptr<VbapData> mSetupData{};
     VbapSourcesData mData{};
+    float gainRamp[4096];
 
 public:
     //==============================================================================
