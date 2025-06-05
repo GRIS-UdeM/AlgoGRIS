@@ -209,6 +209,7 @@ TEST_CASE("HRTF test", "[spat]")
     juce::AudioBuffer<float> stereoBuffer;
     SourcePeaks sourcePeaks;
     testUsingProjectData(hrtfData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
+    benchmarkUsingProjectData("hrtf benchmark", hrtfData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
 }
 
 TEST_CASE("Stereo speaker", "[spat]")
