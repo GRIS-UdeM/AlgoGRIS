@@ -118,7 +118,11 @@ static void benchmarkUsingProjectData(std::string testName,
     // process the audio
     speakerBuffer.silence();
     stereoBuffer.clear();
+#if ENABLE_CATCH2_BENCHMARKS
     BENCHMARK("processing loop")
+#else
+    for (int i = 0; i < 100; ++i)
+#endif
     {
         // catch2 will run this benchmark section in a loop, so we need to clear the output buffers before each run
         speakerBuffer.silence();

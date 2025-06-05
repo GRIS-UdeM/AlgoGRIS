@@ -15,6 +15,7 @@
 
 #define ENABLE_TESTS 0
 #define ENABLE_BENCHMARKS 1
+#define ENABLE_CATCH2_BENCHMARKS 0
 
 #define REQUIRE_MESSAGE(cond, msg)                                                                                     \
     do {                                                                                                               \
