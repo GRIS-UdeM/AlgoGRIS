@@ -77,6 +77,16 @@ public:
     static std::unique_ptr<AbstractSpatAlgorithm> make(SpeakerSetup const & speakerSetup);
 
 private:
+
+    void processSource(const gris::AudioConfig & config,
+                       const gris::source_index_t & sourceId,
+                       const gris::SourcePeaks & sourcePeaks,
+                       gris::SourceAudioBuffer & sourcesBuffer,
+                       const gris::SpeakersAudioConfig & speakersAudioConfig,
+                       const int & numSamples,
+                       gris::SpeakerAudioBuffer & speakersBuffer,
+                       const float & gainInterpolation,
+                       const float gainFactor);
     ashvardanian::fork_union::thread_pool_t pool;
     JUCE_LEAK_DETECTOR(VbapSpatAlgorithm)
 };
