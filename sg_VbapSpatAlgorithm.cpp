@@ -37,6 +37,7 @@
 #include "juce_core/system/juce_PlatformDefs.h"
 #include "juce_events/juce_events.h"
 #include <cmath>
+#include <fork_union.hpp>
 #include <algorithm>
 #include <array>
 #include <cassert>
@@ -63,10 +64,14 @@ VbapType getVbapType(SpeakersData const & speakers)
     return areSpeakersOnSamePlane ? VbapType::twoD : VbapType::threeD;
 }
 
+namespace fu = ashvardanian::fork_union;
+
 //==============================================================================
 VbapSpatAlgorithm::VbapSpatAlgorithm(SpeakersData const & speakers)
 {
     JUCE_ASSERT_MESSAGE_THREAD;
+
+    fu::thread_pool_t pool;
 
     std::array<Position, MAX_NUM_SPEAKERS> loudSpeakers{};
     std::array<output_patch_t, MAX_NUM_SPEAKERS> outputPatches{};

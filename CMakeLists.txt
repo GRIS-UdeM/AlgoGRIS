@@ -15,8 +15,14 @@ FetchContent_Declare(
     GIT_REPOSITORY https://github.com/catchorg/Catch2.git
     GIT_TAG        v3.4.0
 )
-
 FetchContent_MakeAvailable(Catch2)
+
+FetchContent_Declare(
+    fork_union
+    GIT_REPOSITORY https://github.com/ashvardanian/fork_union
+    GIT_TAG main
+)
+FetchContent_MakeAvailable(fork_union)
 
 # Global CMake configuration
 set(CMAKE_INCLUDE_CURRENT_DIR 1)
@@ -142,12 +148,15 @@ target_link_libraries(AlgoGRIS
     juce::juce_graphics
     juce::juce_gui_basics
     juce::juce_dsp
+    fork_union
 )
 
 target_compile_definitions(AlgoGRIS
   PUBLIC
     $<$<BOOL:${BUILD_TESTING}>:ALGOGRIS_UNIT_TESTS>
 )
+
+# target_link_libraries(AlgoGRIS PRIVATE fork_union::fork_union)
 
 # Tests
 add_library(MainTest STATIC

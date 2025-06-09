@@ -8,8 +8,7 @@ on:
     branches: ['*']
 
 env:
-  # TODO VB: put back dev-sat when ready to merge
-  SPATGRIS_REF: feature/speakerGroups
+  SPATGRIS_REF: dev-sat
 
 jobs:
   Build-Ubuntu-Latest:
