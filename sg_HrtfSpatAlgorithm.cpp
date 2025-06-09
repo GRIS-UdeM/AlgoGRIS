@@ -41,6 +41,7 @@
 #include <array>
 #include <cstddef>
 #include <memory>
+#include "StructGRIS/ValueTreeUtilities.hpp"
 
 namespace gris
 {
@@ -90,8 +91,12 @@ HrtfSpatAlgorithm::HrtfSpatAlgorithm(SpeakerSetup const & speakerSetup,
     static auto const FILES = GET_HRTF_IR_FILES();
 
     // Init inner spat algorithm
-    const auto hrtfSpeakerSetupFile{ juce::File::getCurrentWorkingDirectory().getChildFile(
-        "tests/util/BINAURAL_SPEAKER_SETUP.xml") };
+    auto const hrtfSpeakerSetupFile{ getCurDir().getChildFile("tests/util/BINAURAL_SPEAKER_SETUP.xml") };
+    if (!hrtfSpeakerSetupFile.existsAsFile()) {
+        jassertfalse;
+        return;
+    }
+
     auto const binauralXml{ juce::XmlDocument{ hrtfSpeakerSetupFile }.getDocumentElement() };
     if (!binauralXml) {
         jassertfalse;
@@ -156,7 +161,8 @@ void HrtfSpatAlgorithm::updateSpatData(source_index_t const sourceIndex, SourceD
         return;
     }
 
-    mInnerAlgorithm->updateSpatData(sourceIndex, sourceData);
+    if (mInnerAlgorithm)
+        mInnerAlgorithm->updateSpatData(sourceIndex, sourceData);
 }
 
 //==============================================================================

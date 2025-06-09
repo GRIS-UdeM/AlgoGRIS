@@ -120,6 +120,7 @@ static void computeMatrix(MbapField & field)
                 for (size_t z{}; z < MBAP_MATRIX_SIZE; ++z) {
                     auto dist = std::sqrt(std::pow(narrow<float>(x) - px, 2.0f) + std::pow(narrow<float>(y) - py, 2.0f)
                                           + std::pow(narrow<float>(z) - pz, 2.0f));
+
                     dist = std::pow(std::pow(10.0f, 1.0f / 20), dist);          // root-power ratio
                     field.amplitudeMatrix[i][x][y][z] = 1.0f / std::sqrt(dist); // inverse square law
                 }

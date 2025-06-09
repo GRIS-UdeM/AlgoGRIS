@@ -1,6 +1,7 @@
 #include <catch2/catch_all.hpp>
 #include <tests/sg_TestUtils.hpp>
 #include <sg_AbstractSpatAlgorithm.hpp>
+#include "../../StructGRIS/ValueTreeUtilities.hpp"
 
 using namespace gris;
 using namespace gris::tests;
@@ -77,95 +78,89 @@ static void testUsingProjectData(gris::SpatGrisData & data,
     }
 }
 
-TEST_CASE("VBAP test", "[spat]")
+static SpatGrisData getSpatGrisDataFromFiles(const std::string & projectFilename,
+                                             const std::string & speakerSetupFilename)
 {
-    SourceAudioBuffer sourceBuffer;
-    SpeakerAudioBuffer speakerBuffer;
-    juce::AudioBuffer<float> stereoBuffer;
-    SourcePeaks sourcePeaks;
+    SpatGrisData spatGrisData;
 
-    GIVEN("VBAP data sourced from XML")
-    {
-        SpatGrisData vbapData;
+    // hack to get around the pipeline having a different path than other places
+    auto utilDir = getCurDir().getChildFile("tests/util");
 
-        const auto speakerSetupFile{ juce::File::getCurrentWorkingDirectory().getChildFile(
-            "tests/util/default_speaker_setup.xml") };
-        if (const auto speakerSetup{ parseXML(speakerSetupFile) })
-            vbapData.speakerSetup = *SpeakerSetup::fromXml(*speakerSetup);
+    // make sure project file exists
+    const auto projectFile{ utilDir.getChildFile(projectFilename) };
+    // std::cout << "full path for projectFile: " << projectFile.getFullPathName() << "\n";
+    REQUIRE(projectFile.existsAsFile());
 
-        const auto projectFile{ juce::File::getCurrentWorkingDirectory().getChildFile(
-            "tests/util/default_preset.xml") };
-        if (const auto project{ parseXML(projectFile) })
-            vbapData.project = *ProjectData::fromXml(*project);
+    // make sure project file opens correctly
+    const auto project{ parseXML(projectFile) };
+    REQUIRE(project);
+    if (project)
+        spatGrisData.project = *ProjectData::fromXml(*project);
 
-        vbapData.project.spatMode = SpatMode::vbap;
-        vbapData.appData.stereoMode = {};
+    // make sure speaker setup file exists
+    const auto speakerSetupFile{ utilDir.getChildFile(speakerSetupFilename) };
+    // std::cout << "full path for speakerSetupFile: " << speakerSetupFile.getFullPathName() << "\n";
+    REQUIRE(speakerSetupFile.existsAsFile());
 
-        THEN("The VBAP algo executes correctly")
-        {
-            testUsingProjectData(vbapData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
-        }
-    }
+    // make sure speaker setup opens correctly
+    const auto speakerSetup{ parseXML(speakerSetupFile) };
+    REQUIRE(speakerSetup);
+    if (speakerSetup)
+        spatGrisData.speakerSetup = *SpeakerSetup::fromXml(*speakerSetup);
+
+    return spatGrisData;
 }
 
-TEST_CASE("HRTF test", "[spat]")
+TEST_CASE("VBAP test", "[spat]")
 {
+    SpatGrisData vbapData = getSpatGrisDataFromFiles("default_preset.xml", "default_speaker_setup.xml");
+    vbapData.project.spatMode = SpatMode::vbap;
+    vbapData.appData.stereoMode = {};
+
     SourceAudioBuffer sourceBuffer;
     SpeakerAudioBuffer speakerBuffer;
     juce::AudioBuffer<float> stereoBuffer;
     SourcePeaks sourcePeaks;
-
-    GIVEN("VBAP data sourced from XML")
-    {
-        SpatGrisData hrtfData;
-
-        const auto hrtfSpeakerSetupFile{ juce::File::getCurrentWorkingDirectory().getChildFile(
-            "tests/util/BINAURAL_SPEAKER_SETUP.xml") };
-        if (const auto hrtfSpeakerSetup{ parseXML(hrtfSpeakerSetupFile) })
-            hrtfData.speakerSetup = *SpeakerSetup::fromXml(*hrtfSpeakerSetup);
-
-        const auto hrtfProjectFile{ juce::File::getCurrentWorkingDirectory().getChildFile(
-            "tests/util/default_preset.xml") };
-        if (const auto hrtfProject{ parseXML(hrtfProjectFile) })
-            hrtfData.project = *ProjectData::fromXml(*hrtfProject);
-
-        hrtfData.project.spatMode = SpatMode::vbap;
-        hrtfData.appData.stereoMode = StereoMode::hrtf;
-
-        THEN("The HRTF algo executes correctly")
-        {
-            testUsingProjectData(hrtfData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
-        }
-    }
+    testUsingProjectData(vbapData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
 }
 
 TEST_CASE("MBAP test", "[spat]")
 {
+    SpatGrisData mbapData
+        = getSpatGrisDataFromFiles("default_project18(8X2-Subs2).xml", "Cube_default_speaker_setup.xml");
+
+    mbapData.project.spatMode = SpatMode::mbap;
+    mbapData.appData.stereoMode = {};
+
     SourceAudioBuffer sourceBuffer;
     SpeakerAudioBuffer speakerBuffer;
     juce::AudioBuffer<float> stereoBuffer;
     SourcePeaks sourcePeaks;
+    testUsingProjectData(mbapData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
+}
 
-    GIVEN("MBAP data sourced from XML")
-    {
-        SpatGrisData mbapData;
+TEST_CASE("HRTF test", "[spat]")
+{
+    SpatGrisData hrtfData = getSpatGrisDataFromFiles("default_preset.xml", "BINAURAL_SPEAKER_SETUP.xml");
+    hrtfData.project.spatMode = SpatMode::vbap;
+    hrtfData.appData.stereoMode = StereoMode::hrtf;
 
-        const auto mbapSpeakerSetupFile{ juce::File::getCurrentWorkingDirectory().getChildFile(
-            "tests/util/Cube_default_speaker_setup.xml") };
-        if (const auto mbapSpeakerSetup{ parseXML(mbapSpeakerSetupFile) })
-            mbapData.speakerSetup = *SpeakerSetup::fromXml(*mbapSpeakerSetup);
+    SourceAudioBuffer sourceBuffer;
+    SpeakerAudioBuffer speakerBuffer;
+    juce::AudioBuffer<float> stereoBuffer;
+    SourcePeaks sourcePeaks;
+    testUsingProjectData(hrtfData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
+}
 
-        const auto mbapProjectFile{ juce::File::getCurrentWorkingDirectory().getChildFile(
-            "tests/util/default_project18(8X2-Subs2).xml") };
-        if (const auto project{ parseXML(mbapProjectFile) })
-            mbapData.project = *ProjectData::fromXml(*project);
+TEST_CASE("Stereo speaker", "[spat]")
+{
+    SpatGrisData stereoData = getSpatGrisDataFromFiles("default_preset.xml", "STEREO_SPEAKER_SETUP.xml");
+    stereoData.project.spatMode = SpatMode::vbap;
+    stereoData.appData.stereoMode = StereoMode::stereo;
 
-        mbapData.project.spatMode = SpatMode::mbap;
-        mbapData.appData.stereoMode = {};
-
-        THEN("The MBAP algo executes correctly")
-        {
-            testUsingProjectData(mbapData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
-        }
-    }
+    SourceAudioBuffer sourceBuffer;
+    SpeakerAudioBuffer speakerBuffer;
+    juce::AudioBuffer<float> stereoBuffer;
+    SourcePeaks sourcePeaks;
+    testUsingProjectData(stereoData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
 }

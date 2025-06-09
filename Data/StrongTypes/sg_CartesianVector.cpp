@@ -29,7 +29,7 @@
 
 namespace gris
 {
-juce::String const CartesianVector::XmlTags::MAIN_TAG = "POSITION";
+juce::String const CartesianVector::XmlTags::POSITION = "POSITION";
 juce::String const CartesianVector::XmlTags::X = "X";
 juce::String const CartesianVector::XmlTags::Y = "Y";
 juce::String const CartesianVector::XmlTags::Z = "Z";
@@ -68,11 +68,41 @@ CartesianVector CartesianVector::crossProduct(CartesianVector const & other) con
 //==============================================================================
 std::unique_ptr<juce::XmlElement> CartesianVector::toXml() const noexcept
 {
-    auto result{ std::make_unique<juce::XmlElement>(XmlTags::MAIN_TAG) };
+    auto result{ std::make_unique<juce::XmlElement>(XmlTags::POSITION) };
     result->setAttribute(XmlTags::X, x);
     result->setAttribute(XmlTags::Y, y);
     result->setAttribute(XmlTags::Z, z);
     return result;
+}
+
+juce::String CartesianVector::toString() const noexcept
+{
+    return "(" + juce::String{ x } + ", " + juce::String{ y } + ", " + juce::String{ z } + ")";
+}
+
+tl::optional<CartesianVector> CartesianVector::fromString(const juce::String & str) noexcept
+{
+    auto trimmed = str.trim();
+
+    // Remove the parentheses
+    trimmed = trimmed.fromFirstOccurrenceOf("(", false, false).upToLastOccurrenceOf(")", false, false);
+
+    // Split the string into tokens
+    juce::StringArray tokens;
+    tokens.addTokens(trimmed, ",", "\""); // split by commas
+
+    // Convert to floats
+    if (tokens.size() == 3) {
+        float x = tokens[0].trim().getFloatValue();
+        float y = tokens[1].trim().getFloatValue();
+        float z = tokens[2].trim().getFloatValue();
+
+        return CartesianVector{ x, y, z };
+    } else {
+        DBG("Unexpected number of tokens: " << tokens.size());
+        jassertfalse;
+        return {};
+    }
 }
 
 //==============================================================================

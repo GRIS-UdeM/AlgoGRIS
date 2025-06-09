@@ -1,5 +1,4 @@
 #pragma once
-
 #include "Data/StrongTypes/sg_OutputPatch.hpp"
 #include "Data/StrongTypes/sg_SourceIndex.hpp"
 #include "Data/sg_constants.hpp"
@@ -23,9 +22,22 @@
 namespace gris::tests
 {
 
+/** Duration of the audio loop used for the spatialisation tests. */
 float constexpr static testDurationSeconds{ .1f };
+
+/** A list of buffer sizes used for testing. */
 std::array<int, 4> constexpr static bufferSizes{ 1, 512, 1024, SourceAudioBuffer::MAX_NUM_SAMPLES };
 
+/**
+ * @brief Initializes source, speaker, and stereo audio buffers for testing.
+ *
+ * @param bufferSize Number of samples per buffer.
+ * @param numSources Number of source channels.
+ * @param numSpeakers Number of speaker channels.
+ * @param sourceBuffer Reference to the SourceAudioBuffer to initialize.
+ * @param speakerBuffer Reference to the SpeakerAudioBuffer to initialize.
+ * @param stereoBuffer Reference to the stereo juce::AudioBuffer<float> to initialize.
+ */
 inline void initBuffers(const int bufferSize,
                         const size_t numSources,
                         const size_t numSpeakers,
@@ -49,7 +61,14 @@ inline void initBuffers(const int bufferSize,
     stereoBuffer.clear();
 }
 
-/** fill Source Buffers with pink noise, and calculate the peaks */
+/**
+ * @brief Fills the source buffers with pink noise and calculates the peak values.
+ *
+ * @param numSources Number of source channels.
+ * @param sourceBuffer Reference to the SourceAudioBuffer to fill.
+ * @param bufferSize Number of samples per buffer.
+ * @param sourcePeaks Reference to the SourcePeaks to store calculated peak values.
+ */
 inline void fillSourceBuffersWithNoise(const size_t numSources,
                                        SourceAudioBuffer & sourceBuffer,
                                        const int bufferSize,
@@ -63,6 +82,13 @@ inline void fillSourceBuffersWithNoise(const size_t numSources,
     }
 }
 
+/**
+ * @brief Checks the validity of the speaker buffer.
+ *
+ * Ensures that all values are finite and within the range [-1.0, 1.0].
+ *
+ * @param buffer The SpeakerAudioBuffer to check.
+ */
 inline void checkSpeakerBufferValidity(const SpeakerAudioBuffer & buffer)
 {
     for (auto const & speaker : buffer) {
@@ -78,6 +104,13 @@ inline void checkSpeakerBufferValidity(const SpeakerAudioBuffer & buffer)
     }
 }
 
+/**
+ * @brief Checks the validity of the source buffer.
+ *
+ * Ensures that all values are finite and within the range [-1.0, 1.0].
+ *
+ * @param buffer The SourceAudioBuffer to check.
+ */
 inline void checkSourceBufferValidity(const SourceAudioBuffer & buffer)
 {
     for (auto const & source : buffer) {
