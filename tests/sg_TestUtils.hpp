@@ -13,8 +13,8 @@
 #include "catch2/catch_message.hpp"
 #include "catch2/catch_test_macros.hpp"
 
-#define ENABLE_TESTS 1
-#define ENABLE_BENCHMARKS 0
+#define ENABLE_TESTS 0
+#define ENABLE_BENCHMARKS 1
 #define ENABLE_CATCH2_BENCHMARKS 1
 
 #define REQUIRE_MESSAGE(cond, msg)                                                                                     \
