@@ -33,6 +33,7 @@
 #include "juce_audio_basics/juce_audio_basics.h"
 #include "juce_core/juce_core.h"
 #include "tl/optional.hpp"
+#include <fork_union.hpp>
 #include <memory>
 
 #define SIMD_INTERPOLATION 0
@@ -76,6 +77,7 @@ public:
     static std::unique_ptr<AbstractSpatAlgorithm> make(SpeakerSetup const & speakerSetup);
 
 private:
+    ashvardanian::fork_union::thread_pool_t pool;
     JUCE_LEAK_DETECTOR(VbapSpatAlgorithm)
 };
 

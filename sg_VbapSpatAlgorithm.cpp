@@ -37,7 +37,6 @@
 #include "juce_core/system/juce_PlatformDefs.h"
 #include "juce_events/juce_events.h"
 #include <cmath>
-#include <fork_union.hpp>
 #include <algorithm>
 #include <array>
 #include <cassert>
@@ -64,14 +63,14 @@ VbapType getVbapType(SpeakersData const & speakers)
     return areSpeakersOnSamePlane ? VbapType::twoD : VbapType::threeD;
 }
 
-namespace fu = ashvardanian::fork_union;
-
 //==============================================================================
 VbapSpatAlgorithm::VbapSpatAlgorithm(SpeakersData const & speakers)
 {
     JUCE_ASSERT_MESSAGE_THREAD;
 
-    fu::thread_pool_t pool;
+    if (!pool.try_spawn(std::thread::hardware_concurrency())) {
+        std::fprintf(stderr, "Failed to fork the threads\n");
+    }
 
     std::array<Position, MAX_NUM_SPEAKERS> loudSpeakers{};
     std::array<output_patch_t, MAX_NUM_SPEAKERS> outputPatches{};
@@ -125,7 +124,11 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
     auto const & speakersAudioConfig{ altSpeakerConfig ? *altSpeakerConfig : config.speakersAudioConfig };
 
     auto const numSamples{ sourcesBuffer.getNumSamples() };
+    auto const numSources{ config.sourcesAudioConfig.size() };
+
+
     for (auto const & source : config.sourcesAudioConfig) {
+        
         if (source.value.isMuted || source.value.directOut || sourcePeaks[source.key] < SMALL_GAIN) {
             // source silent
             continue;
