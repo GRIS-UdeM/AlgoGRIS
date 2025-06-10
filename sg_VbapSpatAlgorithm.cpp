@@ -68,7 +68,7 @@ VbapSpatAlgorithm::VbapSpatAlgorithm(SpeakersData const & speakers)
 {
     JUCE_ASSERT_MESSAGE_THREAD;
 
-    if (!pool.try_spawn(std::thread::hardware_concurrency())) {
+    if (!threadPool.try_spawn(std::thread::hardware_concurrency())) {
         std::fprintf(stderr, "Failed to fork the threads\n");
     }
 
@@ -128,7 +128,7 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
     auto const sourceIds{ config.sourcesAudioConfig.getKeys() };
 
 #if USE_FORK_UNION
-    ashvardanian::fork_union::for_n_dynamic (pool, sourceIds.size (), [&](std::size_t i) noexcept {
+    ashvardanian::fork_union::for_n_dynamic (threadPool, sourceIds.size (), [&](std::size_t i) noexcept {
         processSource (config,
                        sourceIds[i],
                        sourcePeaks,

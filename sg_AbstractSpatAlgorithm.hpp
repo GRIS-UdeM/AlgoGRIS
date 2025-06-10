@@ -33,6 +33,8 @@
 #include <cstdint>
 #include <memory>
 
+#define USE_FORK_UNION 1
+
 namespace gris
 {
 //==============================================================================

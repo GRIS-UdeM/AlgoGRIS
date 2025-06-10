@@ -36,6 +36,10 @@
 #include <array>
 #include <memory>
 
+#if USE_FORK_UNION
+#include <fork_union.hpp>
+#endif
+
 namespace gris
 {
 using StereoSpeakerGains = std::array<float, 2>;

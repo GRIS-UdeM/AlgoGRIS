@@ -37,6 +37,10 @@
 #include <array>
 #include <memory>
 
+#if USE_FORK_UNION
+#include <fork_union.hpp>
+#endif
+
 namespace gris
 {
 //==============================================================================
