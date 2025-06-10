@@ -99,88 +99,104 @@ void MbapSpatAlgorithm::process(AudioConfig const & config,
                                 SourceAudioBuffer & sourceBuffer,
                                 SpeakerAudioBuffer & speakersBuffer,
                                 [[maybe_unused]] juce::AudioBuffer<float> & stereoBuffer,
-                                SourcePeaks const & sourcesPeaks,
+                                SourcePeaks const & sourcePeaks,
                                 SpeakersAudioConfig const * altSpeakerConfig)
 {
     ASSERT_AUDIO_THREAD;
 
-    auto const & gainInterpolation{ config.spatGainsInterpolation };
-
-    auto const gainFactor{ std::pow(gainInterpolation, 0.1f) * 0.0099f + 0.99f };
-    auto const numSamples{ sourceBuffer.getNumSamples() };
-
     auto const & speakersAudioConfig{ altSpeakerConfig ? *altSpeakerConfig : config.speakersAudioConfig };
+    auto const sourceIds{ config.sourcesAudioConfig.getKeys() };
 
-    for (auto const & source : config.sourcesAudioConfig) {
-        if (source.value.isMuted || source.value.directOut || sourcesPeaks[source.key] < SMALL_GAIN) {
+#if USE_FORK_UNION
+    ashvardanian::fork_union::for_n_dynamic(threadPool, sourceIds.size(), [&](std::size_t i) noexcept {
+        processSource(config, sourceIds[i], sourcePeaks, sourceBuffer, speakersAudioConfig, speakersBuffer);
+    });
+#else
+    for (int i = 0; i < sourceIds.size(); ++i) {
+        processSource(config, sourceIds[i], sourcePeaks, sourcesBuffer, speakersAudioConfig, speakersBuffer);
+    }
+#endif
+}
+
+inline void MbapSpatAlgorithm::processSource(const gris::AudioConfig & config,
+                                             const gris::source_index_t & sourceId,
+                                             const gris::SourcePeaks & sourcePeaks,
+                                             gris::SourceAudioBuffer & sourceBuffer,
+                                             const gris::SpeakersAudioConfig & speakersAudioConfig,
+                                             gris::SpeakerAudioBuffer & speakersBuffer)
+{
+    auto const & source = config.sourcesAudioConfig[sourceId];
+    if (source.isMuted || source.directOut || sourcePeaks[sourceId] < SMALL_GAIN) {
+        // speaker silent
+        return;
+    }
+
+    auto & data{ mData[sourceId] };
+    data.dataQueue.getMostRecent(data.currentData);
+    if (data.currentData == nullptr) {
+        // no spat data
+        return;
+    }
+
+    auto const numSamples{ sourceBuffer.getNumSamples() };
+    auto const & spatData{ data.currentData->get() };
+    auto & lastGains{ data.lastGains };
+    auto const & targetGains{ spatData.gains };
+    auto const & gainInterpolation{ config.spatGainsInterpolation };
+    auto const gainFactor{ std::pow(gainInterpolation, 0.1f) * 0.0099f + 0.99f };
+
+    // process attenuation if Player does not exist
+    auto * inputSamples{ sourceBuffer[sourceId].getWritePointer(0) };
+    if (config.mbapAttenuationConfig.shouldProcess) {
+        config.mbapAttenuationConfig.process(inputSamples,
+                                             numSamples,
+                                             spatData.mbapSourceDistance,
+                                             data.attenuationState);
+    }
+
+    // Process spatialization
+    for (auto const & speaker : speakersAudioConfig) {
+        if (speaker.value.isMuted || speaker.value.isDirectOutOnly || speaker.value.gain < SMALL_GAIN) {
             // speaker silent
             continue;
         }
 
-        auto & data{ mData[source.key] };
-        data.dataQueue.getMostRecent(data.currentData);
-        if (data.currentData == nullptr) {
-            // no spat data
+        auto & currentGain{ lastGains[speaker.key] };
+        auto const & targetGain{ targetGains[speaker.key] };
+        auto * outputSamples{ speakersBuffer[speaker.key].getWritePointer(0) };
+        auto const gainDiff{ targetGain - currentGain };
+        auto const gainSlope{ gainDiff / narrow<float>(numSamples) };
+
+        if (gainSlope == 0.0f || std::abs(gainDiff) < SMALL_GAIN) {
+            // no interpolation
+            currentGain = targetGain;
+            if (currentGain >= SMALL_GAIN) {
+                juce::FloatVectorOperations::addWithMultiply(outputSamples, inputSamples, currentGain, numSamples);
+            }
             continue;
         }
 
-        auto const & spatData{ data.currentData->get() };
-        auto const & targetGains{ spatData.gains };
-        auto & lastGains{ data.lastGains };
-
-        // process attenuation if Player does not exist
-        auto * inputSamples{ sourceBuffer[source.key].getWritePointer(0) };
-        if (config.mbapAttenuationConfig.shouldProcess) {
-            config.mbapAttenuationConfig.process(inputSamples,
-                                                 numSamples,
-                                                 spatData.mbapSourceDistance,
-                                                 data.attenuationState);
-        }
-
-        // Process spatialization
-        for (auto const & speaker : speakersAudioConfig) {
-            if (speaker.value.isMuted || speaker.value.isDirectOutOnly || speaker.value.gain < SMALL_GAIN) {
-                // speaker silent
-                continue;
+        if (gainInterpolation == 0.0f) {
+            // linear interpolation over buffer size
+            for (int sampleIndex{}; sampleIndex < numSamples; ++sampleIndex) {
+                currentGain += gainSlope;
+                outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
             }
-
-            auto & currentGain{ lastGains[speaker.key] };
-            auto const & targetGain{ targetGains[speaker.key] };
-            auto * outputSamples{ speakersBuffer[speaker.key].getWritePointer(0) };
-            auto const gainDiff{ targetGain - currentGain };
-            auto const gainSlope{ gainDiff / narrow<float>(numSamples) };
-
-            if (gainSlope == 0.0f || std::abs(gainDiff) < SMALL_GAIN) {
-                // no interpolation
-                currentGain = targetGain;
-                if (currentGain >= SMALL_GAIN) {
-                    juce::FloatVectorOperations::addWithMultiply(outputSamples, inputSamples, currentGain, numSamples);
+        } else {
+            // log interpolation with 1st order filter
+            if (targetGain < SMALL_GAIN) {
+                // targeting silence
+                for (int sampleIndex{}; sampleIndex < numSamples && currentGain >= SMALL_GAIN; ++sampleIndex) {
+                    currentGain = targetGain + (currentGain - targetGain) * gainFactor;
+                    outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
                 }
                 continue;
             }
 
-            if (gainInterpolation == 0.0f) {
-                // linear interpolation over buffer size
-                for (int sampleIndex{}; sampleIndex < numSamples; ++sampleIndex) {
-                    currentGain += gainSlope;
-                    outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
-                }
-            } else {
-                // log interpolation with 1st order filter
-                if (targetGain < SMALL_GAIN) {
-                    // targeting silence
-                    for (int sampleIndex{}; sampleIndex < numSamples && currentGain >= SMALL_GAIN; ++sampleIndex) {
-                        currentGain = targetGain + (currentGain - targetGain) * gainFactor;
-                        outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
-                    }
-                    continue;
-                }
-
-                // not targeting silence
-                for (int sampleIndex{}; sampleIndex < numSamples; ++sampleIndex) {
-                    currentGain = (currentGain - targetGain) * gainFactor + targetGain;
-                    outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
-                }
+            // not targeting silence
+            for (int sampleIndex{}; sampleIndex < numSamples; ++sampleIndex) {
+                currentGain = (currentGain - targetGain) * gainFactor + targetGain;
+                outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
             }
         }
     }

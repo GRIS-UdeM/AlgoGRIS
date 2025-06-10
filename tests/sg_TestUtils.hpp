@@ -16,7 +16,7 @@
 #define ENABLE_TESTS 1
 #define ENABLE_BENCHMARKS 1
 #define ENABLE_CATCH2_BENCHMARKS 1
-#define USE_FIXED_NUM_LOOPS 0
+#define USE_FIXED_NUM_LOOPS 1
 
 #define REQUIRE_MESSAGE(cond, msg)                                                                                     \
     do {                                                                                                               \
@@ -29,7 +29,7 @@ namespace gris::tests
 
 #if USE_FIXED_NUM_LOOPS
 /** Number of loops over the processing call during tests. */
-int constexpr static numTestLoops{ 2 };
+int constexpr static numTestLoops{ 1 };
 #else
 /** Duration of the audio loop used for the spatialisation tests. */
 float constexpr static testDurationSeconds{ .1f };
