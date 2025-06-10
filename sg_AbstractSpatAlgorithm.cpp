@@ -54,6 +54,16 @@ bool isProbablyAudioThread()
 }
 
 //==============================================================================
+AbstractSpatAlgorithm::AbstractSpatAlgorithm ()
+{
+#if USE_FORK_UNION
+    if (!threadPool.try_spawn (std::thread::hardware_concurrency ())) {
+        std::fprintf (stderr, "Failed to fork the threads\n");
+    }
+#endif
+}
+
+//==============================================================================
 void AbstractSpatAlgorithm::fixDirectOutsIntoPlace(SourcesData const & sources,
                                                    SpeakerSetup const & speakerSetup,
                                                    SpatMode const & projectSpatMode) noexcept

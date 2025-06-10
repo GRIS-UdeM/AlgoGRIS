@@ -68,10 +68,6 @@ VbapSpatAlgorithm::VbapSpatAlgorithm(SpeakersData const & speakers)
 {
     JUCE_ASSERT_MESSAGE_THREAD;
 
-    if (!threadPool.try_spawn(std::thread::hardware_concurrency())) {
-        std::fprintf(stderr, "Failed to fork the threads\n");
-    }
-
     std::array<Position, MAX_NUM_SPEAKERS> loudSpeakers{};
     std::array<output_patch_t, MAX_NUM_SPEAKERS> outputPatches{};
     size_t index{};
@@ -118,46 +114,26 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
 {
     ASSERT_AUDIO_THREAD;
 
-    auto const & gainInterpolation{ config.spatGainsInterpolation };
-    auto const gainFactor{ std::pow(gainInterpolation, 0.1f) * 0.0099f + 0.99f };
-
     auto const & speakersAudioConfig{ altSpeakerConfig ? *altSpeakerConfig : config.speakersAudioConfig };
-
     auto const sourceIds{ config.sourcesAudioConfig.getKeys() };
 
 #if USE_FORK_UNION
-    ashvardanian::fork_union::for_n_dynamic (threadPool, sourceIds.size (), [&](std::size_t i) noexcept {
-        processSource (config,
-                       sourceIds[i],
-                       sourcePeaks,
-                       sourcesBuffer,
-                       speakersAudioConfig,
-                       speakersBuffer,
-                       gainInterpolation,
-                       gainFactor);
-                                             });
+    ashvardanian::fork_union::for_n_dynamic(threadPool, sourceIds.size(), [&](std::size_t i) noexcept {
+        processSource(config, sourceIds[i], sourcePeaks, sourcesBuffer, speakersAudioConfig, speakersBuffer);
+    });
 #else
-    for (int i = 0; i < sourceIds.size (); ++i) {
-        processSource (config,
-                       sourceIds[i],
-                       sourcePeaks,
-                       sourcesBuffer,
-                       speakersAudioConfig,
-                       speakersBuffer,
-                       gainInterpolation,
-                       gainFactor);
+    for (int i = 0; i < sourceIds.size(); ++i) {
+        processSource(config, sourceIds[i], sourcePeaks, sourcesBuffer, speakersAudioConfig, speakersBuffer);
     }
 #endif
 }
 
 inline void VbapSpatAlgorithm::processSource(const gris::AudioConfig & config,
-                                      const gris::source_index_t & sourceId,
-                                      const gris::SourcePeaks & sourcePeaks,
-                                      gris::SourceAudioBuffer & sourcesBuffer,
-                                      const gris::SpeakersAudioConfig & speakersAudioConfig,
-                                      gris::SpeakerAudioBuffer & speakersBuffer,
-                                      const float & gainInterpolation,
-                                      const float gainFactor)
+                                             const gris::source_index_t & sourceId,
+                                             const gris::SourcePeaks & sourcePeaks,
+                                             gris::SourceAudioBuffer & sourcesBuffer,
+                                             const gris::SpeakersAudioConfig & speakersAudioConfig,
+                                             gris::SpeakerAudioBuffer & speakersBuffer)
 {
     auto const & source = config.sourcesAudioConfig[sourceId];
     if (source.isMuted || source.directOut || sourcePeaks[sourceId] < SMALL_GAIN) {
@@ -172,10 +148,12 @@ inline void VbapSpatAlgorithm::processSource(const gris::AudioConfig & config,
         return;
     }
 
-    auto const numSamples { sourcesBuffer.getNumSamples () };
+    auto const numSamples{ sourcesBuffer.getNumSamples() };
     auto const & gains{ data.currentSpatData->get() };
     auto & lastGains{ data.lastGains };
     auto const * inputSamples{ sourcesBuffer[sourceId].getReadPointer(0) };
+    auto const & gainInterpolation{ config.spatGainsInterpolation };
+    auto const gainFactor{ std::pow(gainInterpolation, 0.1f) * 0.0099f + 0.99f };
 
     for (auto const & speaker : speakersAudioConfig) {
         if (speaker.value.isMuted || speaker.value.isDirectOutOnly || speaker.value.gain < SMALL_GAIN) {

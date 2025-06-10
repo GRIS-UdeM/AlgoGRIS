@@ -36,10 +36,6 @@
 #include <array>
 #include <memory>
 
-#if USE_FORK_UNION
-#include <fork_union.hpp>
-#endif
-
 namespace gris
 {
 using StereoSpeakerGains = std::array<float, 2>;
@@ -82,6 +78,15 @@ public:
         make(SpeakerSetup const & speakerSetup, SpatMode const & projectSpatMode, SourcesData const & sources);
 
 private:
+    void processSource (const gris::AudioConfig& config,
+                        const gris::source_index_t& sourceId,
+                        const gris::SourcePeaks& sourcePeaks,
+                        gris::SourceAudioBuffer& sourcesBuffer,
+                        const gris::SpeakersAudioConfig& speakersAudioConfig,
+                        gris::SpeakerAudioBuffer& speakersBuffer,
+                        juce::AudioBuffer<float>& stereoBuffer);
+
+
     JUCE_LEAK_DETECTOR(StereoSpatAlgorithm)
 };
 

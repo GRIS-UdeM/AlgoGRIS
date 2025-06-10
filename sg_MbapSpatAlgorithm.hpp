@@ -35,10 +35,6 @@
 #include "tl/optional.hpp"
 #include <memory>
 
-#if USE_FORK_UNION
-#include <fork_union.hpp>
-#endif
-
 namespace gris
 {
 struct MbapSpatData {

@@ -45,6 +45,7 @@ static void testUsingProjectData(gris::SpatGrisData & data,
 
     // for every test buffer size
     for (int bufferSize : bufferSizes) {
+        std::cout << "\tTesting audio loop with buffer size: " << bufferSize << "...\n";
         data.appData.audioSettings.bufferSize = bufferSize;
 
         // init our buffers
@@ -61,9 +62,14 @@ static void testUsingProjectData(gris::SpatGrisData & data,
         // position the sound sources
         positionSources(algo.get(), data);
 
+#if USE_FIXED_NUM_LOOPS
+        // now simulate processing an numTestLoops audio loops
+        for (int i = 0; i < numTestLoops; ++i) {
+    #else
         // now simulate processing an audio loop of testDurationSeconds
         auto const numLoops{ static_cast<int>(DEFAULT_SAMPLE_RATE * testDurationSeconds / bufferSize) };
         for (int i = 0; i < numLoops; ++i) {
+    #endif
             // fill the source buffers with pink noise
             fillSourceBuffersWithNoise(numSources, sourceBuffer, bufferSize, sourcePeaks);
             checkSourceBufferValidity(sourceBuffer);
@@ -107,9 +113,6 @@ static void benchmarkUsingProjectData(std::string testName,
 
     // position the sound sources
     positionSources(algo.get(), data);
-
-    // now simulate processing an audio loop of testDurationSeconds
-    auto const numLoops{ static_cast<int>(DEFAULT_SAMPLE_RATE * testDurationSeconds / bufferSize) };
 
     // fill the source buffers with pink noise
     fillSourceBuffersWithNoise(numSources, sourceBuffer, bufferSize, sourcePeaks);
@@ -179,7 +182,10 @@ TEST_CASE("VBAP test", "[spat]")
     SpeakerAudioBuffer speakerBuffer;
     juce::AudioBuffer<float> stereoBuffer;
     SourcePeaks sourcePeaks;
+
+    std::cout << "Starting VBAP tests:\n";
     testUsingProjectData(vbapData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
+    std::cout << "VBAP tests done.\n";
     benchmarkUsingProjectData("vbap benchmark", vbapData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
 }
 
@@ -193,7 +199,11 @@ TEST_CASE ("Stereo speaker", "[spat]")
     SpeakerAudioBuffer speakerBuffer;
     juce::AudioBuffer<float> stereoBuffer;
     SourcePeaks sourcePeaks;
+
+    std::cout << "Starting Stereo tests:\n";
     testUsingProjectData (stereoData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
+    std::cout << "Stereo tests done.\n";
+
     benchmarkUsingProjectData ("stereo benchmark", stereoData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
 }
 
@@ -209,7 +219,11 @@ TEST_CASE("MBAP test", "[spat]")
     SpeakerAudioBuffer speakerBuffer;
     juce::AudioBuffer<float> stereoBuffer;
     SourcePeaks sourcePeaks;
+
+    std::cout << "Starting MBAP tests:\n";
     testUsingProjectData(mbapData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
+    std::cout << "MBAP tests done.\n";
+
     benchmarkUsingProjectData("mbap benchmark", mbapData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
 }
 
@@ -223,6 +237,10 @@ TEST_CASE("HRTF test", "[spat]")
     SpeakerAudioBuffer speakerBuffer;
     juce::AudioBuffer<float> stereoBuffer;
     SourcePeaks sourcePeaks;
+
+    std::cout << "Starting HRTF tests:\n";
     testUsingProjectData(hrtfData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
+    std::cout << "HRTF tests done.\n";
+
     benchmarkUsingProjectData("hrtf benchmark", hrtfData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
 }

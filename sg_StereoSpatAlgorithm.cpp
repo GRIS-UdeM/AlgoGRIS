@@ -92,64 +92,85 @@ void StereoSpatAlgorithm::process(AudioConfig const & config,
     jassert(!altSpeakerConfig);
     jassert(stereoBuffer.getNumChannels() == 2);
 
-    auto const & gainInterpolation{ config.spatGainsInterpolation };
-    auto const gainFactor{ std::pow(gainInterpolation, 0.1f) * 0.0099f + 0.99f };
-
     mInnerAlgorithm->process(config, sourcesBuffer, speakersBuffer, stereoBuffer, sourcePeaks, altSpeakerConfig);
 
-    auto const numSamples{ sourcesBuffer.getNumSamples() };
-    for (auto const & source : config.sourcesAudioConfig) {
-        if (source.value.isMuted || source.value.directOut || sourcePeaks[source.key] < SMALL_GAIN) {
-            continue;
-        }
+    auto const sourceIds{ config.sourcesAudioConfig.getKeys() };
 
-        auto & data{ mData[source.key] };
-
-        data.gainsUpdater.getMostRecent(data.currentGains);
-        if (data.currentGains == nullptr) {
-            continue;
-        }
-        auto const & gains{ data.currentGains->get() };
-
-        auto & lastGains{ data.lastGains };
-        auto const * inputSamples{ sourcesBuffer[source.key].getReadPointer(0) };
-
-        static constexpr std::array<size_t, 2> SPEAKERS{ 0, 1 };
-        auto * const * const buffers{ stereoBuffer.getArrayOfWritePointers() };
-
-        for (auto const & speaker : SPEAKERS) {
-            auto & currentGain{ lastGains[speaker] };
-            auto const & targetGain{ gains[speaker] };
-            auto * outputSamples{ buffers[speaker] };
-            if (gainInterpolation == 0.0f) {
-                // linear interpolation over buffer size
-                auto const gainSlope = (targetGain - currentGain) / narrow<float>(numSamples);
-                if (targetGain < SMALL_GAIN && currentGain < SMALL_GAIN) {
-                    // this is not going to produce any more sounds!
-                    continue;
-                }
-                for (int sampleIndex{}; sampleIndex < numSamples; ++sampleIndex) {
-                    currentGain += gainSlope;
-                    outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
-                }
-            } else {
-                // log interpolation with 1st order filter
-                for (int sampleIndex{}; sampleIndex < numSamples; ++sampleIndex) {
-                    currentGain = targetGain + (currentGain - targetGain) * gainFactor;
-                    if (currentGain < SMALL_GAIN && targetGain < SMALL_GAIN) {
-                        // If the gain is near zero and the target gain is also near zero, this means that
-                        // currentGain will no ever increase over this buffer
-                        break;
-                    }
-                    outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
-                }
-            }
-        }
+#if USE_FORK_UNION
+    ashvardanian::fork_union::for_n_dynamic(threadPool, sourceIds.size(), [&](std::size_t i) noexcept {
+        processSource(config, sourceIds[i], sourcePeaks, sourcesBuffer, config.speakersAudioConfig, speakersBuffer, stereoBuffer);
+    });
+#else
+    for (int i = 0; i < sourceIds.size(); ++i) {
+        processSource(config, sourceIds[i], sourcePeaks, sourcesBuffer, config.speakersAudioConfig, speakersBuffer, stereoBuffer);
     }
+#endif
 
     // Apply gain compensation.
     auto const compensation{ std::pow(10.0f, (narrow<float>(config.sourcesAudioConfig.size()) - 1.0f) * -0.005f) };
-    stereoBuffer.applyGain(0, numSamples, compensation);
+    stereoBuffer.applyGain(0, sourcesBuffer.getNumSamples (), compensation);
+}
+
+//==============================================================================
+inline void StereoSpatAlgorithm::processSource(const gris::AudioConfig & config,
+                                               const gris::source_index_t & sourceId,
+                                               const gris::SourcePeaks & sourcePeaks,
+                                               gris::SourceAudioBuffer & sourcesBuffer,
+                                               const gris::SpeakersAudioConfig & speakersAudioConfig,
+                                               gris::SpeakerAudioBuffer & speakersBuffer,
+                                               juce::AudioBuffer<float>& stereoBuffer)
+{
+    auto const& source = config.sourcesAudioConfig[sourceId];
+    if (source.isMuted || source.directOut || sourcePeaks[sourceId] < SMALL_GAIN) {
+        return;
+    }
+
+    auto& data { mData[sourceId] };
+
+    data.gainsUpdater.getMostRecent (data.currentGains);
+    if (data.currentGains == nullptr) {
+        return;
+    }
+
+    auto& lastGains { data.lastGains };
+    auto const& gains { data.currentGains->get () };
+    auto const& gainInterpolation { config.spatGainsInterpolation };
+    auto const numSamples { sourcesBuffer.getNumSamples () };
+    auto const* inputSamples { sourcesBuffer[sourceId].getReadPointer (0) };
+    auto const gainFactor { std::pow (gainInterpolation, 0.1f) * 0.0099f + 0.99f };
+
+    static constexpr std::array<size_t, 2> SPEAKERS { 0, 1 };
+    auto* const* const buffers { stereoBuffer.getArrayOfWritePointers () };
+
+    for (auto const& speaker : SPEAKERS) {
+        auto& currentGain { lastGains[speaker] };
+        auto const& targetGain { gains[speaker] };
+        auto* outputSamples { buffers[speaker] };
+        if (gainInterpolation == 0.0f) {
+            // linear interpolation over buffer size
+            auto const gainSlope = (targetGain - currentGain) / narrow<float> (numSamples);
+            if (targetGain < SMALL_GAIN && currentGain < SMALL_GAIN) {
+                // this is not going to produce any more sounds!
+                continue;
+            }
+            for (int sampleIndex {}; sampleIndex < numSamples; ++sampleIndex) {
+                currentGain += gainSlope;
+                outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
+            }
+        }
+        else {
+            // log interpolation with 1st order filter
+            for (int sampleIndex {}; sampleIndex < numSamples; ++sampleIndex) {
+                currentGain = targetGain + (currentGain - targetGain) * gainFactor;
+                if (currentGain < SMALL_GAIN && targetGain < SMALL_GAIN) {
+                    // If the gain is near zero and the target gain is also near zero, this means that
+                    // currentGain will no ever increase over this buffer
+                    break;
+                }
+                outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
+            }
+        }
+    }
 }
 
 //==============================================================================

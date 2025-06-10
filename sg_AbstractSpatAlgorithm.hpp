@@ -35,6 +35,10 @@
 
 #define USE_FORK_UNION 1
 
+#if USE_FORK_UNION
+#include <fork_union.hpp>
+#endif
+
 namespace gris
 {
 //==============================================================================
@@ -73,7 +77,7 @@ public:
         flatDomeSpeakersTooFarApart,
     };
     //==============================================================================
-    AbstractSpatAlgorithm() = default;
+    AbstractSpatAlgorithm();
     virtual ~AbstractSpatAlgorithm() = default;
     SG_DELETE_COPY_AND_MOVE(AbstractSpatAlgorithm)
     //==============================================================================
@@ -129,6 +133,10 @@ public:
                                                                      SourcesData const & sources,
                                                                      double sampleRate,
                                                                      int bufferSize);
+protected:
+#if USE_FORK_UNION
+    ashvardanian::fork_union::thread_pool_t threadPool;
+#endif
 
 private:
     //==============================================================================
