@@ -36,7 +36,7 @@
 #include <fork_union.hpp>
 #include <memory>
 
-#define SIMD_INTERPOLATION 0
+#define USE_FORK_UNION 1
 
 namespace gris
 {
