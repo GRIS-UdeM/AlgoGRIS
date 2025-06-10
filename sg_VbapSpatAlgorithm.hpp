@@ -84,7 +84,6 @@ private:
                        const gris::SourcePeaks & sourcePeaks,
                        gris::SourceAudioBuffer & sourcesBuffer,
                        const gris::SpeakersAudioConfig & speakersAudioConfig,
-                       const int & numSamples,
                        gris::SpeakerAudioBuffer & speakersBuffer,
                        const float & gainInterpolation,
                        const float gainFactor);

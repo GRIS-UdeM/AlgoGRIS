@@ -123,8 +123,6 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
 
     auto const & speakersAudioConfig{ altSpeakerConfig ? *altSpeakerConfig : config.speakersAudioConfig };
 
-    auto const numSamples{ sourcesBuffer.getNumSamples() };
-    auto const numSources{ config.sourcesAudioConfig.size() };
     auto const sourceIds{ config.sourcesAudioConfig.getKeys() };
 
 #if USE_FORK_UNION
@@ -134,7 +132,6 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
                        sourcePeaks,
                        sourcesBuffer,
                        speakersAudioConfig,
-                       numSamples,
                        speakersBuffer,
                        gainInterpolation,
                        gainFactor);
@@ -146,7 +143,6 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
                        sourcePeaks,
                        sourcesBuffer,
                        speakersAudioConfig,
-                       numSamples,
                        speakersBuffer,
                        gainInterpolation,
                        gainFactor);
@@ -159,7 +155,6 @@ inline void VbapSpatAlgorithm::processSource(const gris::AudioConfig & config,
                                       const gris::SourcePeaks & sourcePeaks,
                                       gris::SourceAudioBuffer & sourcesBuffer,
                                       const gris::SpeakersAudioConfig & speakersAudioConfig,
-                                      const int & numSamples,
                                       gris::SpeakerAudioBuffer & speakersBuffer,
                                       const float & gainInterpolation,
                                       const float gainFactor)
@@ -177,6 +172,7 @@ inline void VbapSpatAlgorithm::processSource(const gris::AudioConfig & config,
         return;
     }
 
+    auto const numSamples { sourcesBuffer.getNumSamples () };
     auto const & gains{ data.currentSpatData->get() };
     auto & lastGains{ data.lastGains };
     auto const * inputSamples{ sourcesBuffer[sourceId].getReadPointer(0) };
