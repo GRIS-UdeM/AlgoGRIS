@@ -17,12 +17,7 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(Catch2)
 
-FetchContent_Declare(
-    fork_union
-    GIT_REPOSITORY https://github.com/ashvardanian/fork_union
-    GIT_TAG main
-)
-FetchContent_MakeAvailable(fork_union)
+add_subdirectory (submodules/fork_union)
 
 # Global CMake configuration
 set(CMAKE_INCLUDE_CURRENT_DIR 1)
