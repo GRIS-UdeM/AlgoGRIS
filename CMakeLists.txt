@@ -151,8 +151,6 @@ target_compile_definitions(AlgoGRIS
     $<$<BOOL:${BUILD_TESTING}>:ALGOGRIS_UNIT_TESTS>
 )
 
-# target_link_libraries(AlgoGRIS PRIVATE fork_union::fork_union)
-
 # Tests
 add_library(MainTest STATIC
   tests/Catch2Main.cpp
