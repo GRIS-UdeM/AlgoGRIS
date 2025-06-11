@@ -59,6 +59,7 @@ AbstractSpatAlgorithm::AbstractSpatAlgorithm ()
 #if USE_FORK_UNION
     if (!threadPool.try_spawn (std::thread::hardware_concurrency ())) {
         std::fprintf (stderr, "Failed to fork the threads\n");
+        jassertfalse;
     }
 #endif
 }

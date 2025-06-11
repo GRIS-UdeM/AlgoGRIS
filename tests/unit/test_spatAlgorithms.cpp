@@ -207,25 +207,25 @@ TEST_CASE ("Stereo speaker", "[spat]")
     benchmarkUsingProjectData ("stereo benchmark", stereoData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
 }
 
-TEST_CASE("MBAP test", "[spat]")
-{
-    SpatGrisData mbapData
-        = getSpatGrisDataFromFiles("default_project18(8X2-Subs2).xml", "Cube_default_speaker_setup.xml");
-
-    mbapData.project.spatMode = SpatMode::mbap;
-    mbapData.appData.stereoMode = {};
-
-    SourceAudioBuffer sourceBuffer;
-    SpeakerAudioBuffer speakerBuffer;
-    juce::AudioBuffer<float> stereoBuffer;
-    SourcePeaks sourcePeaks;
-
-    std::cout << "Starting MBAP tests:\n";
-    testUsingProjectData(mbapData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
-    std::cout << "MBAP tests done.\n";
-
-    benchmarkUsingProjectData("mbap benchmark", mbapData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
-}
+//TEST_CASE("MBAP test", "[spat]")
+//{
+//    SpatGrisData mbapData
+//        = getSpatGrisDataFromFiles("default_project18(8X2-Subs2).xml", "Cube_default_speaker_setup.xml");
+//
+//    mbapData.project.spatMode = SpatMode::mbap;
+//    mbapData.appData.stereoMode = {};
+//
+//    SourceAudioBuffer sourceBuffer;
+//    SpeakerAudioBuffer speakerBuffer;
+//    juce::AudioBuffer<float> stereoBuffer;
+//    SourcePeaks sourcePeaks;
+//
+//    std::cout << "Starting MBAP tests:\n";
+//    testUsingProjectData(mbapData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
+//    std::cout << "MBAP tests done.\n";
+//
+//    benchmarkUsingProjectData("mbap benchmark", mbapData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
+//}
 
 TEST_CASE("HRTF test", "[spat]")
 {

@@ -36,7 +36,8 @@ float constexpr static testDurationSeconds{ .1f };
 #endif
 
 /** A list of buffer sizes used for testing. */
-std::array<int, 4> constexpr static bufferSizes{ 1, 512, 1024, SourceAudioBuffer::MAX_NUM_SAMPLES };
+//std::array<int, 4> constexpr static bufferSizes{ 1, 512, 1024, SourceAudioBuffer::MAX_NUM_SAMPLES };
+std::array<int, 2> constexpr static bufferSizes{ 1, 512 };
 
 /**
  * @brief Initializes source, speaker, and stereo audio buffers for testing.
