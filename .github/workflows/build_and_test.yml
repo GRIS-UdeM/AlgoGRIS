@@ -88,8 +88,9 @@ jobs:
                 -DCMAKE_CXX_COMPILER_LAUNCHER=sccache \
                 ${{ matrix.extra-flags }}
 
-      - name: Build debug
-        run: cmake --build build --config Debug --parallel
+      #TODO VB: PUT BACK
+      # - name: Build debug
+      #   run: cmake --build build --config Debug --parallel
 
       - name: Build release
         run: cmake --build build --config Release --parallel
@@ -107,9 +108,9 @@ jobs:
           mkdir -p benchmarks
 
           if [[ "$RUNNER_OS" == "Windows" ]]; then
-            ./test_spatAlgorithms.exe --reporter xml --out benchmarks/${{ github.sha }}.xml
+            ./build/Release/test_spatAlgorithms.exe --reporter xml --out benchmarks/${{ github.sha }}.xml
           else
-            ./test_spatAlgorithms --reporter xml --out benchmarks/${{ github.sha }}.xml
+            ./build/Release/test_spatAlgorithms --reporter xml --out benchmarks/${{ github.sha }}.xml
           fi
 
           echo "===== Benchmark XML Output ====="
