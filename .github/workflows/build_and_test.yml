@@ -94,6 +94,21 @@ jobs:
       - name: Build release
         run: cmake --build build --config Release --parallel
 
-      - name: Test & Benchmarks
+      - name: Test
         working-directory: build
         run: ctest --verbose --output-on-failure
+
+      - name: Benchmark
+        working-directory: build
+        run: |
+          mkdir -p benchmarks
+
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            ./test_spatAlgorithms.exe --reporter xml --out benchmarks/${{ github.sha }}.xml
+          else
+            ./test_spatAlgorithms --reporter xml --out benchmarks/${{ github.sha }}.xml
+          fi
+
+          echo "===== Benchmark XML Output ====="
+          cat benchmarks/${{ github.sha }}.xml
+          echo "================================"
