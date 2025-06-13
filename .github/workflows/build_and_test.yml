@@ -120,5 +120,5 @@ jobs:
           fi
 
           echo "===== Benchmark XML Output ====="
-          cat benchmarks/${{ github.sha }}.xml
+          cat ${{ github.sha }}.xml
           echo "================================"
