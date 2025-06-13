@@ -95,14 +95,16 @@ jobs:
       - name: Build release
         run: cmake --build build --config Release --parallel
 
-      - name: ls
-        run: ls -R
-
-      - name: ls ./build/
-        run: ls -R ./build/
-
       - name: ls ./build/Release/
         run: ls -R ./build/Release/
+
+      - name: ls per OS
+        run : |
+              if [[ "$RUNNER_OS" == "Windows" ]]; then
+                ls C:\a\AlgoGRIS\AlgoGRIS\build\Release\
+              else
+                ls /Users/runner/work/AlgoGRIS/AlgoGRIS/build/Release/
+              fi
 
       - name: Test
         working-directory: build
@@ -111,12 +113,10 @@ jobs:
       - name: Benchmark
         working-directory: build
         run: |
-          mkdir -p benchmarks
-
           if [[ "$RUNNER_OS" == "Windows" ]]; then
-            ./build/Release/test_spatAlgorithms.exe --reporter xml --out benchmarks/${{ github.sha }}.xml
+            C:\a\AlgoGRIS\AlgoGRIS\build\Release\test_spatAlgorithms.exe --reporter xml --out ${{ github.sha }}.xml
           else
-            ./build/Release/test_spatAlgorithms --reporter xml --out benchmarks/${{ github.sha }}.xml
+            /Users/runner/work/AlgoGRIS/AlgoGRIS/build/Release/test_spatAlgorithms --reporter xml --out ${{ github.sha }}.xml
           fi
 
           echo "===== Benchmark XML Output ====="
