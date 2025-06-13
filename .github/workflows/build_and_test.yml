@@ -95,17 +95,6 @@ jobs:
       - name: Build release
         run: cmake --build build --config Release --parallel
 
-      - name: ls ./build/Release/
-        run: ls -R ./build/Release/
-
-      # - name: ls per OS
-      #   run : |
-      #         if [[ "$RUNNER_OS" == "Windows" ]]; then
-      #           ls C:\a\AlgoGRIS\AlgoGRIS\build\Release\
-      #         else
-      #           ls /Users/runner/work/AlgoGRIS/AlgoGRIS/build/Release/
-      #         fi
-
       - name: Test
         working-directory: build
         run: ctest --verbose --output-on-failure
