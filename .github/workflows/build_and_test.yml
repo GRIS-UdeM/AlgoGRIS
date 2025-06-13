@@ -115,8 +115,10 @@ jobs:
         run: |
           if [[ "$RUNNER_OS" == "Windows" ]]; then
             C:\a\AlgoGRIS\AlgoGRIS\build\Release\test_spatAlgorithms.exe --reporter xml --out ${{ github.sha }}.xml
-          else
+          elif [[ "$RUNNER_OS" == "macOS" ]]; then
             /Users/runner/work/AlgoGRIS/AlgoGRIS/build/Release/test_spatAlgorithms --reporter xml --out ${{ github.sha }}.xml
+          else
+            /home/runner/work/AlgoGRIS/AlgoGRIS/build/Release/test_spatAlgorithms --reporter xml --out ${{ github.sha }}.xml
           fi
 
           echo "===== Benchmark XML Output ====="
