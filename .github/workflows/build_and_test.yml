@@ -102,32 +102,37 @@ jobs:
       - name: Benchmark
         working-directory: build
         run: |
+          mkdir -p benchmarks/${RUNNER_OS}
+
           if [[ "$RUNNER_OS" == "Windows" ]]; then
-            C:\\a\\AlgoGRIS\\AlgoGRIS\\build\\Release\\test_spatAlgorithms.exe --reporter xml --out ${{ github.sha }}.xml
+            ./Release/test_spatAlgorithms.exe --reporter xml --out benchmarks/${RUNNER_OS}/${{ github.sha }}.xml
           elif [[ "$RUNNER_OS" == "macOS" ]]; then
-            /Users/runner/work/AlgoGRIS/AlgoGRIS/build/Release/test_spatAlgorithms --reporter xml --out ${{ github.sha }}.xml
+            ./Release/test_spatAlgorithms --reporter xml --out benchmarks/${RUNNER_OS}/${{ github.sha }}.xml
           else
-            /home/runner/work/AlgoGRIS/AlgoGRIS/build/Release/test_spatAlgorithms --reporter xml --out ${{ github.sha }}.xml
+            ./Release/test_spatAlgorithms --reporter xml --out benchmarks/${RUNNER_OS}/${{ github.sha }}.xml
           fi
 
           echo "===== Benchmark XML Output ====="
-          cat ${{ github.sha }}.xml
+          cat benchmarks/${RUNNER_OS}/${{ github.sha }}.xml
           echo "================================"
 
       - name: Commit benchmark results to benchmarks branch
         run: |
-          # Set up bogus git account
+          # Set up git account
           git config --global user.email "ci-bot@example.com"
           git config --global user.name "GitHub Actions"
 
           # Clone the repo into temp-benchmarks and switch to the 'benchmarks' branch
           git clone --depth=1 --branch=benchmarks https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} temp-benchmarks
 
-          # Copy current benchmark xml into the cloned repo
-          cp ${{ github.sha }}.xml temp-benchmarks/${{ github.sha }}.xml
+          # Create OS-specific subdirectory if it doesn't exist
+          mkdir -p temp-benchmarks/${RUNNER_OS}
+
+          # Copy current benchmark XML into the appropriate subdirectory
+          cp build/benchmarks/${RUNNER_OS}/${{ github.sha }}.xml temp-benchmarks/${RUNNER_OS}/${{ github.sha }}.xml
 
           # Commit and push to the benchmarks branch
           cd temp-benchmarks
           git add .
-          git commit -m "Add benchmark results for commit ${{ github.sha }}"
+          git commit -m "Add benchmark results for commit ${{ github.sha }} on ${RUNNER_OS}"
           git push origin benchmarks
