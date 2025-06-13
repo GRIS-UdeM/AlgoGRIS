@@ -113,3 +113,21 @@ jobs:
           echo "===== Benchmark XML Output ====="
           cat ${{ github.sha }}.xml
           echo "================================"
+
+      - name: Commit benchmark results to benchmarks branch
+        run: |
+          # Set up bogus git account
+          git config --global user.email "ci-bot@example.com"
+          git config --global user.name "GitHub Actions"
+
+          # Clone the repo into temp-benchmarks and switch to the 'benchmarks' branch
+          git clone --depth=1 --branch=benchmarks https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} temp-benchmarks
+
+          # Copy current benchmark xml into the cloned repo
+          cp ${{ github.sha }}.xml temp-benchmarks/${{ github.sha }}.xml
+
+          # Commit and push to the benchmarks branch
+          cd temp-benchmarks
+          git add .
+          git commit -m "Add benchmark results for commit ${{ github.sha }}"
+          git push origin benchmarks
