@@ -98,6 +98,12 @@ jobs:
       - name: ls
         run: ls -R
 
+      - name: ls ./build/
+        run: ls -R ./build/
+
+      - name: ls ./build/Release/
+        run: ls -R ./build/Release/
+
       - name: Test
         working-directory: build
         run: ctest --verbose --output-on-failure
