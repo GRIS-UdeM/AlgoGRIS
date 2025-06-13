@@ -33,7 +33,7 @@
 #include <cstdint>
 #include <memory>
 
-#define USE_FORK_UNION 0
+#define USE_FORK_UNION 1
 
 #if USE_FORK_UNION
 #include <fork_union.hpp>
