@@ -113,7 +113,7 @@ void MbapSpatAlgorithm::process(AudioConfig const & config,
     });
 #else
     for (int i = 0; i < sourceIds.size(); ++i) {
-        processSource(config, sourceIds[i], sourcePeaks, sourcesBuffer, speakersAudioConfig, speakersBuffer);
+        processSource(config, sourceIds[i], sourcePeaks, sourceBuffer, speakersAudioConfig, speakersBuffer);
     }
 #endif
 }
