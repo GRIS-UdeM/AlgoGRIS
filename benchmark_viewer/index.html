@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AlgoGRIS Benchmarks</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 2rem;
+      background: #f9f9f9;
+    }
+
+    h1 {
+      text-align: center;
+    }
+
+    #controls {
+      margin-bottom: 2rem;
+      text-align: center;
+    }
+
+    canvas {
+      max-width: 100%;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>AlgoGRIS Benchmarks</h1>
+
+  <div id="controls">
+    <label for="testSelect">Select Test Case:</label>
+    <select id="testSelect"></select>
+  </div>
+
+  <canvas id="benchmarkChart" width="1200" height="500"></canvas>
+
+  <script type="module" src="./scripts/load-benchmarks.js"></script>
+
+</body>
+
+</html>
