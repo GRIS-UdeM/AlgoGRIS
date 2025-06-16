@@ -79,7 +79,8 @@
             continue;
           }
           const data = await res.json();
-          messages[hash] = data.commit.message.split('\n')[0]; // first line only
+          const fullMessage = data.commit.message.split('\n')[0]; // first line only
+          messages[hash] = fullMessage.length > 20 ? fullMessage.slice(0, 20) + '…' : fullMessage;
         } catch (e) {
           console.warn(`Error fetching commit ${hash}:`, e);
           messages[hash] = hash.slice(0, 7);
@@ -87,6 +88,7 @@
       }
       return messages;
     }
+
 
     async function fetchBenchmarkFiles() {
       const allBenchmarks = {}; // { commitHash: { os: [xmlDoc, ...] } }
