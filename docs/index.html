@@ -1,236 +1,273 @@
-<script>
-  const OS_DIRS = ['Linux', 'macOS', 'Windows'];
-  const OS_COLORS = {
-    Linux: 'green',
-    macOS: 'red',
-    Windows: 'blue'
-  };
-  const REPO = 'GRIS-UdeM/AlgoGRIS';
-  const BRANCH = 'benchmarks';
-  const API_REPO = 'https://api.github.com/repos/' + REPO;
+<!DOCTYPE html>
+<html lang="en">
 
-  // Extract timestamp and commit hash from filename
-  // Filename format: YYYYMMDD_HHMMSS_<commitHash>.xml
-  function parseFilename(filename) {
-    const base = filename.replace('.xml', '');
-    // Split into 3 parts: date, time, commitHash
-    // Using regex:
-    const m = base.match(/^(\d{8})_(\d{6})_(.+)$/);
-    if (!m) return null;
-    return {
-      timestampStr: `${m[1]}_${m[2]}`, // "YYYYMMDD_HHMMSS"
-      commitHash: m[3],
-      full: base,
-      date: new Date(
-        m[1].slice(0, 4),       // year
-        parseInt(m[1].slice(4, 6)) - 1, // month zero-based
-        m[1].slice(6, 8),       // day
-        m[2].slice(0, 2),       // hour
-        m[2].slice(2, 4),       // min
-        m[2].slice(4, 6)        // sec
-      )
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Benchmark Results Over Time</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      max-width: 900px;
+    }
+
+    h1 {
+      margin-bottom: 1rem;
+    }
+
+    h2 {
+      margin-top: 2rem;
+    }
+
+    canvas {
+      max-width: 100%;
+      height: 300px;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Benchmark Results Over Time</h1>
+
+  <script>
+    const OS_DIRS = ['Linux', 'macOS', 'Windows'];
+    const OS_COLORS = {
+      Linux: 'green',
+      macOS: 'red',
+      Windows: 'blue'
     };
-  }
+    const REPO = 'GRIS-UdeM/AlgoGRIS';
+    const BRANCH = 'benchmarks';
+    const API_REPO = 'https://api.github.com/repos/' + REPO;
 
-  // Fetch commit messages for given commit hashes
-  // Returns { commitHash: commitMessage }
-  async function fetchCommitMessages(commitHashes) {
-    const messages = {};
-    // To avoid GitHub API rate limit, fetch sequentially or with small concurrency
-    for (const hash of commitHashes) {
-      try {
-        const res = await fetch(`${API_REPO}/commits/${hash}`);
-        if (!res.ok) {
-          console.warn(`Failed to fetch commit ${hash}: ${res.statusText}`);
-          messages[hash] = hash.slice(0, 7); // fallback to short hash
-          continue;
-        }
-        const data = await res.json();
-        messages[hash] = data.commit.message.split('\n')[0]; // first line only
-      } catch (e) {
-        console.warn(`Error fetching commit ${hash}:`, e);
-        messages[hash] = hash.slice(0, 7);
-      }
+    // Extract timestamp and commit hash from filename
+    // Filename format: YYYYMMDD_HHMMSS_<commitHash>.xml
+    function parseFilename(filename) {
+      const base = filename.replace('.xml', '');
+      // Split into 3 parts: date, time, commitHash
+      // Using regex:
+      const m = base.match(/^(\d{8})_(\d{6})_(.+)$/);
+      if (!m) return null;
+      return {
+        timestampStr: `${m[1]}_${m[2]}`, // "YYYYMMDD_HHMMSS"
+        commitHash: m[3],
+        full: base,
+        date: new Date(
+          m[1].slice(0, 4),       // year
+          parseInt(m[1].slice(4, 6)) - 1, // month zero-based
+          m[1].slice(6, 8),       // day
+          m[2].slice(0, 2),       // hour
+          m[2].slice(2, 4),       // min
+          m[2].slice(4, 6)        // sec
+        )
+      };
     }
-    return messages;
-  }
 
-  async function fetchBenchmarkFiles() {
-    const allBenchmarks = {}; // { commitHash: { os: [xmlDoc, ...] } }
-    const parser = new DOMParser();
-
-    for (const os of OS_DIRS) {
-      const apiURL = `https://api.github.com/repos/${REPO}/contents/benchmarks/${os}?ref=${BRANCH}`;
-      try {
-        const response = await fetch(apiURL);
-        if (!response.ok) {
-          console.error(`Failed to fetch ${os} directory from GitHub:`, response.statusText);
-          continue;
-        }
-        const files = await response.json();
-
-        for (const file of files) {
-          if (!file.name.endsWith('.xml')) continue;
-
-          const parsed = parseFilename(file.name);
-          if (!parsed) continue;
-
-          const { commitHash } = parsed;
-
-          if (!allBenchmarks[commitHash]) {
-            allBenchmarks[commitHash] = {};
+    // Fetch commit messages for given commit hashes
+    // Returns { commitHash: commitMessage }
+    async function fetchCommitMessages(commitHashes) {
+      const messages = {};
+      // To avoid GitHub API rate limit, fetch sequentially or with small concurrency
+      for (const hash of commitHashes) {
+        try {
+          const res = await fetch(`${API_REPO}/commits/${hash}`);
+          if (!res.ok) {
+            console.warn(`Failed to fetch commit ${hash}: ${res.statusText}`);
+            messages[hash] = hash.slice(0, 7); // fallback to short hash
+            continue;
           }
-          if (!allBenchmarks[commitHash][os]) {
-            allBenchmarks[commitHash][os] = [];
-          }
-
-          const xmlRes = await fetch(file.download_url);
-          const xmlText = await xmlRes.text();
-          const xmlDoc = parser.parseFromString(xmlText, 'application/xml');
-
-          allBenchmarks[commitHash][os].push(xmlDoc);
+          const data = await res.json();
+          messages[hash] = data.commit.message.split('\n')[0]; // first line only
+        } catch (e) {
+          console.warn(`Error fetching commit ${hash}:`, e);
+          messages[hash] = hash.slice(0, 7);
         }
-      } catch (e) {
-        console.error(`Error fetching files for OS ${os}:`, e);
       }
+      return messages;
     }
-    return allBenchmarks;
-  }
 
-  // Combine multiple xml docs for same commitHash & OS by averaging means for each test
-  function parseBenchmarks(allBenchmarks) {
-    // { testName: { commitHash: { os: mean } } }
-    const resultsByTestName = {};
+    async function fetchBenchmarkFiles() {
+      const allBenchmarks = {}; // { commitHash: { os: [xmlDoc, ...] } }
+      const parser = new DOMParser();
 
-    for (const [commitHash, osData] of Object.entries(allBenchmarks)) {
-      for (const [os, xmlDocs] of Object.entries(osData)) {
-        for (const xmlDoc of xmlDocs) {
-          const testCases = xmlDoc.querySelectorAll('TestCase');
-          for (const testCase of testCases) {
-            const testName = testCase.getAttribute('name');
-            const benchNode = testCase.querySelector('BenchmarkResults mean');
-            if (!benchNode) continue;
+      for (const os of OS_DIRS) {
+        const apiURL = `https://api.github.com/repos/${REPO}/contents/benchmarks/${os}?ref=${BRANCH}`;
+        try {
+          const response = await fetch(apiURL);
+          if (!response.ok) {
+            console.error(`Failed to fetch ${os} directory from GitHub:`, response.statusText);
+            continue;
+          }
+          const files = await response.json();
 
-            const mean = parseFloat(benchNode.getAttribute('value'));
-            if (!resultsByTestName[testName]) resultsByTestName[testName] = {};
-            if (!resultsByTestName[testName][commitHash]) resultsByTestName[testName][commitHash] = {};
-            if (!resultsByTestName[testName][commitHash][os]) {
-              resultsByTestName[testName][commitHash][os] = [];
+          for (const file of files) {
+            if (!file.name.endsWith('.xml')) continue;
+
+            const parsed = parseFilename(file.name);
+            if (!parsed) continue;
+
+            const { commitHash } = parsed;
+
+            if (!allBenchmarks[commitHash]) {
+              allBenchmarks[commitHash] = {};
             }
-            resultsByTestName[testName][commitHash][os].push(mean);
+            if (!allBenchmarks[commitHash][os]) {
+              allBenchmarks[commitHash][os] = [];
+            }
+
+            const xmlRes = await fetch(file.download_url);
+            const xmlText = await xmlRes.text();
+            const xmlDoc = parser.parseFromString(xmlText, 'application/xml');
+
+            allBenchmarks[commitHash][os].push(xmlDoc);
+          }
+        } catch (e) {
+          console.error(`Error fetching files for OS ${os}:`, e);
+        }
+      }
+      return allBenchmarks;
+    }
+
+    // Combine multiple xml docs for same commitHash & OS by averaging means for each test
+    function parseBenchmarks(allBenchmarks) {
+      // { testName: { commitHash: { os: mean } } }
+      const resultsByTestName = {};
+
+      for (const [commitHash, osData] of Object.entries(allBenchmarks)) {
+        for (const [os, xmlDocs] of Object.entries(osData)) {
+          for (const xmlDoc of xmlDocs) {
+            const testCases = xmlDoc.querySelectorAll('TestCase');
+            for (const testCase of testCases) {
+              const testName = testCase.getAttribute('name');
+              const benchNode = testCase.querySelector('BenchmarkResults mean');
+              if (!benchNode) continue;
+
+              const mean = parseFloat(benchNode.getAttribute('value'));
+              if (!resultsByTestName[testName]) resultsByTestName[testName] = {};
+              if (!resultsByTestName[testName][commitHash]) resultsByTestName[testName][commitHash] = {};
+              if (!resultsByTestName[testName][commitHash][os]) {
+                resultsByTestName[testName][commitHash][os] = [];
+              }
+              resultsByTestName[testName][commitHash][os].push(mean);
+            }
           }
         }
       }
-    }
 
-    // Average the means for multiple xml docs of the same commitHash/os/test
-    for (const testName of Object.keys(resultsByTestName)) {
-      for (const commitHash of Object.keys(resultsByTestName[testName])) {
-        for (const os of Object.keys(resultsByTestName[testName][commitHash])) {
-          const means = resultsByTestName[testName][commitHash][os];
-          const avg = means.reduce((a,b) => a+b, 0) / means.length;
-          resultsByTestName[testName][commitHash][os] = avg;
-        }
-      }
-    }
-
-    return resultsByTestName;
-  }
-
-  // We need to order commitHashes by their earliest timestamp (from the files)
-  // So let's get timestamps per commitHash from filenames again
-  async function getCommitOrder(allBenchmarks) {
-    const commitTimes = {}; // commitHash: earliest Date
-
-    // Fetch file list once again for timestamps
-    for (const os of OS_DIRS) {
-      const apiURL = `https://api.github.com/repos/${REPO}/contents/benchmarks/${os}?ref=${BRANCH}`;
-      try {
-        const response = await fetch(apiURL);
-        if (!response.ok) continue;
-        const files = await response.json();
-
-        for (const file of files) {
-          const parsed = parseFilename(file.name);
-          if (!parsed) continue;
-
-          const { commitHash, date } = parsed;
-          if (!commitTimes[commitHash] || date < commitTimes[commitHash]) {
-            commitTimes[commitHash] = date;
+      // Average the means for multiple xml docs of the same commitHash/os/test
+      for (const testName of Object.keys(resultsByTestName)) {
+        for (const commitHash of Object.keys(resultsByTestName[testName])) {
+          for (const os of Object.keys(resultsByTestName[testName][commitHash])) {
+            const means = resultsByTestName[testName][commitHash][os];
+            const avg = means.reduce((a, b) => a + b, 0) / means.length;
+            resultsByTestName[testName][commitHash][os] = avg;
           }
         }
-      } catch (e) {
-        // Ignore errors here
       }
+
+      return resultsByTestName;
     }
-    // Sort commit hashes by earliest timestamp ascending
-    return Object.entries(commitTimes)
-      .sort((a,b) => a[1] - b[1])
-      .map(e => e[0]);
-  }
 
-  async function render() {
-    const allBenchmarks = await fetchBenchmarkFiles();
-    const resultsByTestName = parseBenchmarks(allBenchmarks);
-    const commitHashes = await getCommitOrder(allBenchmarks);
-    const commitMessages = await fetchCommitMessages(commitHashes);
+    // We need to order commitHashes by their earliest timestamp (from the files)
+    // So let's get timestamps per commitHash from filenames again
+    async function getCommitOrder(allBenchmarks) {
+      const commitTimes = {}; // commitHash: earliest Date
 
-    // Clear old charts
-    document.querySelectorAll('canvas').forEach(c => c.remove());
-    document.querySelectorAll('h2.chart-title').forEach(h => h.remove());
+      // Fetch file list once again for timestamps
+      for (const os of OS_DIRS) {
+        const apiURL = `https://api.github.com/repos/${REPO}/contents/benchmarks/${os}?ref=${BRANCH}`;
+        try {
+          const response = await fetch(apiURL);
+          if (!response.ok) continue;
+          const files = await response.json();
 
-    for (const [testName, commitData] of Object.entries(resultsByTestName)) {
-      // Use commitHashes in order for labels
-      const labels = commitHashes.map(hash => commitMessages[hash] || hash.slice(0,7));
+          for (const file of files) {
+            const parsed = parseFilename(file.name);
+            if (!parsed) continue;
 
-      const datasets = OS_DIRS.map(os => ({
-        label: os,
-        data: commitHashes.map(hash => (commitData[hash] && commitData[hash][os]) ?? null),
-        fill: false,
-        borderColor: OS_COLORS[os],
-        tension: 0.1,
-        spanGaps: true,
-        pointRadius: 3,
-      }));
+            const { commitHash, date } = parsed;
+            if (!commitTimes[commitHash] || date < commitTimes[commitHash]) {
+              commitTimes[commitHash] = date;
+            }
+          }
+        } catch (e) {
+          // Ignore errors here
+        }
+      }
+      // Sort commit hashes by earliest timestamp ascending
+      return Object.entries(commitTimes)
+        .sort((a, b) => a[1] - b[1])
+        .map(e => e[0]);
+    }
 
-      const container = document.createElement('div');
-      const title = document.createElement('h2');
-      title.textContent = testName;
-      title.classList.add('chart-title');
-      const canvas = document.createElement('canvas');
-      container.appendChild(title);
-      container.appendChild(canvas);
-      document.body.appendChild(container);
+    async function render() {
+      const allBenchmarks = await fetchBenchmarkFiles();
+      const resultsByTestName = parseBenchmarks(allBenchmarks);
+      const commitHashes = await getCommitOrder(allBenchmarks);
+      const commitMessages = await fetchCommitMessages(commitHashes);
 
-      new Chart(canvas.getContext('2d'), {
-        type: 'line',
-        data: { labels, datasets },
-        options: {
-          responsive: true,
-          plugins: {
-            legend: { position: 'top' },
-            title: { display: true, text: `${testName} Mean Time (ns)` }
-          },
-          scales: {
-            y: {
-              title: { display: true, text: 'Mean Time (ns)' },
-              type: 'logarithmic',
-              ticks: { callback: val => Number(val).toLocaleString() }
+      // Clear old charts
+      document.querySelectorAll('canvas').forEach(c => c.remove());
+      document.querySelectorAll('h2.chart-title').forEach(h => h.remove());
+
+      for (const [testName, commitData] of Object.entries(resultsByTestName)) {
+        // Use commitHashes in order for labels
+        const labels = commitHashes.map(hash => commitMessages[hash] || hash.slice(0, 7));
+
+        const datasets = OS_DIRS.map(os => ({
+          label: os,
+          data: commitHashes.map(hash => (commitData[hash] && commitData[hash][os]) ?? null),
+          fill: false,
+          borderColor: OS_COLORS[os],
+          tension: 0.1,
+          spanGaps: true,
+          pointRadius: 3,
+        }));
+
+        const container = document.createElement('div');
+        const title = document.createElement('h2');
+        title.textContent = testName;
+        title.classList.add('chart-title');
+        const canvas = document.createElement('canvas');
+        container.appendChild(title);
+        container.appendChild(canvas);
+        document.body.appendChild(container);
+
+        new Chart(canvas.getContext('2d'), {
+          type: 'line',
+          data: { labels, datasets },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: { position: 'top' },
+              title: { display: true, text: `${testName} Mean Time (ns)` }
             },
-            x: {
-              title: { display: true, text: 'Commit Message' },
-              ticks: {
-                maxRotation: 90,
-                minRotation: 45,
-                autoSkip: true,
-                maxTicksLimit: 20
+            scales: {
+              y: {
+                title: { display: true, text: 'Mean Time (ns)' },
+                type: 'logarithmic',
+                ticks: { callback: val => Number(val).toLocaleString() }
+              },
+              x: {
+                title: { display: true, text: 'Commit Message' },
+                ticks: {
+                  maxRotation: 90,
+                  minRotation: 45,
+                  autoSkip: true,
+                  maxTicksLimit: 20
+                }
               }
             }
           }
-        }
-      });
+        });
+      }
     }
-  }
 
-  render();
-</script>
+    render();
+  </script>
+
+</body>
+
+</html>
