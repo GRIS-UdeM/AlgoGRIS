@@ -1,46 +1,132 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AlgoGRIS Benchmarks</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Benchmark Results</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body {
       font-family: sans-serif;
       margin: 2rem;
-      background: #f9f9f9;
+      background: #f7f7f7;
+      color: #333;
     }
-
-    h1 {
-      text-align: center;
-    }
-
-    #controls {
-      margin-bottom: 2rem;
-      text-align: center;
-    }
-
     canvas {
-      max-width: 100%;
+      margin: 2rem 0;
+      background: #fff;
+      padding: 1rem;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h1, h2 {
+      color: #222;
     }
   </style>
 </head>
-
 <body>
+  <h1>Benchmark Results Over Time</h1>
+  <div id="charts"></div>
 
-  <h1>AlgoGRIS Benchmarks</h1>
+  <script>
+    const osList = ['Linux', 'macOS', 'Windows'];
+    const osColors = {
+      Linux: 'rgba(75, 192, 75, 0.8)',     // Green
+      macOS: 'rgba(255, 99, 132, 0.8)',     // Red
+      Windows: 'rgba(54, 162, 235, 0.8)'    // Blue
+    };
 
-  <div id="controls">
-    <label for="testSelect">Select Test Case:</label>
-    <select id="testSelect"></select>
-  </div>
+    const chartsDiv = document.getElementById('charts');
+    const allData = {};
 
-  <canvas id="benchmarkChart" width="1200" height="500"></canvas>
+    async function loadBenchmarks() {
+      for (const os of osList) {
+        const res = await fetch(`../benchmarks/${os}`);
+        const html = await res.text();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const links = Array.from(doc.querySelectorAll('a'))
+          .map(a => a.getAttribute('href'))
+          .filter(href => href.endsWith('.xml'));
 
-  <script type="module" src="./scripts/load-benchmarks.js"></script>
+        for (const link of links) {
+          const fileName = link.split('/').pop();
+          const fullPath = `../benchmarks/${os}/${fileName}`;
+          const xml = await fetch(fullPath).then(r => r.text());
+          const xmlDoc = parser.parseFromString(xml, 'application/xml');
 
+          const testCases = Array.from(xmlDoc.querySelectorAll('TestCase'));
+          const timestamp = fileName.split('_')[0]; // e.g., 20250616
+
+          for (const testCase of testCases) {
+            const name = testCase.getAttribute('name');
+            const mean = parseFloat(testCase.querySelector('mean')?.getAttribute('value') || 0);
+            const date = fileName.substring(0, 15); // yyyyMMdd_HHmmss
+
+            if (!allData[name]) allData[name] = {};
+            if (!allData[name][os]) allData[name][os] = [];
+            allData[name][os].push({ date, mean });
+          }
+        }
+      }
+
+      drawCharts();
+    }
+
+    function drawCharts() {
+      for (const [testName, osData] of Object.entries(allData)) {
+        const canvas = document.createElement('canvas');
+        chartsDiv.appendChild(document.createElement('hr'));
+        chartsDiv.appendChild(document.createElement('h2')).textContent = testName;
+        chartsDiv.appendChild(canvas);
+
+        const datasets = [];
+
+        for (const os of osList) {
+          const data = (osData[os] || []).sort((a, b) => a.date.localeCompare(b.date));
+          datasets.push({
+            label: os,
+            data: data.map(d => ({ x: d.date, y: d.mean / 1e6 })), // ms
+            fill: false,
+            backgroundColor: osColors[os],
+            borderColor: osColors[os],
+            tension: 0.1
+          });
+        }
+
+        new Chart(canvas.getContext('2d'), {
+          type: 'line',
+          data: {
+            datasets
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              title: {
+                display: true,
+                text: `Mean Processing Time (ms)`
+              },
+              legend: {
+                position: 'top'
+              }
+            },
+            scales: {
+              x: {
+                type: 'category',
+                title: { display: true, text: 'Timestamp (UTC)' },
+                ticks: { autoSkip: false, maxRotation: 45, minRotation: 45 }
+              },
+              y: {
+                title: { display: true, text: 'Mean Time (ms)' },
+                beginAtZero: true
+              }
+            }
+          }
+        });
+      }
+    }
+
+    loadBenchmarks();
+  </script>
 </body>
-
 </html>
