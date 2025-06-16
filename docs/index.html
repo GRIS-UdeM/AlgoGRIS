@@ -2,123 +2,173 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Benchmark Results</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Benchmark Results Over Time</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body {
-      font-family: sans-serif;
-      margin: 2rem;
-      background: #f7f7f7;
-      color: #333;
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      max-width: 900px;
+    }
+    h1 {
+      margin-bottom: 1rem;
+    }
+    h2 {
+      margin-top: 2rem;
     }
     canvas {
-      margin: 2rem 0;
-      background: #fff;
-      padding: 1rem;
-      border-radius: 8px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    }
-    h1, h2 {
-      color: #222;
+      max-width: 100%;
+      height: 300px;
     }
   </style>
 </head>
 <body>
   <h1>Benchmark Results Over Time</h1>
-  <div id="charts"></div>
 
   <script>
-    const osList = ['Linux', 'macOS', 'Windows'];
-    const osColors = {
-      Linux: 'rgba(75, 192, 75, 0.8)',     // Green
-      macOS: 'rgba(255, 99, 132, 0.8)',     // Red
-      Windows: 'rgba(54, 162, 235, 0.8)'    // Blue
+    const OS_DIRS = ['Linux', 'macOS', 'Windows'];
+    const OS_COLORS = {
+      Linux: 'green',
+      macOS: 'red',
+      Windows: 'blue'
     };
+    const REPO = 'GRIS-UdeM/AlgoGRIS';
+    const BRANCH = 'benchmarks';
 
-    const chartsDiv = document.getElementById('charts');
-    const allData = {};
+    // Fetch all benchmark XML files from benchmarks/{OS} folders
+    async function fetchBenchmarkFiles() {
+      const allBenchmarks = {}; // { commitHash: { os: xmlDoc } }
+      const parser = new DOMParser();
 
-    async function loadBenchmarks() {
-      for (const os of osList) {
-        const res = await fetch(`../benchmarks/${os}`);
-        const html = await res.text();
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(html, 'text/html');
-        const links = Array.from(doc.querySelectorAll('a'))
-          .map(a => a.getAttribute('href'))
-          .filter(href => href.endsWith('.xml'));
+      for (const os of OS_DIRS) {
+        const apiURL = `https://api.github.com/repos/${REPO}/contents/benchmarks/${os}?ref=${BRANCH}`;
+        try {
+          const response = await fetch(apiURL);
+          if (!response.ok) {
+            console.error(`Failed to fetch ${os} directory from GitHub:`, response.statusText);
+            continue;
+          }
+          const files = await response.json();
 
-        for (const link of links) {
-          const fileName = link.split('/').pop();
-          const fullPath = `../benchmarks/${os}/${fileName}`;
-          const xml = await fetch(fullPath).then(r => r.text());
-          const xmlDoc = parser.parseFromString(xml, 'application/xml');
+          for (const file of files) {
+            if (!file.name.endsWith('.xml')) continue;
 
-          const testCases = Array.from(xmlDoc.querySelectorAll('TestCase'));
-          const timestamp = fileName.split('_')[0]; // e.g., 20250616
+            // Filename format: "YYYYMMDD_HHMMSS_<commitHash>.xml"
+            // We want to keep the full filename as a unique key for sorting by date.
+            const fileKey = file.name.replace('.xml', '');
 
+            if (!allBenchmarks[fileKey]) {
+              allBenchmarks[fileKey] = {};
+            }
+
+            const xmlRes = await fetch(file.download_url);
+            const xmlText = await xmlRes.text();
+            const xmlDoc = parser.parseFromString(xmlText, 'application/xml');
+
+            allBenchmarks[fileKey][os] = xmlDoc;
+          }
+        } catch (e) {
+          console.error(`Error fetching files for OS ${os}:`, e);
+        }
+      }
+      return allBenchmarks;
+    }
+
+    // Parse mean benchmark times out of the XML documents
+    function parseBenchmarks(allBenchmarks) {
+      // { testName: { fileKey: { os: mean } } }
+      const resultsByTestName = {};
+
+      for (const [fileKey, osData] of Object.entries(allBenchmarks)) {
+        for (const [os, xmlDoc] of Object.entries(osData)) {
+          const testCases = xmlDoc.querySelectorAll('TestCase');
           for (const testCase of testCases) {
-            const name = testCase.getAttribute('name');
-            const mean = parseFloat(testCase.querySelector('mean')?.getAttribute('value') || 0);
-            const date = fileName.substring(0, 15); // yyyyMMdd_HHmmss
+            const testName = testCase.getAttribute('name');
+            const benchNode = testCase.querySelector('BenchmarkResults mean');
+            if (!benchNode) continue;
 
-            if (!allData[name]) allData[name] = {};
-            if (!allData[name][os]) allData[name][os] = [];
-            allData[name][os].push({ date, mean });
+            const mean = parseFloat(benchNode.getAttribute('value'));
+            if (!resultsByTestName[testName]) resultsByTestName[testName] = {};
+            if (!resultsByTestName[testName][fileKey]) resultsByTestName[testName][fileKey] = {};
+
+            resultsByTestName[testName][fileKey][os] = mean;
           }
         }
       }
-
-      drawCharts();
+      return resultsByTestName;
     }
 
-    function drawCharts() {
-      for (const [testName, osData] of Object.entries(allData)) {
+    // Extract the datetime from the fileKey for sorting (format: YYYYMMDD_HHMMSS_commitHash)
+    function extractDate(fileKey) {
+      // Example fileKey: "20250616_192018_e342971f8585ea9ea9910ba3049e7756b6cca6b5"
+      const match = fileKey.match(/^(\d{8}_\d{6})_/);
+      if (!match) return new Date(0); // fallback to epoch if no match
+      const dtStr = match[1]; // "YYYYMMDD_HHMMSS"
+      // Convert to ISO string "YYYY-MM-DDTHH:MM:SS" to parse as Date
+      const isoStr = dtStr.slice(0,4) + '-' + dtStr.slice(4,6) + '-' + dtStr.slice(6,8) + 'T' +
+                     dtStr.slice(9,11) + ':' + dtStr.slice(11,13) + ':' + dtStr.slice(13,15);
+      return new Date(isoStr);
+    }
+
+    // Render charts using Chart.js
+    function renderCharts(resultsByTestName) {
+      // Remove any existing charts (in case of rerun)
+      document.querySelectorAll('canvas').forEach(c => c.remove());
+      document.querySelectorAll('h2.chart-title').forEach(h => h.remove());
+
+      for (const [testName, commitData] of Object.entries(resultsByTestName)) {
+        // Sort commits (fileKeys) by datetime ascending
+        const sortedKeys = Object.keys(commitData).sort((a, b) => extractDate(a) - extractDate(b));
+
+        // Create container and chart elements
+        const container = document.createElement('div');
+        const title = document.createElement('h2');
+        title.textContent = testName;
+        title.classList.add('chart-title');
         const canvas = document.createElement('canvas');
-        chartsDiv.appendChild(document.createElement('hr'));
-        chartsDiv.appendChild(document.createElement('h2')).textContent = testName;
-        chartsDiv.appendChild(canvas);
+        container.appendChild(title);
+        container.appendChild(canvas);
+        document.body.appendChild(container);
 
-        const datasets = [];
+        // Chart labels are the sorted fileKeys (timestamps)
+        const labels = sortedKeys;
 
-        for (const os of osList) {
-          const data = (osData[os] || []).sort((a, b) => a.date.localeCompare(b.date));
-          datasets.push({
-            label: os,
-            data: data.map(d => ({ x: d.date, y: d.mean / 1e6 })), // ms
-            fill: false,
-            backgroundColor: osColors[os],
-            borderColor: osColors[os],
-            tension: 0.1
-          });
-        }
+        const datasets = OS_DIRS.map(os => ({
+          label: os,
+          data: labels.map(key => (commitData[key] && commitData[key][os]) ?? null),
+          fill: false,
+          borderColor: OS_COLORS[os],
+          tension: 0.1,
+          spanGaps: true,
+          pointRadius: 3,
+        }));
 
         new Chart(canvas.getContext('2d'), {
           type: 'line',
-          data: {
-            datasets
-          },
+          data: { labels, datasets },
           options: {
             responsive: true,
             plugins: {
-              title: {
-                display: true,
-                text: `Mean Processing Time (ms)`
-              },
-              legend: {
-                position: 'top'
-              }
+              legend: { position: 'top' },
+              title: { display: true, text: `${testName} Mean Time (ns)` }
             },
             scales: {
-              x: {
-                type: 'category',
-                title: { display: true, text: 'Timestamp (UTC)' },
-                ticks: { autoSkip: false, maxRotation: 45, minRotation: 45 }
-              },
               y: {
-                title: { display: true, text: 'Mean Time (ms)' },
-                beginAtZero: true
+                title: { display: true, text: 'Mean Time (ns)' },
+                type: 'logarithmic',
+                ticks: {
+                  callback: val => Number(val).toLocaleString()
+                }
+              },
+              x: {
+                title: { display: true, text: 'Timestamp (filename)' },
+                ticks: {
+                  maxRotation: 90,
+                  minRotation: 45,
+                  autoSkip: true,
+                  maxTicksLimit: 20
+                }
               }
             }
           }
@@ -126,7 +176,11 @@
       }
     }
 
-    loadBenchmarks();
+    (async () => {
+      const benchmarks = await fetchBenchmarkFiles();
+      const parsed = parseBenchmarks(benchmarks);
+      renderCharts(parsed);
+    })();
   </script>
 </body>
 </html>
