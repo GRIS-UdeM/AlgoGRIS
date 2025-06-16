@@ -122,17 +122,18 @@ jobs:
           git config --global user.email "ci-bot@example.com"
           git config --global user.name "GitHub Actions"
 
-          # Clone the repo into temp-benchmarks and switch to the 'benchmarks' branch
-          git clone --depth=1 --branch=benchmarks https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} temp-benchmarks
+          # Clone the `benchmarks` branch of this repo into a benchmarks_branch directory
+          git clone --depth=1 --branch=benchmarks https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} benchmarks_branch
 
           # Create OS-specific subdirectory if it doesn't exist
-          mkdir -p temp-benchmarks/${RUNNER_OS}
+          mkdir -p benchmarks_branch/benchmarks/${RUNNER_OS}
 
           # Copy current benchmark XML into the appropriate subdirectory
-          cp build/benchmarks/${RUNNER_OS}/${{ github.sha }}.xml temp-benchmarks/${RUNNER_OS}/${{ github.sha }}.xml
+          TIMESTAMP=$(date -u +%Y%m%d_%H%M%S)
+          cp build/benchmarks/${RUNNER_OS}/${{ github.sha }}.xml benchmarks_branch/benchmarks/${RUNNER_OS}/${TIMESTAMP}_${{ github.sha }}.xml
 
           # Commit and push to the benchmarks branch
-          cd temp-benchmarks
+          cd benchmarks_branch
           git add .
           git commit -m "Add benchmark results for commit ${{ github.sha }} on ${RUNNER_OS}"
           git push origin benchmarks
