@@ -132,9 +132,11 @@ static void benchmarkUsingProjectData(std::string testName,
                                            data.appData.audioSettings.sampleRate,
                                            data.appData.audioSettings.bufferSize) };
 
-    // position the sound sources and init the sine phase
+    // position the sound sources
     distributeSourcesOnSphere(algo.get(), data);
-    float curPhase { 0.f };
+
+    fillSourceBuffersWithNoise(numSources, sourceBuffer, bufferSize, sourcePeaks);
+    checkSourceBufferValidity(sourceBuffer);
 
     // process the audio
     speakerBuffer.silence();
@@ -149,11 +151,6 @@ static void benchmarkUsingProjectData(std::string testName,
         // catch2 will run this benchmark section in a loop, so we need to clear the output buffers before each run
         speakerBuffer.silence();
         stereoBuffer.clear();
-
-        // animate the sources and fill them with sine waves
-        incrementAllSourcesAzimuth (algo.get (), data, TWO_PI / bufferSize);
-        fillSourceBuffersWithSine (numSources, sourceBuffer, bufferSize, sourcePeaks, curPhase);
-
         algo->process(*config, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks, nullptr);
     };
 
