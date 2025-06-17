@@ -78,6 +78,8 @@ static void testUsingProjectData(gris::SpatGrisData & data,
         // position the sound sources
         distributeSourcesOnSphere(algo.get(), data);
 
+        float lastAngle{ 0.f };
+
 #if USE_FIXED_NUM_LOOPS
         // now simulate processing an numTestLoops audio loops
         for (int i = 0; i < numTestLoops; ++i) {
@@ -90,7 +92,8 @@ static void testUsingProjectData(gris::SpatGrisData & data,
             incrementAllSourcesAzimuth (algo.get (), data, TWO_PI/bufferSize);
 
             // fill the source buffers with pink noise
-            fillSourceBuffersWithNoise(numSources, sourceBuffer, bufferSize, sourcePeaks);
+            //fillSourceBuffersWithNoise(numSources, sourceBuffer, bufferSize, sourcePeaks);
+            fillSourceBuffersWithSine(numSources, sourceBuffer, bufferSize, sourcePeaks, lastAngle);
             checkSourceBufferValidity(sourceBuffer);
 
             // process the audio
