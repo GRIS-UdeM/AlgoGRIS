@@ -21,6 +21,7 @@ static void distributeSourcesOnSphere(AbstractSpatAlgorithm * algo, SpatGrisData
         auto& source{ data.project.sources[sourceIndex] };
 
         source.position = PolarVector(radians_t{ curAzimuth }, radians_t{ curRing * elevSteps }, 1.f);
+        //DBG ("src " << i << ": " << source.position->getPolar ().toString ());
         curAzimuth += azimSteps;
 
         algo->updateSpatData(sourceIndex, source);
@@ -78,7 +79,7 @@ static void testUsingProjectData(gris::SpatGrisData & data,
         // position the sound sources
         distributeSourcesOnSphere(algo.get(), data);
 
-        float lastAngle{ 0.f };
+        float lastPhase{ 0.f };
 
 #if USE_FIXED_NUM_LOOPS
         // now simulate processing an numTestLoops audio loops
@@ -89,11 +90,9 @@ static void testUsingProjectData(gris::SpatGrisData & data,
         for (int i = 0; i < numLoops; ++i) {
     #endif
 
-            incrementAllSourcesAzimuth (algo.get (), data, TWO_PI/bufferSize);
-
-            // fill the source buffers with pink noise
-            //fillSourceBuffersWithNoise(numSources, sourceBuffer, bufferSize, sourcePeaks);
-            fillSourceBuffersWithSine(numSources, sourceBuffer, bufferSize, sourcePeaks, lastAngle);
+            // animate the sources and fill them with sine waves
+            incrementAllSourcesAzimuth (algo.get (), data, TWO_PI / bufferSize);
+            fillSourceBuffersWithSine (numSources, sourceBuffer, bufferSize, sourcePeaks, lastPhase);
             checkSourceBufferValidity(sourceBuffer);
 
             // process the audio
@@ -133,12 +132,9 @@ static void benchmarkUsingProjectData(std::string testName,
                                            data.appData.audioSettings.sampleRate,
                                            data.appData.audioSettings.bufferSize) };
 
-    // position the sound sources
+    // position the sound sources and init the sine phase
     distributeSourcesOnSphere(algo.get(), data);
-
-    // fill the source buffers with pink noise
-    fillSourceBuffersWithNoise(numSources, sourceBuffer, bufferSize, sourcePeaks);
-    checkSourceBufferValidity(sourceBuffer);
+    float curPhase { 0.f };
 
     // process the audio
     speakerBuffer.silence();
@@ -153,6 +149,11 @@ static void benchmarkUsingProjectData(std::string testName,
         // catch2 will run this benchmark section in a loop, so we need to clear the output buffers before each run
         speakerBuffer.silence();
         stereoBuffer.clear();
+
+        // animate the sources and fill them with sine waves
+        incrementAllSourcesAzimuth (algo.get (), data, TWO_PI / bufferSize);
+        fillSourceBuffersWithSine (numSources, sourceBuffer, bufferSize, sourcePeaks, curPhase);
+
         algo->process(*config, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks, nullptr);
     };
 

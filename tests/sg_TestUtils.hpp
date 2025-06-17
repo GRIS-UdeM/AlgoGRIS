@@ -16,7 +16,7 @@
 #define ENABLE_TESTS 1
 #define ENABLE_BENCHMARKS 1
 #define ENABLE_CATCH2_BENCHMARKS 1
-#define USE_FIXED_NUM_LOOPS 1
+#define USE_FIXED_NUM_LOOPS 0
 
 #define REQUIRE_MESSAGE(cond, msg)                                                                                     \
     do {                                                                                                               \
@@ -36,8 +36,8 @@ float constexpr static testDurationSeconds{ .1f };
 #endif
 
 /** A list of buffer sizes used for testing. */
-//std::array<int, 4> constexpr static bufferSizes{ 1, 512, 1024, SourceAudioBuffer::MAX_NUM_SAMPLES };
-std::array<int, 2> constexpr static bufferSizes{ 512 };
+std::array<int, 4> constexpr static bufferSizes{ 1, 512, 1024, SourceAudioBuffer::MAX_NUM_SAMPLES };
+//std::array<int, 2> constexpr static bufferSizes{ 1, 512 };
 
 /**
  * @brief Initializes source, speaker, and stereo audio buffers for testing.
@@ -97,35 +97,35 @@ inline void fillSourceBuffersWithSine(const size_t numSources,
                                       SourceAudioBuffer & sourceBuffer,
                                       const int bufferSize,
                                       SourcePeaks & sourcePeaks,
-                                      float& lastAngle)
+                                      float & lastPhase)
 {
-    sourceBuffer.silence ();
+    constexpr float frequency = 440.f;
+    constexpr float sampleRate = 48000.f;
+    constexpr float phaseIncrement = juce::MathConstants<float>::twoPi * frequency / sampleRate;
+
+    sourceBuffer.silence();
 
     for (int i = 1; i <= numSources; ++i) {
 
-        auto const sourceIndex { source_index_t{ i } };
+        auto const sourceIndex{ source_index_t{ i } };
+        auto curPhase = lastPhase;
 
         for (int s = 0; s < bufferSize; ++s) {
-            auto const curAngle { TWO_PI.get () * 440.f * s / 48000.f + lastAngle };
-            auto const curValue { std::sin (curAngle) * .5f };
-            sourceBuffer[sourceIndex].setSample (0, s, curValue);
+            sourceBuffer[sourceIndex].setSample(0, s, std::sin (curPhase) * 0.25f);
 
-            DBG (curValue);
-            DBG (std::asin (sourceBuffer[sourceIndex].getSample (0, s)));
-
-            jassert (juce::approximatelyEqual (std::asin (sourceBuffer[sourceIndex].getSample (0, s)), curValue, juce::absoluteTolerance (0.001f)));
-
-            if (i == 1)
-                DBG (sourceBuffer[sourceIndex].getSample (0, s));
+            curPhase += phaseIncrement;
+            if (curPhase > juce::MathConstants<float>::twoPi)
+                curPhase -= juce::MathConstants<float>::twoPi; // wrap phase
         }
 
-        sourcePeaks[sourceIndex] = sourceBuffer[sourceIndex].getMagnitude (0, bufferSize);
+        sourcePeaks[sourceIndex] = sourceBuffer[sourceIndex].getMagnitude(0, bufferSize);
     }
 
-    //TODO: need to assert that we can do this other operation, maybe return an optional or something
-    //jassert ()
-    lastAngle = std::asin (2 * sourceBuffer[source_index_t { 1 }].getSample (0, bufferSize -1));
+    lastPhase += bufferSize * phaseIncrement;
+    if (lastPhase > juce::MathConstants<float>::twoPi)
+        lastPhase -= juce::MathConstants<float>::twoPi;
 }
+
 
 /**
  * @brief Checks the validity of the speaker buffer.
