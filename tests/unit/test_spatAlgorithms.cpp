@@ -18,10 +18,10 @@ static void distributeSourcesOnSphere(AbstractSpatAlgorithm * algo, SpatGrisData
 
     for (int i = 1; i <= numSources; ++i) {
         const auto sourceIndex{ source_index_t{ i } };
-        auto& source{ data.project.sources[sourceIndex] };
+        auto & source{ data.project.sources[sourceIndex] };
 
         source.position = PolarVector(radians_t{ curAzimuth }, radians_t{ curRing * elevSteps }, 1.f);
-        //DBG ("src " << i << ": " << source.position->getPolar ().toString ());
+        // DBG ("src " << i << ": " << source.position->getPolar ().toString ());
         curAzimuth += azimSteps;
 
         algo->updateSpatData(sourceIndex, source);
@@ -33,19 +33,18 @@ static void distributeSourcesOnSphere(AbstractSpatAlgorithm * algo, SpatGrisData
     }
 }
 
-static void incrementAllSourcesAzimuth (AbstractSpatAlgorithm* algo, SpatGrisData& data, radians_t azimuthIncrement)
+static void incrementAllSourcesAzimuth(AbstractSpatAlgorithm * algo, SpatGrisData & data, radians_t azimuthIncrement)
 {
-    for (int i = 1; i <= data.project.sources.size (); ++i) {
+    for (int i = 1; i <= data.project.sources.size(); ++i) {
+        const auto sourceIndex{ source_index_t{ i } };
+        auto & source{ data.project.sources[sourceIndex] };
 
-        const auto sourceIndex { source_index_t{ i } };
-        auto& source { data.project.sources[sourceIndex] };
-
-        //DBG ("src " << i << " before: " << source.position->getPolar ().toString ());
+        // DBG ("src " << i << " before: " << source.position->getPolar ().toString ());
         auto const curPosition = source.position;
         source.position = curPosition->withAzimuth(curPosition->getPolar().azimuth + azimuthIncrement);
-        //DBG ("src " << i << " after: " << source.position->getPolar ().toString ());
+        // DBG ("src " << i << " after: " << source.position->getPolar ().toString ());
 
-        algo->updateSpatData (sourceIndex, source);
+        algo->updateSpatData(sourceIndex, source);
     }
 }
 
@@ -81,7 +80,7 @@ static void testUsingProjectData(gris::SpatGrisData & data,
 
         float lastPhase{ 0.f };
 
-#if USE_FIXED_NUM_LOOPS
+    #if USE_FIXED_NUM_LOOPS
         // now simulate processing an numTestLoops audio loops
         for (int i = 0; i < numTestLoops; ++i) {
     #else
@@ -91,8 +90,8 @@ static void testUsingProjectData(gris::SpatGrisData & data,
     #endif
 
             // animate the sources and fill them with sine waves
-            incrementAllSourcesAzimuth (algo.get (), data, TWO_PI / bufferSize);
-            fillSourceBuffersWithSine (numSources, sourceBuffer, bufferSize, sourcePeaks, lastPhase);
+            incrementAllSourcesAzimuth(algo.get(), data, TWO_PI / bufferSize);
+            fillSourceBuffersWithSine(numSources, sourceBuffer, bufferSize, sourcePeaks, lastPhase);
             checkSourceBufferValidity(sourceBuffer);
 
             // process the audio
@@ -105,6 +104,48 @@ static void testUsingProjectData(gris::SpatGrisData & data,
         }
     }
 #endif
+}
+
+static void saveBufferToFile(const juce::AudioBuffer<float> & buffer, const std::string & path)
+{
+    std::ofstream out(path, std::ios::binary);
+    int numChannels = buffer.getNumChannels();
+    int numSamples = buffer.getNumSamples();
+    out.write(reinterpret_cast<const char *>(&numChannels), sizeof(int));
+    out.write(reinterpret_cast<const char *>(&numSamples), sizeof(int));
+    for (int ch = 0; ch < numChannels; ++ch)
+        out.write(reinterpret_cast<const char *>(buffer.getReadPointer(ch)), sizeof(float) * numSamples);
+}
+
+static bool loadBufferFromFile(juce::AudioBuffer<float> & buffer, const std::string & path)
+{
+    std::ifstream in(path, std::ios::binary);
+    if (!in)
+        return false;
+    int numChannels, numSamples;
+    in.read(reinterpret_cast<char *>(&numChannels), sizeof(int));
+    in.read(reinterpret_cast<char *>(&numSamples), sizeof(int));
+    buffer.setSize(numChannels, numSamples);
+    for (int ch = 0; ch < numChannels; ++ch)
+        in.read(reinterpret_cast<char *>(buffer.getWritePointer(ch)), sizeof(float) * numSamples);
+    return true;
+}
+
+static bool buffersApproximatelyEqual(const juce::AudioBuffer<float> & a,
+                                      const juce::AudioBuffer<float> & b,
+                                      float tolerance = 1e-5f)
+{
+    if (a.getNumChannels() != b.getNumChannels() || a.getNumSamples() != b.getNumSamples())
+        return false;
+    for (int ch = 0; ch < a.getNumChannels(); ++ch) {
+        const float * aData = a.getReadPointer(ch);
+        const float * bData = b.getReadPointer(ch);
+        for (int i = 0; i < a.getNumSamples(); ++i) {
+            if (std::abs(aData[i] - bData[i]) > tolerance)
+                return false;
+        }
+    }
+    return true;
 }
 
 static void benchmarkUsingProjectData(std::string testName,
@@ -141,12 +182,12 @@ static void benchmarkUsingProjectData(std::string testName,
     // process the audio
     speakerBuffer.silence();
     stereoBuffer.clear();
-#if ENABLE_CATCH2_BENCHMARKS
+    #if ENABLE_CATCH2_BENCHMARKS
     BENCHMARK("processing loop")
-#else
+    #else
     std::cout << testName << "\n";
     for (int i = 0; i < 1000; ++i)
-#endif
+    #endif
     {
         // catch2 will run this benchmark section in a loop, so we need to clear the output buffers before each run
         speakerBuffer.silence();
@@ -154,8 +195,23 @@ static void benchmarkUsingProjectData(std::string testName,
         algo->process(*config, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks, nullptr);
     };
 
-    // check that the audio output is valid
-    checkSpeakerBufferValidity(speakerBuffer);
+    std::string prefix = "reference_output/";
+    std::string stereoFile = prefix + "stereo_" + std::to_string(bufferSize) + ".bin";
+    std::string speakerFile = prefix + "speaker_" + std::to_string(bufferSize) + ".bin";
+
+    juce::AudioBuffer<float> refStereo;
+    juce::AudioBuffer<float> refSpeaker;
+
+    if (!loadBufferFromFile(refStereo, stereoFile) || !loadBufferFromFile(refSpeaker, speakerFile)) {
+        std::cout << "Saving reference output...\n";
+        saveBufferToFile(stereoBuffer, stereoFile);
+        saveBufferToFile(speakerBuffer, speakerFile);
+    } else {
+        bool ok1 = buffersApproximatelyEqual(stereoBuffer, refStereo);
+        bool ok2 = buffersApproximatelyEqual(speakerBuffer, refSpeaker);
+        if (!ok1 || !ok2)
+            throw std::runtime_error("Output buffers don't match saved reference.");
+    }
 #endif
 }
 
@@ -209,9 +265,9 @@ TEST_CASE("VBAP test", "[spat]")
     benchmarkUsingProjectData("vbap benchmark", vbapData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
 }
 
-TEST_CASE ("Stereo speaker", "[spat]")
+TEST_CASE("Stereo speaker", "[spat]")
 {
-    SpatGrisData stereoData = getSpatGrisDataFromFiles ("default_preset.xml", "STEREO_SPEAKER_SETUP.xml");
+    SpatGrisData stereoData = getSpatGrisDataFromFiles("default_preset.xml", "STEREO_SPEAKER_SETUP.xml");
     stereoData.project.spatMode = SpatMode::vbap;
     stereoData.appData.stereoMode = StereoMode::stereo;
 
@@ -221,10 +277,10 @@ TEST_CASE ("Stereo speaker", "[spat]")
     SourcePeaks sourcePeaks;
 
     std::cout << "Starting Stereo tests:\n";
-    testUsingProjectData (stereoData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
+    testUsingProjectData(stereoData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
     std::cout << "Stereo tests done.\n";
 
-    benchmarkUsingProjectData ("stereo benchmark", stereoData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
+    benchmarkUsingProjectData("stereo benchmark", stereoData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
 }
 
 TEST_CASE("MBAP test", "[spat]")
