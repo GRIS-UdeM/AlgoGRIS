@@ -6,7 +6,7 @@
 using namespace gris;
 using namespace gris::tests;
 
-static void positionSources(AbstractSpatAlgorithm * algo, SpatGrisData & data)
+static void distributeSourcesOnSphere(AbstractSpatAlgorithm * algo, SpatGrisData & data)
 {
     const auto numSources{ data.project.sources.size() };
     const auto numRings{ 3 };
@@ -18,7 +18,7 @@ static void positionSources(AbstractSpatAlgorithm * algo, SpatGrisData & data)
 
     for (int i = 1; i <= numSources; ++i) {
         const auto sourceIndex{ source_index_t{ i } };
-        auto source{ data.project.sources[sourceIndex] };
+        auto& source{ data.project.sources[sourceIndex] };
 
         source.position = PolarVector(radians_t{ curAzimuth }, radians_t{ curRing * elevSteps }, 1.f);
         curAzimuth += azimSteps;
@@ -29,6 +29,22 @@ static void positionSources(AbstractSpatAlgorithm * algo, SpatGrisData & data)
             ++curRing;
             curAzimuth = 0;
         }
+    }
+}
+
+static void incrementAllSourcesAzimuth (AbstractSpatAlgorithm* algo, SpatGrisData& data, radians_t azimuthIncrement)
+{
+    for (int i = 1; i <= data.project.sources.size (); ++i) {
+
+        const auto sourceIndex { source_index_t{ i } };
+        auto& source { data.project.sources[sourceIndex] };
+
+        //DBG ("src " << i << " before: " << source.position->getPolar ().toString ());
+        auto const curPosition = source.position;
+        source.position = curPosition->withAzimuth(curPosition->getPolar().azimuth + azimuthIncrement);
+        //DBG ("src " << i << " after: " << source.position->getPolar ().toString ());
+
+        algo->updateSpatData (sourceIndex, source);
     }
 }
 
@@ -60,7 +76,7 @@ static void testUsingProjectData(gris::SpatGrisData & data,
                                                data.appData.audioSettings.bufferSize) };
 
         // position the sound sources
-        positionSources(algo.get(), data);
+        distributeSourcesOnSphere(algo.get(), data);
 
 #if USE_FIXED_NUM_LOOPS
         // now simulate processing an numTestLoops audio loops
@@ -70,6 +86,9 @@ static void testUsingProjectData(gris::SpatGrisData & data,
         auto const numLoops{ static_cast<int>(DEFAULT_SAMPLE_RATE * testDurationSeconds / bufferSize) };
         for (int i = 0; i < numLoops; ++i) {
     #endif
+
+            incrementAllSourcesAzimuth (algo.get (), data, TWO_PI/bufferSize);
+
             // fill the source buffers with pink noise
             fillSourceBuffersWithNoise(numSources, sourceBuffer, bufferSize, sourcePeaks);
             checkSourceBufferValidity(sourceBuffer);
@@ -112,7 +131,7 @@ static void benchmarkUsingProjectData(std::string testName,
                                            data.appData.audioSettings.bufferSize) };
 
     // position the sound sources
-    positionSources(algo.get(), data);
+    distributeSourcesOnSphere(algo.get(), data);
 
     // fill the source buffers with pink noise
     fillSourceBuffersWithNoise(numSources, sourceBuffer, bufferSize, sourcePeaks);
@@ -149,7 +168,7 @@ static SpatGrisData getSpatGrisDataFromFiles(const std::string & projectFilename
 
     // make sure project file exists
     const auto projectFile{ utilDir.getChildFile(projectFilename) };
-//    std::cout << "full path for projectFile: " << projectFile.getFullPathName() << "\n";
+    // std::cout << "full path for projectFile: " << projectFile.getFullPathName() << "\n";
     REQUIRE(projectFile.existsAsFile());
 
     // make sure project file opens correctly

@@ -29,7 +29,7 @@ namespace gris::tests
 
 #if USE_FIXED_NUM_LOOPS
 /** Number of loops over the processing call during tests. */
-int constexpr static numTestLoops{ 1 };
+int constexpr static numTestLoops{ 3 };
 #else
 /** Duration of the audio loop used for the spatialisation tests. */
 float constexpr static testDurationSeconds{ .1f };
