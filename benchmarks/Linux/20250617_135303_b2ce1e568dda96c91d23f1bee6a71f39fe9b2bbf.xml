@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Catch2TestRun name="test_spatAlgorithms" rng-seed="2581819180" xml-format-version="3" catch2-version="3.4.0">
+  <TestCase name="VBAP test" tags="[spat]" filename="/home/runner/work/AlgoGRIS/AlgoGRIS/tests/unit/test_spatAlgorithms.cpp" line="175">
+    <BenchmarkResults name="processing loop" samples="100" resamples="100000" iterations="2" clockResolution="54.0782" estimatedDuration="9.3458e+06">
+      <!-- All values in nano seconds -->
+      <mean value="46841.5" lowerBound="46568.6" upperBound="47203.2" ci="0.95"/>
+      <standardDeviation value="1587.62" lowerBound="1252.35" upperBound="1980.57" ci="0.95"/>
+      <outliers variance="0.296929" lowMild="0" lowSevere="0" highMild="1" highSevere="9"/>
+    </BenchmarkResults>
+    <OverallResult success="true" skips="0">
+      <StdOut>
+Starting VBAP tests:
+	Testing audio loop with buffer size: 1...
+	Testing audio loop with buffer size: 512...
+VBAP tests done.
+      </StdOut>
+    </OverallResult>
+  </TestCase>
+  <TestCase name="Stereo speaker" tags="[spat]" filename="/home/runner/work/AlgoGRIS/AlgoGRIS/tests/unit/test_spatAlgorithms.cpp" line="192">
+    <BenchmarkResults name="processing loop" samples="100" resamples="100000" iterations="1" clockResolution="54.0782" estimatedDuration="1.03957e+07">
+      <!-- All values in nano seconds -->
+      <mean value="84319.7" lowerBound="69102.2" upperBound="159212" ci="0.95"/>
+      <standardDeviation value="149239" lowerBound="3182.01" upperBound="327011" ci="0.95"/>
+      <outliers variance="0.989951" lowMild="1" lowSevere="3" highMild="1" highSevere="11"/>
+    </BenchmarkResults>
+    <OverallResult success="true" skips="0">
+      <StdOut>
+Starting Stereo tests:
+	Testing audio loop with buffer size: 1...
+	Testing audio loop with buffer size: 512...
+Stereo tests done.
+      </StdOut>
+    </OverallResult>
+  </TestCase>
+  <TestCase name="MBAP test" tags="[spat]" filename="/home/runner/work/AlgoGRIS/AlgoGRIS/tests/unit/test_spatAlgorithms.cpp" line="210">
+    <BenchmarkResults name="processing loop" samples="100" resamples="100000" iterations="1" clockResolution="54.0782" estimatedDuration="1.89869e+07">
+      <!-- All values in nano seconds -->
+      <mean value="189797" lowerBound="189118" upperBound="190644" ci="0.95"/>
+      <standardDeviation value="3844.74" lowerBound="3210.34" upperBound="4485.23" ci="0.95"/>
+      <outliers variance="0.132537" lowMild="1" lowSevere="0" highMild="1" highSevere="18"/>
+    </BenchmarkResults>
+    <OverallResult success="true" skips="0">
+      <StdOut>
+Starting MBAP tests:
+	Testing audio loop with buffer size: 1...
+	Testing audio loop with buffer size: 512...
+MBAP tests done.
+      </StdOut>
+    </OverallResult>
+  </TestCase>
+  <TestCase name="HRTF test" tags="[spat]" filename="/home/runner/work/AlgoGRIS/AlgoGRIS/tests/unit/test_spatAlgorithms.cpp" line="230">
+    <BenchmarkResults name="processing loop" samples="100" resamples="100000" iterations="1" clockResolution="54.0782" estimatedDuration="1.23834e+09">
+      <!-- All values in nano seconds -->
+      <mean value="1.10771e+07" lowerBound="1.07374e+07" upperBound="1.15221e+07" ci="0.95"/>
+      <standardDeviation value="1.97899e+06" lowerBound="1.57634e+06" upperBound="2.54746e+06" ci="0.95"/>
+      <outliers variance="0.925766" lowMild="0" lowSevere="0" highMild="4" highSevere="3"/>
+    </BenchmarkResults>
+    <OverallResult success="true" skips="0">
+      <StdOut>
+Starting HRTF tests:
+	Testing audio loop with buffer size: 1...
+	Testing audio loop with buffer size: 512...
+HRTF tests done.
+      </StdOut>
+    </OverallResult>
+  </TestCase>
+  <OverallResults successes="258316" failures="0" expectedFailures="0" skips="0"/>
+  <OverallResultsCases successes="4" failures="0" expectedFailures="0" skips="0"/>
+</Catch2TestRun>
