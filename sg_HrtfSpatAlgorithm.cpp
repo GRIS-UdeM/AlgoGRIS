@@ -53,8 +53,20 @@ HrtfSpatAlgorithm::HrtfSpatAlgorithm(SpeakerSetup const & speakerSetup,
                                      int const bufferSize)
 {
     JUCE_ASSERT_MESSAGE_THREAD;
+    juce::File dataRoot = getCurDir();
 
-    static auto const hrtfDir{ juce::File::getCurrentWorkingDirectory().getChildFile("hrtf_compact") };
+    auto hrtfDir{ dataRoot.getChildFile("hrtf_compact") };
+    if (!hrtfDir.exists()) {
+        dataRoot = getCurDir().getChildFile("submodules/AlgoGRIS");
+        hrtfDir = dataRoot.getChildFile("hrtf_compact");
+        if (!hrtfDir.exists()) {
+            std::cerr << "Could not locate HRTFs within: " << getCurDir().getFullPathName()
+                      << "/hrtf_compact or " << getCurDir().getFullPathName() << "/submodules/AlgoGRIS/hrtf_compact\n";
+            mHrtfAvailable = false;
+            jassertfalse;
+            return;
+        }
+    }
     static auto const HRTF_FOLDER_0{ hrtfDir.getChildFile("elev0") };
     static auto const HRTF_FOLDER_40{ hrtfDir.getChildFile("elev40") };
     static auto const HRTF_FOLDER_80{ hrtfDir.getChildFile("elev80") };
@@ -79,33 +91,46 @@ HrtfSpatAlgorithm::HrtfSpatAlgorithm(SpeakerSetup const & speakerSetup,
         return HRTF_FOLDER_80.getChildFile(name);
     };
 
-    static auto const GET_HRTF_IR_FILES = []() {
+    static auto const GET_HRTF_IR_FILES = []() -> juce::Array<juce::File> {
         juce::Array<juce::File> files{};
         for (int i{}; i < NAMES.size(); ++i) {
-            files.add(GET_HRTF_IR_FILE(i));
+            auto file = GET_HRTF_IR_FILE(i);
+            if (!file.exists()) {
+                return {};
+            }
+
+            files.add(file);
         }
 
         return files;
     };
 
     static auto const FILES = GET_HRTF_IR_FILES();
+    if (FILES.isEmpty()) {
+        jassertfalse;
+        mHrtfAvailable = false;
+        return;
+    }
 
     // Init inner spat algorithm
-    auto const hrtfSpeakerSetupFile{ getCurDir().getChildFile("tests/util/BINAURAL_SPEAKER_SETUP.xml") };
+    auto const hrtfSpeakerSetupFile{ dataRoot.getChildFile("tests/util/BINAURAL_SPEAKER_SETUP.xml") };
     if (!hrtfSpeakerSetupFile.existsAsFile()) {
         jassertfalse;
+        mHrtfAvailable = false;
         return;
     }
 
     auto const binauralXml{ juce::XmlDocument{ hrtfSpeakerSetupFile }.getDocumentElement() };
     if (!binauralXml) {
         jassertfalse;
+        mHrtfAvailable = false;
         return;
     }
 
     auto const binauralSpeakerSetup{ SpeakerSetup::fromXml(*binauralXml) };
     if (!binauralSpeakerSetup) {
         jassertfalse;
+        mHrtfAvailable = false;
         return;
     }
 
@@ -115,6 +140,7 @@ HrtfSpatAlgorithm::HrtfSpatAlgorithm(SpeakerSetup const & speakerSetup,
 
     speakers.sort();
     mHrtfData.speakersBuffer.init(speakers);
+    jassert(mHrtfData.speakersBuffer.size() == 16);
 
     auto const & binauralSpeakerData{ binauralSpeakerSetup->speakers };
 
@@ -150,6 +176,7 @@ HrtfSpatAlgorithm::HrtfSpatAlgorithm(SpeakerSetup const & speakerSetup,
     }
 
     fixDirectOutsIntoPlace(sources, speakerSetup, projectSpatMode);
+    mHrtfAvailable = true;
 }
 
 //==============================================================================
@@ -174,6 +201,9 @@ void HrtfSpatAlgorithm::process(AudioConfig const & config,
                                 [[maybe_unused]] SpeakersAudioConfig const * altSpeakerConfig)
 {
     ASSERT_AUDIO_THREAD;
+    jassert(mHrtfAvailable);
+    if (!mHrtfAvailable)
+        return;
     jassert(!altSpeakerConfig);
     jassert(stereoBuffer.getNumChannels() == 2);
 
