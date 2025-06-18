@@ -34,7 +34,7 @@ namespace gris::tests
 int constexpr static numTestLoops{ 3 };
 #else
 /** Duration of the audio loop used for the spatialisation tests. */
-float constexpr static testDurationSeconds{ .1f };
+float constexpr static testDurationSeconds{ 1.f };
 #endif
 
 /** A list of buffer sizes used for testing. */
@@ -243,10 +243,11 @@ inline void cacheSpeakerBuffersInMemory(const SpeakerAudioBuffer & newSpeakerBuf
     }
 }
 
-inline void writeSpeakerBuffersToWavFiles(juce::StringRef testName, double sampleRate = 48000.0)
+inline void writeSpeakerBuffersToWavFiles(juce::StringRef testName, int bufferSize, double sampleRate = 48000.0)
 {
     juce::WavAudioFormat wavFormat;
-    juce::File outputDir = getValidCurrentDirectory().getChildFile("tests/util/buffer_dumps/" + testName);
+    juce::String const curTestDirName{ "tests/util/buffer_dumps/" + testName + "/" + juce::String(bufferSize) };
+    juce::File const outputDir = getValidCurrentDirectory().getChildFile(curTestDirName);
 
     if (!outputDir.exists())
         outputDir.createDirectory();

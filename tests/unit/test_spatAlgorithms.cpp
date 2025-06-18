@@ -48,6 +48,65 @@ static void incrementAllSourcesAzimuth(AbstractSpatAlgorithm * algo, SpatGrisDat
     }
 }
 
+
+static void renderProjectOutput(juce::StringRef testName,
+                                gris::SpatGrisData & data,
+                                SourceAudioBuffer & sourceBuffer,
+                                SpeakerAudioBuffer & speakerBuffer,
+                                juce::AudioBuffer<float> & stereoBuffer,
+                                SourcePeaks & sourcePeaks)
+{
+    const auto config{ data.toAudioConfig() };
+    const auto numSources{ config->sourcesAudioConfig.size() };
+    const auto numSpeakers{ config->speakersAudioConfig.size() };
+
+    // for every test buffer size
+    for (int bufferSize : bufferSizes) {
+        data.appData.audioSettings.bufferSize = bufferSize;
+
+        // init our buffers
+        initBuffers(bufferSize, numSources, numSpeakers, sourceBuffer, speakerBuffer, stereoBuffer);
+
+        // create our spatialization algorithm
+        auto algo{ AbstractSpatAlgorithm::make(data.speakerSetup,
+                                               data.project.spatMode,
+                                               data.appData.stereoMode,
+                                               data.project.sources,
+                                               data.appData.audioSettings.sampleRate,
+                                               data.appData.audioSettings.bufferSize) };
+
+        // position the sound sources
+        distributeSourcesOnSphere(algo.get(), data);
+
+        float lastPhase{ 0.f };
+
+#if USE_FIXED_NUM_LOOPS
+        // now simulate processing an numTestLoops audio loops
+        for (int i = 0; i < numTestLoops; ++i) {
+#else
+        // now simulate processing an audio loop of testDurationSeconds
+        auto const numLoops{ static_cast<int>(DEFAULT_SAMPLE_RATE * testDurationSeconds / bufferSize) };
+        for (int i = 0; i < numLoops; ++i) {
+#endif
+            // animate the sources and fill them with sine waves
+            incrementAllSourcesAzimuth(algo.get(), data, TWO_PI / bufferSize);
+            fillSourceBuffersWithSine(numSources, sourceBuffer, bufferSize, sourcePeaks, lastPhase);
+
+            // process the audio
+            speakerBuffer.silence();
+            stereoBuffer.clear();
+            algo->process(*config, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks, nullptr);
+
+            // cache the output buffers to memory
+            cacheSpeakerBuffersInMemory (speakerBuffer, config->speakersAudioConfig, bufferSize);
+        }
+
+        // and once all loops are done, write the cached buffers to disk
+        writeSpeakerBuffersToWavFiles(testName, bufferSize);
+    }
+}
+
+
 static void testUsingProjectData(gris::SpatGrisData & data,
                                  SourceAudioBuffer & sourceBuffer,
                                  SpeakerAudioBuffer & speakerBuffer,
@@ -99,7 +158,7 @@ static void testUsingProjectData(gris::SpatGrisData & data,
             stereoBuffer.clear();
             algo->process(*config, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks, nullptr);
 
-            saveAllSpeakerBuffersToFile (speakerBuffer, config->speakersAudioConfig, bufferSize);
+            //saveAllSpeakerBuffersToFile (speakerBuffer, config->speakersAudioConfig, bufferSize);
             //DBG ("done");
 
             // check that the audio output is valid
@@ -204,6 +263,7 @@ TEST_CASE("VBAP test", "[spat]")
     SourcePeaks sourcePeaks;
 
     std::cout << "Starting VBAP tests:\n";
+    renderProjectOutput ("VBAP", vbapData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
     testUsingProjectData(vbapData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
     std::cout << "VBAP tests done.\n";
     benchmarkUsingProjectData("vbap benchmark", vbapData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);

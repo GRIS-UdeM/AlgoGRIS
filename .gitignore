@@ -1,3 +1,6 @@
+#TEMP REMOVE ME
+tests/util/buffer_dumps/
+
 installer/ControlGris
 installer/SpeakerView
 installer/AudioDescriptors
