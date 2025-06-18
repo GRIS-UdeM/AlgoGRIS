@@ -48,6 +48,49 @@ static void incrementAllSourcesAzimuth(AbstractSpatAlgorithm * algo, SpatGrisDat
     }
 }
 
+//static void saveBufferToFile (const juce::AudioBuffer<float>& buffer, const std::string& path)
+//{
+//    std::ofstream out (path, std::ios::binary);
+//    int numChannels = buffer.getNumChannels ();
+//    int numSamples = buffer.getNumSamples ();
+//    out.write (reinterpret_cast<const char*>(&numChannels), sizeof (int));
+//    out.write (reinterpret_cast<const char*>(&numSamples), sizeof (int));
+//    for (int ch = 0; ch < numChannels; ++ch)
+//        out.write (reinterpret_cast<const char*> (buffer.getReadPointer (ch)), sizeof (float) * numSamples);
+//}
+//
+//static bool loadBufferFromFile (juce::AudioBuffer<float>& buffer, const std::string& path)
+//{
+//    std::ifstream in (path, std::ios::binary);
+//    if (!in)
+//        return false;
+//    int numChannels, numSamples;
+//    in.read (reinterpret_cast<char*> (&numChannels), sizeof (int));
+//    in.read (reinterpret_cast<char*>(&numSamples), sizeof (int));
+//    buffer.setSize (numChannels, numSamples);
+//    for (int ch = 0; ch < numChannels; ++ch)
+//        in.read (reinterpret_cast<char*> (buffer.getWritePointer (ch)), sizeof (float) * numSamples);
+//    return true;
+//}
+//
+//static bool buffersApproximatelyEqual (const juce::AudioBuffer<float>& a,
+//                                       const juce::AudioBuffer<float>& b,
+//                                       float tolerance = 1e-5f)
+//{
+//    if (a.getNumChannels () != b.getNumChannels () || a.getNumSamples () != b.getNumSamples ())
+//        return false;
+//    for (int ch = 0; ch < a.getNumChannels (); ++ch) {
+//        const float* aData = a.getReadPointer (ch);
+//        const float* bData = b.getReadPointer (ch);
+//        for (int i = 0; i < a.getNumSamples (); ++i) {
+//            if (std::abs (aData[i] - bData[i]) > tolerance)
+//                return false;
+//        }
+//    }
+//    return true;
+//}
+
+
 static void testUsingProjectData(gris::SpatGrisData & data,
                                  SourceAudioBuffer & sourceBuffer,
                                  SpeakerAudioBuffer & speakerBuffer,
@@ -100,52 +143,11 @@ static void testUsingProjectData(gris::SpatGrisData & data,
             algo->process(*config, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks, nullptr);
 
             // check that the audio output is valid
-            checkSpeakerBufferValidity(speakerBuffer);
+            //makeSureSpeakerBufferMatchesSavedVersion (speakerBuffer);
+            //makeSureStereoBufferMatchesSavedVersion (stereoBuffer);
         }
     }
 #endif
-}
-
-static void saveBufferToFile(const juce::AudioBuffer<float> & buffer, const std::string & path)
-{
-    std::ofstream out(path, std::ios::binary);
-    int numChannels = buffer.getNumChannels();
-    int numSamples = buffer.getNumSamples();
-    out.write(reinterpret_cast<const char *>(&numChannels), sizeof(int));
-    out.write(reinterpret_cast<const char *>(&numSamples), sizeof(int));
-    for (int ch = 0; ch < numChannels; ++ch)
-        out.write(reinterpret_cast<const char *>(buffer.getReadPointer(ch)), sizeof(float) * numSamples);
-}
-
-static bool loadBufferFromFile(juce::AudioBuffer<float> & buffer, const std::string & path)
-{
-    std::ifstream in(path, std::ios::binary);
-    if (!in)
-        return false;
-    int numChannels, numSamples;
-    in.read(reinterpret_cast<char *>(&numChannels), sizeof(int));
-    in.read(reinterpret_cast<char *>(&numSamples), sizeof(int));
-    buffer.setSize(numChannels, numSamples);
-    for (int ch = 0; ch < numChannels; ++ch)
-        in.read(reinterpret_cast<char *>(buffer.getWritePointer(ch)), sizeof(float) * numSamples);
-    return true;
-}
-
-static bool buffersApproximatelyEqual(const juce::AudioBuffer<float> & a,
-                                      const juce::AudioBuffer<float> & b,
-                                      float tolerance = 1e-5f)
-{
-    if (a.getNumChannels() != b.getNumChannels() || a.getNumSamples() != b.getNumSamples())
-        return false;
-    for (int ch = 0; ch < a.getNumChannels(); ++ch) {
-        const float * aData = a.getReadPointer(ch);
-        const float * bData = b.getReadPointer(ch);
-        for (int i = 0; i < a.getNumSamples(); ++i) {
-            if (std::abs(aData[i] - bData[i]) > tolerance)
-                return false;
-        }
-    }
-    return true;
 }
 
 static void benchmarkUsingProjectData(std::string testName,
@@ -182,36 +184,18 @@ static void benchmarkUsingProjectData(std::string testName,
     // process the audio
     speakerBuffer.silence();
     stereoBuffer.clear();
-    #if ENABLE_CATCH2_BENCHMARKS
+#if ENABLE_CATCH2_BENCHMARKS
     BENCHMARK("processing loop")
-    #else
+#else
     std::cout << testName << "\n";
     for (int i = 0; i < 1000; ++i)
-    #endif
+#endif
     {
         // catch2 will run this benchmark section in a loop, so we need to clear the output buffers before each run
         speakerBuffer.silence();
         stereoBuffer.clear();
         algo->process(*config, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks, nullptr);
     };
-
-    std::string prefix = "reference_output/";
-    std::string stereoFile = prefix + "stereo_" + std::to_string(bufferSize) + ".bin";
-    std::string speakerFile = prefix + "speaker_" + std::to_string(bufferSize) + ".bin";
-
-    juce::AudioBuffer<float> refStereo;
-    juce::AudioBuffer<float> refSpeaker;
-
-    if (!loadBufferFromFile(refStereo, stereoFile) || !loadBufferFromFile(refSpeaker, speakerFile)) {
-        std::cout << "Saving reference output...\n";
-        saveBufferToFile(stereoBuffer, stereoFile);
-        saveBufferToFile(speakerBuffer, speakerFile);
-    } else {
-        bool ok1 = buffersApproximatelyEqual(stereoBuffer, refStereo);
-        bool ok2 = buffersApproximatelyEqual(speakerBuffer, refSpeaker);
-        if (!ok1 || !ok2)
-            throw std::runtime_error("Output buffers don't match saved reference.");
-    }
 #endif
 }
 

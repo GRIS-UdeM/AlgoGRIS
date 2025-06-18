@@ -149,6 +149,81 @@ inline void checkSpeakerBufferValidity(const SpeakerAudioBuffer & buffer)
     }
 }
 
+inline void makeSureStereoBufferMatchesSavedVersion (const juce::AudioBuffer<float>& buffer, int bufferSize)
+{
+
+}
+
+//inline void saveBufferToFile (const juce::AudioBuffer<float>& buffer, const juce::String& fileName)
+//{
+//    juce::File file (fileName);
+//    if (!file.existsAsFile()) {
+//        file.create();
+//    }
+//    juce::FileOutputStream outputStream (file);
+//    if (outputStream.openedOk()) {
+//        buffer.writeToStream (outputStream);
+//    }
+//}
+
+inline void saveSpeakerBufferToFile (const SpeakerAudioBuffer & speakersBuffer, const SpeakersAudioConfig & speakersAudioConfig, int bufferSize)
+{
+    juce::Array<float const*> usableSpeakersbuffer = speakersBuffer.getArrayOfReadPointers (speakersAudioConfig.getKeys ());
+    
+    //for each speaker
+    for (auto const& speaker : speakersAudioConfig) {
+        const auto & individualSpeakerBuffer = usableSpeakersbuffer[speaker.key.get()];
+
+        //so this should be printing into a file
+        for (int i = 0; i < bufferSize; ++i)
+            DBG (individualSpeakerBuffer[i]);
+    }
+}
+
+//inline void makeSureSpeakerBufferMatchesSavedVersion (const SpeakerAudioBuffer* buffer, int bufferSize)
+//{
+//    const juce::String stereoFile = "reference_output/stereo_" + std::to_string (bufferSize) + ".bin";
+//
+//    const juce::String speakerFile = "reference_output/speaker_" + std::to_string (bufferSize) + ".bin";
+//
+//    juce::AudioBuffer<float> refStereo;
+//    juce::AudioBuffer<float> refSpeaker;
+//
+//    if (!loadBufferFromFile (refStereo, stereoFile) || !loadBufferFromFile (refSpeaker, speakerFile)) {
+//        std::cout << "Saving reference output...\n";
+//        saveBufferToFile (stereoBuffer, stereoFile);
+//        saveBufferToFile (speakerBuffer, speakerFile);
+//    }
+//    else {
+//        bool ok1 = buffersApproximatelyEqual (stereoBuffer, refStereo);
+//        bool ok2 = buffersApproximatelyEqual (speakerBuffer, refSpeaker);
+//        if (!ok1 || !ok2)
+//            throw std::runtime_error ("Output buffers don't match saved reference.");
+//    }
+//}
+//
+//inline void makeSureBufferMatchesSavedVersion (const SpeakerAudioBuffer* buffer)
+//{
+//    std::string prefix = "reference_output/";
+//    std::string stereoFile = prefix + "stereo_" + std::to_string (bufferSize) + ".bin";
+//    std::string speakerFile = prefix + "speaker_" + std::to_string (bufferSize) + ".bin";
+//
+//    juce::AudioBuffer<float> refStereo;
+//    juce::AudioBuffer<float> refSpeaker;
+//
+//    if (!loadBufferFromFile (refStereo, stereoFile) || !loadBufferFromFile (refSpeaker, speakerFile)) {
+//        std::cout << "Saving reference output...\n";
+//        saveBufferToFile (stereoBuffer, stereoFile);
+//        saveBufferToFile (speakerBuffer, speakerFile);
+//    }
+//    else {
+//        bool ok1 = buffersApproximatelyEqual (stereoBuffer, refStereo);
+//        bool ok2 = buffersApproximatelyEqual (speakerBuffer, refSpeaker);
+//        if (!ok1 || !ok2)
+//            throw std::runtime_error ("Output buffers don't match saved reference.");
+//    }
+//}
+
 /**
  * @brief Checks the validity of the source buffer.
  *
