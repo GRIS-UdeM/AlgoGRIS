@@ -100,6 +100,7 @@ static void testUsingProjectData(gris::SpatGrisData & data,
             algo->process(*config, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks, nullptr);
 
             saveAllSpeakerBuffersToFile (speakerBuffer, config->speakersAudioConfig, bufferSize);
+            //DBG ("done");
 
             // check that the audio output is valid
             //makeSureSpeakerBufferMatchesSavedVersion (speakerBuffer);

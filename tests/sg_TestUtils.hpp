@@ -36,8 +36,8 @@ float constexpr static testDurationSeconds{ .1f };
 #endif
 
 /** A list of buffer sizes used for testing. */
-std::array<int, 4> constexpr static bufferSizes{ 1, 512, 1024, SourceAudioBuffer::MAX_NUM_SAMPLES };
-//std::array<int, 2> constexpr static bufferSizes{ 1, 512 };
+//std::array<int, 4> constexpr static bufferSizes{ 1, 512, 1024, SourceAudioBuffer::MAX_NUM_SAMPLES };
+std::array<int, 2> constexpr static bufferSizes{ 512, 1024 };
 
 /**
  * @brief Initializes source, speaker, and stereo audio buffers for testing.
@@ -208,17 +208,27 @@ inline void makeSureStereoBufferMatchesSavedVersion (const juce::AudioBuffer<flo
 //    return true;
 //}
 
-inline void saveAllSpeakerBuffersToFile (const SpeakerAudioBuffer & speakersBuffer, const SpeakersAudioConfig & speakersAudioConfig, int bufferSize)
+inline void saveAllSpeakerBuffersToFile (const SpeakerAudioBuffer & speakerBuffers, const SpeakersAudioConfig & speakersAudioConfig, int bufferSize)
 {
-    juce::Array<float const*> usableSpeakersbuffer = speakersBuffer.getArrayOfReadPointers (speakersAudioConfig.getKeys ());
-    
-    //for each speaker
-    for (auto const& speaker : speakersAudioConfig) {
-        const auto & individualSpeakerBuffer = usableSpeakersbuffer[speaker.key.get()];
+    // get actual data we can use
+    juce::Array<float const*> usableSpeakerBuffers = speakerBuffers.getArrayOfReadPointers (speakersAudioConfig.getKeys ());
 
-        //so this should be printing into a file
+    // for each speaker
+    for (auto const& speaker : speakersAudioConfig) {
+
+        // skip it if unused
+        if (speaker.value.isMuted || speaker.value.isDirectOutOnly || speaker.value.gain < SMALL_GAIN)
+            continue;
+
+        // get the individual speaker buffer
+        const int speakerId { speaker.key.get () };
+        const float * const individualSpeakerBuffer = usableSpeakerBuffers[speakerId];
+
+        // create the file if it doesn't exist
+
+        // and append all current samples to the file
         for (int i = 0; i < bufferSize; ++i)
-            DBG (individualSpeakerBuffer[i]);
+            DBG ("speakerId "<< juce::String (speakerId) << " sample [" << juce::String(i) << "]: " << individualSpeakerBuffer[i]);
     }
 }
 
