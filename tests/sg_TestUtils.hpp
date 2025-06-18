@@ -165,8 +165,50 @@ inline void makeSureStereoBufferMatchesSavedVersion (const juce::AudioBuffer<flo
 //        buffer.writeToStream (outputStream);
 //    }
 //}
+//
+//static void saveBufferToFile (const juce::AudioBuffer<float>& buffer, const std::string& path)
+//{
+//    std::ofstream out (path, std::ios::binary);
+//    int numChannels = buffer.getNumChannels ();
+//    int numSamples = buffer.getNumSamples ();
+//    out.write (reinterpret_cast<const char*>(&numChannels), sizeof (int));
+//    out.write (reinterpret_cast<const char*>(&numSamples), sizeof (int));
+//    for (int ch = 0; ch < numChannels; ++ch)
+//        out.write (reinterpret_cast<const char*> (buffer.getReadPointer (ch)), sizeof (float) * numSamples);
+//}
+//
+//static bool loadBufferFromFile (juce::AudioBuffer<float>& buffer, const std::string& path)
+//{
+//    std::ifstream in (path, std::ios::binary);
+//    if (!in)
+//        return false;
+//    int numChannels, numSamples;
+//    in.read (reinterpret_cast<char*> (&numChannels), sizeof (int));
+//    in.read (reinterpret_cast<char*>(&numSamples), sizeof (int));
+//    buffer.setSize (numChannels, numSamples);
+//    for (int ch = 0; ch < numChannels; ++ch)
+//        in.read (reinterpret_cast<char*> (buffer.getWritePointer (ch)), sizeof (float) * numSamples);
+//    return true;
+//}
+//
+//static bool buffersApproximatelyEqual (const juce::AudioBuffer<float>& a,
+//                                       const juce::AudioBuffer<float>& b,
+//                                       float tolerance = 1e-5f)
+//{
+//    if (a.getNumChannels () != b.getNumChannels () || a.getNumSamples () != b.getNumSamples ())
+//        return false;
+//    for (int ch = 0; ch < a.getNumChannels (); ++ch) {
+//        const float* aData = a.getReadPointer (ch);
+//        const float* bData = b.getReadPointer (ch);
+//        for (int i = 0; i < a.getNumSamples (); ++i) {
+//            if (std::abs (aData[i] - bData[i]) > tolerance)
+//                return false;
+//        }
+//    }
+//    return true;
+//}
 
-inline void saveSpeakerBufferToFile (const SpeakerAudioBuffer & speakersBuffer, const SpeakersAudioConfig & speakersAudioConfig, int bufferSize)
+inline void saveAllSpeakerBuffersToFile (const SpeakerAudioBuffer & speakersBuffer, const SpeakersAudioConfig & speakersAudioConfig, int bufferSize)
 {
     juce::Array<float const*> usableSpeakersbuffer = speakersBuffer.getArrayOfReadPointers (speakersAudioConfig.getKeys ());
     
@@ -178,6 +220,13 @@ inline void saveSpeakerBufferToFile (const SpeakerAudioBuffer & speakersBuffer, 
         for (int i = 0; i < bufferSize; ++i)
             DBG (individualSpeakerBuffer[i]);
     }
+}
+
+inline void saveSpeakerBufferToFile(float const * const speakersBuffer, int bufferSize)
+{
+    // so this should be printing into a file
+    for (int i = 0; i < bufferSize; ++i)
+        DBG(speakersBuffer[i]);
 }
 
 //inline void makeSureSpeakerBufferMatchesSavedVersion (const SpeakerAudioBuffer* buffer, int bufferSize)
