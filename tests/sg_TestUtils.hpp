@@ -19,6 +19,7 @@
 #define ENABLE_BENCHMARKS 1
 #define ENABLE_CATCH2_BENCHMARKS 1
 #define USE_FIXED_NUM_LOOPS 0
+#define USE_ONLY_TWO_BUFFER_SIZES 0
 
 #define REQUIRE_MESSAGE(cond, msg)                                                                                     \
     do {                                                                                                               \
@@ -38,8 +39,11 @@ float constexpr static testDurationSeconds{ 1.f };
 #endif
 
 /** A list of buffer sizes used for testing. */
-// std::array<int, 4> constexpr static bufferSizes{ 1, 512, 1024, SourceAudioBuffer::MAX_NUM_SAMPLES };
-std::array<int, 2> constexpr static bufferSizes{ 512, 1024 };
+#if USE_ONLY_TWO_BUFFER_SIZES
+std::array<int, 2> constexpr static bufferSizes { 512, 1024 };
+#else
+std::array<int, 4> constexpr static bufferSizes{ 1, 512, 1024, SourceAudioBuffer::MAX_NUM_SAMPLES };
+#endif
 
 /**
  * @brief Initializes source, speaker, and stereo audio buffers for testing.
