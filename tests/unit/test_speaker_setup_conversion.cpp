@@ -11,7 +11,7 @@ void checkSpeakerSetupConversion(const std::string & version, const std::string 
     SECTION("Converting speaker setup " + speakerSetupName + " with version " + version)
     {
         // get the speaker setup directory. The build hack is because the pipeline uses that as current directory
-        auto speakerSetupDir = getCurDir().getChildFile("tests/temp");
+        auto speakerSetupDir = getValidCurrentDirectory().getChildFile("tests/temp");
         REQUIRE(speakerSetupDir.exists());
 
         // now get the speaker setup file and make sure it also exists

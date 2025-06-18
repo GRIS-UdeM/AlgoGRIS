@@ -11,6 +11,7 @@
 #include <cmath>
 #include <array>
 #include <random>
+#include "../../StructGRIS/ValueTreeUtilities.hpp"
 #include "catch2/catch_message.hpp"
 #include "catch2/catch_test_macros.hpp"
 
@@ -242,10 +243,10 @@ inline void cacheSpeakerBuffersInMemory(const SpeakerAudioBuffer & newSpeakerBuf
     }
 }
 
-inline void writeSpeakerBuffersToWavFiles(double sampleRate = 48000.0)
+inline void writeSpeakerBuffersToWavFiles(juce::StringRef testName, double sampleRate = 48000.0)
 {
     juce::WavAudioFormat wavFormat;
-    juce::File outputDir = juce::File::getCurrentWorkingDirectory().getChildFile("SpeakerDumps");
+    juce::File outputDir = getValidCurrentDirectory().getChildFile("tests/util/buffer_dumps/" + testName);
 
     if (!outputDir.exists())
         outputDir.createDirectory();
@@ -261,11 +262,16 @@ inline void writeSpeakerBuffersToWavFiles(double sampleRate = 48000.0)
             if (writer) {
                 outputStream.release(); // Writer takes ownership
                 writer->writeFromAudioSampleBuffer(buffer, 0, buffer.getNumSamples());
+            } else {
+                // failed to create writer!
+                jassertfalse;
             }
+        } else {
+            // failed to create stream!
+            jassertfalse;
         }
     }
 
-    // Optional: clear cache after writing
     cachedSpeakerBuffers.clear();
 }
 

@@ -25,7 +25,7 @@ namespace gris
  * directory. This is useful because juce returns different directories as the working directory on the pipeline vs
  * locally.
  */
-juce::File getCurDir();
+juce::File getValidCurrentDirectory();
 
 /** Converts properties between versions of Speaker Setups.
  * Returns true if the conversion was successful, false if something unexpected happened.

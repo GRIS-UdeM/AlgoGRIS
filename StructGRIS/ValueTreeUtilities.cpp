@@ -20,7 +20,7 @@
 
 namespace gris
 {
-juce::File getCurDir()
+juce::File getValidCurrentDirectory()
 {
     auto dir = juce::File::getCurrentWorkingDirectory();
     if (dir.getFileName() == "build" || dir.getFileName() == "Builds")

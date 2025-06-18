@@ -165,7 +165,7 @@ static SpatGrisData getSpatGrisDataFromFiles(const std::string & projectFilename
     SpatGrisData spatGrisData;
 
     // hack to get around the pipeline having a different path than other places
-    auto utilDir = getCurDir().getChildFile("tests/util");
+    auto utilDir = getValidCurrentDirectory().getChildFile("tests/util");
 
     // make sure project file exists
     const auto projectFile{ utilDir.getChildFile(projectFilename) };
