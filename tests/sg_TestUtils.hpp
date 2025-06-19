@@ -18,8 +18,8 @@
 #define ENABLE_TESTS 1
 #define ENABLE_BENCHMARKS 1
 #define ENABLE_CATCH2_BENCHMARKS 1
-#define USE_FIXED_NUM_LOOPS 0
-#define USE_ONLY_TWO_BUFFER_SIZES 0
+#define USE_FIXED_NUM_LOOPS 1
+#define USE_ONLY_TWO_BUFFER_SIZES 1
 #define WRITE_TEST_OUTPUT 0
 
 #define REQUIRE_MESSAGE(cond, msg)                                                                                     \
@@ -246,38 +246,6 @@ inline void writeCachedSpeakerBuffersToDisk(juce::StringRef testName, int buffer
     }
 
     cachedSpeakerBuffers.clear();
-}
-
-
-
-inline void printWavSamples (const juce::File& wavFile)
-{
-    juce::AudioFormatManager formatManager;
-    formatManager.registerFormat (new juce::WavAudioFormat (), true);
-    std::unique_ptr<juce::AudioFormatReader> reader (formatManager.createReaderFor (wavFile));
-
-    if (reader == nullptr)
-    {
-        DBG ("Failed to create reader for file: " << wavFile.getFullPathName ());
-        return;
-    }
-
-    if (reader->numChannels != 1)
-    {
-        DBG ("File is not mono! Number of channels: " << reader->numChannels);
-        return;
-    }
-
-    const juce::int64 numSamples = reader->lengthInSamples;
-    juce::AudioBuffer<float> buffer (1, static_cast<int>(numSamples));
-
-    reader->read (&buffer, 0, static_cast<int>(numSamples), 0, true, false);
-    const float* samples = buffer.getReadPointer (0);
-
-    for (int i = 0; i < numSamples; ++i)
-        DBG ("Sample " << i << ": " << samples[i]);
-
-    DBG ("done");
 }
 
 inline void compareBuffers (const float* const curBuffer, const juce::AudioBuffer<float>& savedBuffer)
