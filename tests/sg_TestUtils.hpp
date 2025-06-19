@@ -211,17 +211,23 @@ inline void cacheSpeakerBuffersInMemory(const SpeakerAudioBuffer & newSpeakerBuf
     }
 }
 
+juce::File getSpeakerDumpFile (juce::StringRef testName, int bufferSize, int speakerId)
+{
+    auto const curTestDirName { "tests/util/buffer_dumps/" + testName + "/" + juce::String (bufferSize) };
+    auto const outputDir = getValidCurrentDirectory ().getChildFile (curTestDirName);
+
+    if (!outputDir.exists ())
+        outputDir.createDirectory ();
+
+    return outputDir.getChildFile ("speaker_" + juce::String (speakerId) + ".wav");
+}
+
 inline void writeSpeakerBuffersToWavFiles(juce::StringRef testName, int bufferSize, double sampleRate = 48000.0)
 {
     juce::WavAudioFormat wavFormat;
-    juce::String const curTestDirName{ "tests/util/buffer_dumps/" + testName + "/" + juce::String(bufferSize) };
-    juce::File const outputDir = getValidCurrentDirectory().getChildFile(curTestDirName);
-
-    if (!outputDir.exists())
-        outputDir.createDirectory();
 
     for (const auto & [speakerId, buffer] : cachedSpeakerBuffers) {
-        juce::File wavFile = outputDir.getChildFile("speaker_" + juce::String(speakerId) + ".wav");
+        juce::File wavFile = getSpeakerDumpFile(testName, bufferSize, speakerId);
         std::unique_ptr<juce::FileOutputStream> outputStream(wavFile.createOutputStream());
 
         if (outputStream) {
@@ -244,7 +250,7 @@ inline void writeSpeakerBuffersToWavFiles(juce::StringRef testName, int bufferSi
     cachedSpeakerBuffers.clear();
 }
 
-// inline void makeSureSpeakerBufferMatchesSavedVersion (const SpeakerAudioBuffer* buffer, int bufferSize)
+//inline void makeSureSpeakerBufferMatchesSavedVersion (const SpeakerAudioBuffer* buffer, int bufferSize)
 //{
 //     const juce::String stereoFile = "reference_output/stereo_" + std::to_string (bufferSize) + ".bin";
 //
@@ -265,6 +271,7 @@ inline void writeSpeakerBuffersToWavFiles(juce::StringRef testName, int bufferSi
 //             throw std::runtime_error ("Output buffers don't match saved reference.");
 //     }
 // }
+
 //
 // inline void makeSureBufferMatchesSavedVersion (const SpeakerAudioBuffer* buffer)
 //{
