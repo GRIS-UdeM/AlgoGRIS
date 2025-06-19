@@ -19,7 +19,7 @@
 #define ENABLE_BENCHMARKS 1
 #define ENABLE_CATCH2_BENCHMARKS 1
 #define USE_FIXED_NUM_LOOPS 0
-#define USE_ONLY_TWO_BUFFER_SIZES 1
+#define USE_ONLY_TWO_BUFFER_SIZES 0
 #define WRITE_TEST_OUTPUT 0
 
 #define REQUIRE_MESSAGE(cond, msg)                                                                                     \
@@ -279,8 +279,6 @@ inline void printWavSamples (const juce::File& wavFile)
 
     DBG ("done");
 }
-
-
 
 inline void compareBuffers (const float* const curBuffer, const juce::AudioBuffer<float>& savedBuffer)
 {
