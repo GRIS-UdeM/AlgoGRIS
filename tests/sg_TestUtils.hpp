@@ -30,6 +30,11 @@
 
 namespace gris::tests
 {
+auto constexpr static vbapTestName = "VBAP";
+auto constexpr static stereoTestName = "STEREO";
+auto constexpr static mbapTestName = "MBAP";
+auto constexpr static hrtfTestName = "HRTF";
+
 
 #if USE_FIXED_NUM_LOOPS
 /** Number of loops over the processing call during tests. */
@@ -178,42 +183,55 @@ inline void makeSureStereoBufferMatchesSavedVersion(const juce::AudioBuffer<floa
      return true;
  }
 
-//TODO VB: presumably this shouldn't be just in the namespace?
-std::map<int, juce::AudioBuffer<float>> cachedSpeakerBuffers;
+ inline void forAllSpatializedSpeakers(const SpeakersAudioConfig & speakersAudioConfig,
+                                       const SpeakerAudioBuffer & newSpeakerBuffers,
+                                       int bufferSize,
+                                       std::function<void(int, const float *, int)> func)
+ {
+     juce::Array<output_patch_t> const keys{ speakersAudioConfig.getKeys() };
+     juce::Array<float const *> usableNewBuffers = newSpeakerBuffers.getArrayOfReadPointers(keys);
 
-inline void cacheSpeakerBuffersInMemory(const SpeakerAudioBuffer & newSpeakerBuffers,
-                                        const SpeakersAudioConfig & speakersAudioConfig,
-                                        int bufferSize)
-{
-    // first get buffer data we can read
-    juce::Array<output_patch_t> const keys{ speakersAudioConfig.getKeys() };
-    juce::Array<float const *> usableNewBuffers = newSpeakerBuffers.getArrayOfReadPointers(keys);
+     // then for each spatialized, unmuted speaker
+     for (const auto & speaker : speakersAudioConfig) {
+         if (speaker.value.isMuted || speaker.value.isDirectOutOnly || speaker.value.gain < SMALL_GAIN)
+             continue;
 
-    // then for each spatialized, unmuted speaker
-    for (const auto & speaker : speakersAudioConfig) {
-        if (speaker.value.isMuted || speaker.value.isDirectOutOnly || speaker.value.gain < SMALL_GAIN)
-            continue;
+         // get the new data
+         const int speakerId = speaker.key.get();
+         const float * newIndividualSpeakerBuffer = usableNewBuffers[speakerId];
 
-        // get the new data
-        const int speakerId = speaker.key.get();
-        const float * newIndividualSpeakerBuffer = usableNewBuffers[speakerId];
+         func(speakerId, newIndividualSpeakerBuffer, bufferSize);
+     }
+ }
 
-        // get the cached data
-        juce::AudioSampleBuffer & cachedBuffer = cachedSpeakerBuffers[speakerId];
+ // TODO VB: presumably this shouldn't be just in the namespace?
+ std::map<int, juce::AudioBuffer<float>> cachedSpeakerBuffers;
 
-        const int oldSize = cachedBuffer.getNumSamples();
-        const int newSize = oldSize + bufferSize;
+ inline void cacheSpeakerBuffersInMemory(const SpeakersAudioConfig & speakersAudioConfig,
+                                         const SpeakerAudioBuffer & newSpeakerBuffers,
+                                         int bufferSize)
+ {
+     forAllSpatializedSpeakers(
+         speakersAudioConfig,
+         newSpeakerBuffers,
+         bufferSize,
+         [](int speakerId, const float * newIndividualSpeakerBuffer, int bufferSize) {
+             // get the cached data
+             juce::AudioSampleBuffer & cachedBuffer = cachedSpeakerBuffers[speakerId];
 
-        // if the cached buffer is empty
-        if (cachedBuffer.getNumChannels() == 0)
-            cachedBuffer.setSize(1, newSize, false, true); // resize and wipe it
-        else
-            cachedBuffer.setSize(1, newSize, true, true); // otherwise resize and preserve existing
+             const int oldSize = cachedBuffer.getNumSamples();
+             const int newSize = oldSize + bufferSize;
 
-        // finally copy the new data
-        cachedBuffer.copyFrom(0, oldSize, newIndividualSpeakerBuffer, bufferSize);
-    }
-}
+             // if the cached buffer is empty
+             if (cachedBuffer.getNumChannels() == 0)
+                 cachedBuffer.setSize(1, newSize, false, true); // resize and wipe it
+             else
+                 cachedBuffer.setSize(1, newSize, true, true); // otherwise resize and preserve existing
+
+             // finally copy the new data
+             cachedBuffer.copyFrom(0, oldSize, newIndividualSpeakerBuffer, bufferSize);
+         });
+ }
 
 juce::File getSpeakerDumpFile (juce::StringRef testName, int bufferSize, int speakerId)
 {
@@ -254,27 +272,57 @@ inline void writeCachedSpeakerBuffersToDisk(juce::StringRef testName, int buffer
     cachedSpeakerBuffers.clear();
 }
 
-//inline void makeSureSpeakerBufferMatchesSavedVersion (const SpeakerAudioBuffer* buffer, int bufferSize)
-//{
-//     const juce::String stereoFile = "reference_output/stereo_" + std::to_string (bufferSize) + ".bin";
-//
-//     const juce::String speakerFile = "reference_output/speaker_" + std::to_string (bufferSize) + ".bin";
-//
-//     juce::AudioBuffer<float> refStereo;
-//     juce::AudioBuffer<float> refSpeaker;
-//
-//     if (!loadBufferFromFile (refStereo, stereoFile) || !loadBufferFromFile (refSpeaker, speakerFile)) {
-//         std::cout << "Saving reference output...\n";
-//         saveBufferToFile (stereoBuffer, stereoFile);
-//         saveBufferToFile (speakerBuffer, speakerFile);
-//     }
-//     else {
-//         bool ok1 = buffersApproximatelyEqual (stereoBuffer, refStereo);
-//         bool ok2 = buffersApproximatelyEqual (speakerBuffer, refSpeaker);
-//         if (!ok1 || !ok2)
-//             throw std::runtime_error ("Output buffers don't match saved reference.");
-//     }
-// }
+inline void makeSureSpeakerBufferMatchesSavedVersion(juce::StringRef testName,
+                                                     const SpeakersAudioConfig & speakersAudioConfig,
+                                                     const SpeakerAudioBuffer & speakerAudioBuffer,
+                                                     int bufferSize,
+                                                     int curLoop)
+{
+    forAllSpatializedSpeakers(
+        speakersAudioConfig,
+        speakerAudioBuffer,
+        bufferSize,
+        [testName, curLoop](int speakerId, const float * individualSpeakerBuffer, int bufferSize) {
+            const auto speakerDumpFile = getSpeakerDumpFile(testName, bufferSize, speakerId);
+
+
+
+            //std::unique_ptr<juce::FileOutputStream> outputStream (wavFile.createOutputStream ());
+
+            //if (outputStream) {
+            //    std::unique_ptr<juce::AudioFormatWriter> writer (
+            //        wavFormat.createWriterFor (outputStream.get (), sampleRate, 1, 16, {}, 0));
+
+            //    if (writer) {
+            //        outputStream.release (); // Writer takes ownership
+            //        writer->writeFromAudioSampleBuffer (buffer, 0, buffer.getNumSamples ());
+            //    }
+            //    else {
+            //        // failed to create writer!
+            //        jassertfalse;
+            //    }
+            //}
+            //else {
+            //    // failed to create stream!
+            //    jassertfalse;
+            //}
+
+
+
+            //juce::AudioBuffer<float> refSpeaker;
+
+            //if (!loadBufferFromFile(refStereo, stereoFile) || !loadBufferFromFile(refSpeaker, speakerFile)) {
+            //    std::cout << "Saving reference output...\n";
+            //    saveBufferToFile(stereoBuffer, stereoFile);
+            //    saveBufferToFile(speakerBuffer, speakerFile);
+            //} else {
+            //    bool ok1 = buffersApproximatelyEqual(stereoBuffer, refStereo);
+            //    bool ok2 = buffersApproximatelyEqual(speakerBuffer, refSpeaker);
+            //    if (!ok1 || !ok2)
+            //        throw std::runtime_error("Output buffers don't match saved reference.");
+            //}
+        });
+}
 
 //
 // inline void makeSureBufferMatchesSavedVersion (const SpeakerAudioBuffer* buffer)
