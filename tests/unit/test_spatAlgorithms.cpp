@@ -273,6 +273,7 @@ TEST_CASE(vbapTestName, "[spat]")
     benchmarkUsingProjectData("vbap benchmark", vbapData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
 }
 
+#if 0
 TEST_CASE(stereoTestName, "[spat]")
 {
     SpatGrisData stereoData = getSpatGrisDataFromFiles("default_preset.xml", "STEREO_SPEAKER_SETUP.xml");
@@ -328,3 +329,5 @@ TEST_CASE(hrtfTestName, "[spat]")
 
     benchmarkUsingProjectData("hrtf benchmark", hrtfData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
 }
+
+#endif

@@ -159,50 +159,26 @@ inline void checkSpeakerBufferValidity(const SpeakerAudioBuffer & buffer)
     }
 }
 
-
-
-
-inline void makeSureStereoBufferMatchesSavedVersion(const juce::AudioBuffer<float> & buffer, int bufferSize)
+inline void forAllSpatializedSpeakers(const SpeakersAudioConfig & speakersAudioConfig,
+                                      const SpeakerAudioBuffer & newSpeakerBuffers,
+                                      int bufferSize,
+                                      std::function<void(int, const float * const, int)> func)
 {
+    juce::Array<output_patch_t> const keys{ speakersAudioConfig.getKeys() };
+    juce::Array<float const *> usableNewBuffers = newSpeakerBuffers.getArrayOfReadPointers(keys);
+
+    // then for each spatialized, unmuted speaker
+    for (const auto & speaker : speakersAudioConfig) {
+        if (speaker.value.isMuted || speaker.value.isDirectOutOnly || speaker.value.gain < SMALL_GAIN)
+            continue;
+
+        // get the new data
+        const int speakerId = speaker.key.get();
+        const float * const newIndividualSpeakerBuffer = usableNewBuffers[speakerId];
+
+        func(speakerId, newIndividualSpeakerBuffer, bufferSize);
+    }
 }
-
- static bool buffersApproximatelyEqual (const juce::AudioBuffer<float>& a,
-                                        const juce::AudioBuffer<float>& b,
-                                        float tolerance = 1e-5f)
-{
-     if (a.getNumChannels () != b.getNumChannels () || a.getNumSamples () != b.getNumSamples ())
-         return false;
-     for (int ch = 0; ch < a.getNumChannels (); ++ch) {
-         const float* aData = a.getReadPointer (ch);
-         const float* bData = b.getReadPointer (ch);
-         for (int i = 0; i < a.getNumSamples (); ++i) {
-             if (std::abs (aData[i] - bData[i]) > tolerance)
-                 return false;
-         }
-     }
-     return true;
- }
-
- inline void forAllSpatializedSpeakers(const SpeakersAudioConfig & speakersAudioConfig,
-                                       const SpeakerAudioBuffer & newSpeakerBuffers,
-                                       int bufferSize,
-                                       std::function<void(int, const float *, int)> func)
- {
-     juce::Array<output_patch_t> const keys{ speakersAudioConfig.getKeys() };
-     juce::Array<float const *> usableNewBuffers = newSpeakerBuffers.getArrayOfReadPointers(keys);
-
-     // then for each spatialized, unmuted speaker
-     for (const auto & speaker : speakersAudioConfig) {
-         if (speaker.value.isMuted || speaker.value.isDirectOutOnly || speaker.value.gain < SMALL_GAIN)
-             continue;
-
-         // get the new data
-         const int speakerId = speaker.key.get();
-         const float * newIndividualSpeakerBuffer = usableNewBuffers[speakerId];
-
-         func(speakerId, newIndividualSpeakerBuffer, bufferSize);
-     }
- }
 
  // TODO VB: presumably this shouldn't be just in the namespace?
  std::map<int, juce::AudioBuffer<float>> cachedSpeakerBuffers;
@@ -260,7 +236,7 @@ inline void writeCachedSpeakerBuffersToDisk(juce::StringRef testName, int buffer
                 outputStream.release(); // Writer takes ownership
                 writer->writeFromAudioSampleBuffer(buffer, 0, buffer.getNumSamples());
             } else {
-                // failed to create writer!
+                // failed to create reader!
                 jassertfalse;
             }
         } else {
@@ -270,6 +246,19 @@ inline void writeCachedSpeakerBuffersToDisk(juce::StringRef testName, int buffer
     }
 
     cachedSpeakerBuffers.clear();
+}
+
+inline void compareBuffers (const float* const curBuffer, const juce::AudioBuffer<float>& savedBuffer)
+{
+    REQUIRE_MESSAGE(curBuffer != nullptr, "Current buffer is null!");
+    REQUIRE_MESSAGE(savedBuffer.getNumSamples() > 0, "Saved buffer has no samples!");
+    for (int i = 0; i < savedBuffer.getNumSamples(); ++i) {
+        const auto curSample = curBuffer[i];
+        const auto savedSample = savedBuffer.getSample(0, i);
+        REQUIRE_MESSAGE(std::abs(curSample - savedSample) < 1e-5f,
+                        "Buffers do not match at sample " + juce::String(i) + ": " +
+                        juce::String(curSample) + " vs " + juce::String(savedSample));
+    }
 }
 
 inline void makeSureSpeakerBufferMatchesSavedVersion(juce::StringRef testName,
@@ -282,70 +271,29 @@ inline void makeSureSpeakerBufferMatchesSavedVersion(juce::StringRef testName,
         speakersAudioConfig,
         speakerAudioBuffer,
         bufferSize,
-        [testName, curLoop](int speakerId, const float * individualSpeakerBuffer, int bufferSize) {
+        [testName, curLoop](int speakerId, float const * const individualSpeakerBuffer, int bufferSize) {
+            juce::WavAudioFormat wavFormat;
             const auto speakerDumpFile = getSpeakerDumpFile(testName, bufferSize, speakerId);
 
+            if (auto inputStream{ speakerDumpFile.createInputStream() }) {
+                if (auto reader{ wavFormat.createReaderFor(inputStream.get(), true) }) {
+                    inputStream.release(); // reader takes ownership
 
+                    // read the stored wave data into wavBuffer
+                    juce::AudioBuffer<float> wavBuffer(1, bufferSize);
+                    reader->read(&wavBuffer, 1, curLoop * bufferSize, bufferSize, true, false);
 
-            //std::unique_ptr<juce::FileOutputStream> outputStream (wavFile.createOutputStream ());
-
-            //if (outputStream) {
-            //    std::unique_ptr<juce::AudioFormatWriter> writer (
-            //        wavFormat.createWriterFor (outputStream.get (), sampleRate, 1, 16, {}, 0));
-
-            //    if (writer) {
-            //        outputStream.release (); // Writer takes ownership
-            //        writer->writeFromAudioSampleBuffer (buffer, 0, buffer.getNumSamples ());
-            //    }
-            //    else {
-            //        // failed to create writer!
-            //        jassertfalse;
-            //    }
-            //}
-            //else {
-            //    // failed to create stream!
-            //    jassertfalse;
-            //}
-
-
-
-            //juce::AudioBuffer<float> refSpeaker;
-
-            //if (!loadBufferFromFile(refStereo, stereoFile) || !loadBufferFromFile(refSpeaker, speakerFile)) {
-            //    std::cout << "Saving reference output...\n";
-            //    saveBufferToFile(stereoBuffer, stereoFile);
-            //    saveBufferToFile(speakerBuffer, speakerFile);
-            //} else {
-            //    bool ok1 = buffersApproximatelyEqual(stereoBuffer, refStereo);
-            //    bool ok2 = buffersApproximatelyEqual(speakerBuffer, refSpeaker);
-            //    if (!ok1 || !ok2)
-            //        throw std::runtime_error("Output buffers don't match saved reference.");
-            //}
+                    compareBuffers(individualSpeakerBuffer, wavBuffer);
+                } else {
+                    // failed to create reader!
+                    jassertfalse;
+                }
+            } else {
+                // failed to create stream!
+                jassertfalse;
+            }
         });
 }
-
-//
-// inline void makeSureBufferMatchesSavedVersion (const SpeakerAudioBuffer* buffer)
-//{
-//     std::string prefix = "reference_output/";
-//     std::string stereoFile = prefix + "stereo_" + std::to_string (bufferSize) + ".bin";
-//     std::string speakerFile = prefix + "speaker_" + std::to_string (bufferSize) + ".bin";
-//
-//     juce::AudioBuffer<float> refStereo;
-//     juce::AudioBuffer<float> refSpeaker;
-//
-//     if (!loadBufferFromFile (refStereo, stereoFile) || !loadBufferFromFile (refSpeaker, speakerFile)) {
-//         std::cout << "Saving reference output...\n";
-//         saveBufferToFile (stereoBuffer, stereoFile);
-//         saveBufferToFile (speakerBuffer, speakerFile);
-//     }
-//     else {
-//         bool ok1 = buffersApproximatelyEqual (stereoBuffer, refStereo);
-//         bool ok2 = buffersApproximatelyEqual (speakerBuffer, refSpeaker);
-//         if (!ok1 || !ok2)
-//             throw std::runtime_error ("Output buffers don't match saved reference.");
-//     }
-// }
 
 /**
  * @brief Checks the validity of the source buffer.
