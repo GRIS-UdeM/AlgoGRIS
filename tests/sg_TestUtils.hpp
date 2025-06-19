@@ -294,9 +294,9 @@ inline void makeSureSpeakerBufferMatchesSavedVersion(juce::StringRef testName,
                     // read the stored wave data into wavBuffer
                     juce::AudioBuffer<float> wavBuffer(1, bufferSize);
                     const auto res = reader->read(&wavBuffer, 0, curLoop * bufferSize, bufferSize, true, true);
-                    jassert (res);
+                    jassert(res);
 
-                    //and compare the 2 buffers
+                    // and compare the 2 buffers
                     compareBuffers(individualSpeakerBuffer, wavBuffer);
                 } else {
                     // failed to create reader!
