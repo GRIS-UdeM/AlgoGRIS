@@ -101,7 +101,7 @@ static void renderProjectOutput(juce::StringRef testName,
         }
 
         // and once all loops are done, write the cached buffers to disk
-        writeSpeakerBuffersToWavFiles(testName, bufferSize);
+        writeCachedSpeakerBuffersToDisk(testName, bufferSize);
     }
 }
 

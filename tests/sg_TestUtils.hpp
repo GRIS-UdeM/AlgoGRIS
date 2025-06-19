@@ -222,7 +222,7 @@ juce::File getSpeakerDumpFile (juce::StringRef testName, int bufferSize, int spe
     return outputDir.getChildFile ("speaker_" + juce::String (speakerId) + ".wav");
 }
 
-inline void writeSpeakerBuffersToWavFiles(juce::StringRef testName, int bufferSize, double sampleRate = 48000.0)
+inline void writeCachedSpeakerBuffersToDisk(juce::StringRef testName, int bufferSize, double sampleRate = 48000.0)
 {
     juce::WavAudioFormat wavFormat;
 
