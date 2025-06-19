@@ -48,6 +48,7 @@ static void incrementAllSourcesAzimuth(AbstractSpatAlgorithm * algo, SpatGrisDat
     }
 }
 
+#if WRITE_TEST_OUTPUT
 static void renderProjectOutput(juce::StringRef testName,
                                 gris::SpatGrisData & data,
                                 SourceAudioBuffer & sourceBuffer,
@@ -96,18 +97,15 @@ static void renderProjectOutput(juce::StringRef testName,
             stereoBuffer.clear();
             algo->process(*config, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks, nullptr);
 
-#if WRITE_TEST_OUTPUT
             // cache the output buffers to memory
             cacheSpeakerBuffersInMemory(speakerBuffer, config->speakersAudioConfig, bufferSize);
-#endif
         }
 
-#if WRITE_TEST_OUTPUT
         // and once all loops are done, write the cached buffers to disk
         writeCachedSpeakerBuffersToDisk(testName, bufferSize);
-#endif
     }
 }
+#endif
 
 static void testUsingProjectData(gris::SpatGrisData & data,
                                  SourceAudioBuffer & sourceBuffer,
@@ -265,7 +263,9 @@ TEST_CASE("VBAP test", "[spat]")
     SourcePeaks sourcePeaks;
 
     std::cout << "Starting VBAP tests:\n";
+#if WRITE_TEST_OUTPUT
     renderProjectOutput ("VBAP", vbapData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
+#endif
     testUsingProjectData(vbapData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
     std::cout << "VBAP tests done.\n";
     benchmarkUsingProjectData("vbap benchmark", vbapData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
