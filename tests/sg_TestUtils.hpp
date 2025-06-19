@@ -157,60 +157,24 @@ inline void makeSureStereoBufferMatchesSavedVersion(const juce::AudioBuffer<floa
 {
 }
 
-// inline void saveBufferToFile (const juce::AudioBuffer<float>& buffer, const juce::String& fileName)
-//{
-//     juce::File file (fileName);
-//     if (!file.existsAsFile()) {
-//         file.create();
-//     }
-//     juce::FileOutputStream outputStream (file);
-//     if (outputStream.openedOk()) {
-//         buffer.writeToStream (outputStream);
-//     }
-// }
-//
-// static void saveBufferToFile (const juce::AudioBuffer<float>& buffer, const std::string& path)
-//{
-//     std::ofstream out (path, std::ios::binary);
-//     int numChannels = buffer.getNumChannels ();
-//     int numSamples = buffer.getNumSamples ();
-//     out.write (reinterpret_cast<const char*>(&numChannels), sizeof (int));
-//     out.write (reinterpret_cast<const char*>(&numSamples), sizeof (int));
-//     for (int ch = 0; ch < numChannels; ++ch)
-//         out.write (reinterpret_cast<const char*> (buffer.getReadPointer (ch)), sizeof (float) * numSamples);
-// }
-//
-// static bool loadBufferFromFile (juce::AudioBuffer<float>& buffer, const std::string& path)
-//{
-//     std::ifstream in (path, std::ios::binary);
-//     if (!in)
-//         return false;
-//     int numChannels, numSamples;
-//     in.read (reinterpret_cast<char*> (&numChannels), sizeof (int));
-//     in.read (reinterpret_cast<char*>(&numSamples), sizeof (int));
-//     buffer.setSize (numChannels, numSamples);
-//     for (int ch = 0; ch < numChannels; ++ch)
-//         in.read (reinterpret_cast<char*> (buffer.getWritePointer (ch)), sizeof (float) * numSamples);
-//     return true;
-// }
-//
-// static bool buffersApproximatelyEqual (const juce::AudioBuffer<float>& a,
-//                                        const juce::AudioBuffer<float>& b,
-//                                        float tolerance = 1e-5f)
-//{
-//     if (a.getNumChannels () != b.getNumChannels () || a.getNumSamples () != b.getNumSamples ())
-//         return false;
-//     for (int ch = 0; ch < a.getNumChannels (); ++ch) {
-//         const float* aData = a.getReadPointer (ch);
-//         const float* bData = b.getReadPointer (ch);
-//         for (int i = 0; i < a.getNumSamples (); ++i) {
-//             if (std::abs (aData[i] - bData[i]) > tolerance)
-//                 return false;
-//         }
-//     }
-//     return true;
-// }
+ static bool buffersApproximatelyEqual (const juce::AudioBuffer<float>& a,
+                                        const juce::AudioBuffer<float>& b,
+                                        float tolerance = 1e-5f)
+{
+     if (a.getNumChannels () != b.getNumChannels () || a.getNumSamples () != b.getNumSamples ())
+         return false;
+     for (int ch = 0; ch < a.getNumChannels (); ++ch) {
+         const float* aData = a.getReadPointer (ch);
+         const float* bData = b.getReadPointer (ch);
+         for (int i = 0; i < a.getNumSamples (); ++i) {
+             if (std::abs (aData[i] - bData[i]) > tolerance)
+                 return false;
+         }
+     }
+     return true;
+ }
 
+//TODO VB: presumably this shouldn't be just in the namespace?
 std::map<int, juce::AudioBuffer<float>> cachedSpeakerBuffers;
 
 inline void cacheSpeakerBuffersInMemory(const SpeakerAudioBuffer & newSpeakerBuffers,
@@ -278,40 +242,6 @@ inline void writeSpeakerBuffersToWavFiles(juce::StringRef testName, int bufferSi
     }
 
     cachedSpeakerBuffers.clear();
-}
-
-inline void saveAllSpeakerBuffersToFile(const SpeakerAudioBuffer & speakerBuffers,
-                                        const SpeakersAudioConfig & speakersAudioConfig,
-                                        int bufferSize)
-{
-    // get actual data we can use
-    juce::Array<float const *> usableSpeakerBuffers
-        = speakerBuffers.getArrayOfReadPointers(speakersAudioConfig.getKeys());
-
-    // for each speaker
-    for (auto const & speaker : speakersAudioConfig) {
-        // skip it if unused
-        if (speaker.value.isMuted || speaker.value.isDirectOutOnly || speaker.value.gain < SMALL_GAIN)
-            continue;
-
-        // get the individual speaker buffer
-        const int speakerId{ speaker.key.get() };
-        const float * const individualSpeakerBuffer = usableSpeakerBuffers[speakerId];
-
-        // create the file if it doesn't exist
-
-        // and append all current samples to the file
-        for (int i = 0; i < bufferSize; ++i)
-            DBG("speakerId " << juce::String(speakerId) << " sample [" << juce::String(i)
-                             << "]: " << individualSpeakerBuffer[i]);
-    }
-}
-
-inline void saveSpeakerBufferToFile(float const * const speakersBuffer, int bufferSize)
-{
-    // so this should be printing into a file
-    for (int i = 0; i < bufferSize; ++i)
-        DBG(speakersBuffer[i]);
 }
 
 // inline void makeSureSpeakerBufferMatchesSavedVersion (const SpeakerAudioBuffer* buffer, int bufferSize)

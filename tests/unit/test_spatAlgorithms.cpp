@@ -48,7 +48,6 @@ static void incrementAllSourcesAzimuth(AbstractSpatAlgorithm * algo, SpatGrisDat
     }
 }
 
-
 static void renderProjectOutput(juce::StringRef testName,
                                 gris::SpatGrisData & data,
                                 SourceAudioBuffer & sourceBuffer,
@@ -105,7 +104,6 @@ static void renderProjectOutput(juce::StringRef testName,
         writeSpeakerBuffersToWavFiles(testName, bufferSize);
     }
 }
-
 
 static void testUsingProjectData(gris::SpatGrisData & data,
                                  SourceAudioBuffer & sourceBuffer,
