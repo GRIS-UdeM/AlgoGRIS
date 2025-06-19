@@ -11,7 +11,7 @@
 #include <cmath>
 #include <array>
 #include <random>
-#include "../../StructGRIS/ValueTreeUtilities.hpp"
+#include "StructGRIS/ValueTreeUtilities.hpp"
 #include "catch2/catch_message.hpp"
 #include "catch2/catch_test_macros.hpp"
 
