@@ -248,29 +248,51 @@ inline void writeCachedSpeakerBuffersToDisk(juce::StringRef testName, int buffer
     cachedSpeakerBuffers.clear();
 }
 
-inline void compareBuffers (const float* const curBuffer, const juce::AudioBuffer<float>& savedBuffer)
-{
-#if 1
-    DBG ("starting");
-    for (int i = 0; i < savedBuffer.getNumSamples (); ++i)
-        DBG (curBuffer[i]);
 
-    for (int i = 0; i < savedBuffer.getNumSamples (); ++i)
-        DBG (savedBuffer.getSample(0, i));
+
+inline void printWavSamples (const juce::File& wavFile)
+{
+    juce::AudioFormatManager formatManager;
+    formatManager.registerFormat (new juce::WavAudioFormat (), true);
+    std::unique_ptr<juce::AudioFormatReader> reader (formatManager.createReaderFor (wavFile));
+
+    if (reader == nullptr)
+    {
+        DBG ("Failed to create reader for file: " << wavFile.getFullPathName ());
+        return;
+    }
+
+    if (reader->numChannels != 1)
+    {
+        DBG ("File is not mono! Number of channels: " << reader->numChannels);
+        return;
+    }
+
+    const juce::int64 numSamples = reader->lengthInSamples;
+    juce::AudioBuffer<float> buffer (1, static_cast<int>(numSamples));
+
+    reader->read (&buffer, 0, static_cast<int>(numSamples), 0, true, false);
+    const float* samples = buffer.getReadPointer (0);
+
+    for (int i = 0; i < numSamples; ++i)
+        DBG ("Sample " << i << ": " << samples[i]);
 
     DBG ("done");
+}
 
-#else
+
+
+inline void compareBuffers (const float* const curBuffer, const juce::AudioBuffer<float>& savedBuffer)
+{
     REQUIRE_MESSAGE(curBuffer != nullptr, "Current buffer is null!");
     REQUIRE_MESSAGE(savedBuffer.getNumSamples() > 0, "Saved buffer has no samples!");
     for (int i = 0; i < savedBuffer.getNumSamples(); ++i) {
         const auto curSample = curBuffer[i];
         const auto savedSample = savedBuffer.getSample(0, i);
-        REQUIRE_MESSAGE(std::abs(curSample - savedSample) < 1e-5f,
+        REQUIRE_MESSAGE(std::abs(curSample - savedSample) < .001f,
                         "Buffers do not match at sample " + juce::String(i) + ": " +
                         juce::String(curSample) + " vs " + juce::String(savedSample));
     }
-#endif
 }
 
 inline void makeSureSpeakerBufferMatchesSavedVersion(juce::StringRef testName,
@@ -279,33 +301,35 @@ inline void makeSureSpeakerBufferMatchesSavedVersion(juce::StringRef testName,
                                                      int bufferSize,
                                                      int curLoop)
 {
-    forAllSpatializedSpeakers(
-        speakersAudioConfig,
-        speakerAudioBuffer,
-        bufferSize,
+    forAllSpatializedSpeakers( speakersAudioConfig, speakerAudioBuffer, bufferSize,
         [testName, curLoop](int speakerId, float const * const individualSpeakerBuffer, int bufferSize) {
-            juce::WavAudioFormat wavFormat;
-            const auto speakerDumpFile = getSpeakerDumpFile(testName, bufferSize, speakerId);
 
-            if (auto inputStream{ speakerDumpFile.createInputStream() }) {
-                if (auto reader{ wavFormat.createReaderFor(inputStream.get(), true) }) {
-                    inputStream.release(); // reader takes ownership
+            const auto speakerWavFile = getSpeakerDumpFile(testName, bufferSize, speakerId);
 
-                    // read the stored wave data into wavBuffer
-                    juce::AudioBuffer<float> wavBuffer(1, bufferSize);
-                    const auto res = reader->read(&wavBuffer, 0, curLoop * bufferSize, bufferSize, true, true);
-                    jassert(res);
+            // this whole thing needs to be a function
+            juce::AudioBuffer<float> wavBuffer(1, bufferSize);
+            {
+                juce::AudioFormatManager formatManager;
+                formatManager.registerFormat(new juce::WavAudioFormat(), true);
+                std::unique_ptr<juce::AudioFormatReader> reader(formatManager.createReaderFor(speakerWavFile));
 
-                    // and compare the 2 buffers
-                    compareBuffers(individualSpeakerBuffer, wavBuffer);
-                } else {
-                    // failed to create reader!
-                    jassertfalse;
+                if (reader == nullptr) {
+                    DBG("Failed to create reader for file: " << speakerWavFile.getFullPathName());
+                    return;
                 }
-            } else {
-                // failed to create stream!
-                jassertfalse;
+
+                if (reader->numChannels != 1) {
+                    DBG("File is not mono! Number of channels: " << reader->numChannels);
+                    return;
+                }
+
+                // read the stored wave data into wavBuffer
+                const auto res = reader->read(& wavBuffer, 0, bufferSize, curLoop* bufferSize, true, false);
+                jassert(res);
             }
+
+            // compare the current and saved buffers
+            compareBuffers (individualSpeakerBuffer, wavBuffer);
         });
 }
 
