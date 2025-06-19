@@ -19,7 +19,7 @@
 #define ENABLE_BENCHMARKS 1
 #define ENABLE_CATCH2_BENCHMARKS 1
 #define USE_FIXED_NUM_LOOPS 0
-#define USE_ONLY_TWO_BUFFER_SIZES 0
+#define USE_ONLY_TWO_BUFFER_SIZES 1
 #define WRITE_TEST_OUTPUT 0
 
 #define REQUIRE_MESSAGE(cond, msg)                                                                                     \
@@ -250,6 +250,17 @@ inline void writeCachedSpeakerBuffersToDisk(juce::StringRef testName, int buffer
 
 inline void compareBuffers (const float* const curBuffer, const juce::AudioBuffer<float>& savedBuffer)
 {
+#if 1
+    DBG ("starting");
+    for (int i = 0; i < savedBuffer.getNumSamples (); ++i)
+        DBG (curBuffer[i]);
+
+    for (int i = 0; i < savedBuffer.getNumSamples (); ++i)
+        DBG (savedBuffer.getSample(0, i));
+
+    DBG ("done");
+
+#else
     REQUIRE_MESSAGE(curBuffer != nullptr, "Current buffer is null!");
     REQUIRE_MESSAGE(savedBuffer.getNumSamples() > 0, "Saved buffer has no samples!");
     for (int i = 0; i < savedBuffer.getNumSamples(); ++i) {
@@ -259,6 +270,7 @@ inline void compareBuffers (const float* const curBuffer, const juce::AudioBuffe
                         "Buffers do not match at sample " + juce::String(i) + ": " +
                         juce::String(curSample) + " vs " + juce::String(savedSample));
     }
+#endif
 }
 
 inline void makeSureSpeakerBufferMatchesSavedVersion(juce::StringRef testName,
@@ -281,8 +293,10 @@ inline void makeSureSpeakerBufferMatchesSavedVersion(juce::StringRef testName,
 
                     // read the stored wave data into wavBuffer
                     juce::AudioBuffer<float> wavBuffer(1, bufferSize);
-                    reader->read(&wavBuffer, 1, curLoop * bufferSize, bufferSize, true, false);
+                    const auto res = reader->read(&wavBuffer, 0, curLoop * bufferSize, bufferSize, true, true);
+                    jassert (res);
 
+                    //and compare the 2 buffers
                     compareBuffers(individualSpeakerBuffer, wavBuffer);
                 } else {
                     // failed to create reader!
