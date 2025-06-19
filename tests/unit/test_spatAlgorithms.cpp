@@ -96,12 +96,16 @@ static void renderProjectOutput(juce::StringRef testName,
             stereoBuffer.clear();
             algo->process(*config, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks, nullptr);
 
+#if WRITE_TEST_OUTPUT
             // cache the output buffers to memory
-            cacheSpeakerBuffersInMemory (speakerBuffer, config->speakersAudioConfig, bufferSize);
+            cacheSpeakerBuffersInMemory(speakerBuffer, config->speakersAudioConfig, bufferSize);
+#endif
         }
 
+#if WRITE_TEST_OUTPUT
         // and once all loops are done, write the cached buffers to disk
         writeCachedSpeakerBuffersToDisk(testName, bufferSize);
+#endif
     }
 }
 
