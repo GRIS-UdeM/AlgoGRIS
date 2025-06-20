@@ -34,11 +34,11 @@ jobs:
         include:
           - name: Linux
             os: ubuntu-latest
-            extra-flags: -G"Ninja Multi-Config" #-DCMAKE_C_FLAGS="-fsanitize=address -fsanitize=undefined"  -DCMAKE_CXX_FLAGS="-fsanitize=address -fsanitize=undefined"
+            extra-flags: -G"Ninja Multi-Config" -DCMAKE_C_FLAGS="-fsanitize=address -fsanitize=undefined"  -DCMAKE_CXX_FLAGS="-fsanitize=address -fsanitize=undefined"
 
           - name: macOS
             os: macos-latest
-            extra-flags: -G"Ninja Multi-Config" #-DCMAKE_OSX_ARCHITECTURES="arm64;x86_64"  -DCMAKE_C_FLAGS=" -fsanitize=address -fsanitize=undefined" -DCMAKE_CXX_FLAGS="-fsanitize=address -fsanitize=undefined"
+            extra-flags: -G"Ninja Multi-Config" -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64"  -DCMAKE_C_FLAGS=" -fsanitize=address -fsanitize=undefined" -DCMAKE_CXX_FLAGS="-fsanitize=address -fsanitize=undefined"
 
           - name: Windows
             os: windows-latest
@@ -56,7 +56,7 @@ jobs:
         if: runner.os == 'Linux'
         # Thanks to McMartin & co https://forum.juce.com/t/list-of-juce-dependencies-under-linux/15121/44
         run: |
-          sudo apt-get update && sudo apt install libasound2-dev libx11-dev libxinerama-dev libxext-dev libfreetype6-dev libwebkit2gtk-4.1-dev libglu1-mesa-dev xvfb ninja-build libcurl4-openssl-dev libomp-dev
+          sudo apt-get update && sudo apt install libasound2-dev libx11-dev libxinerama-dev libxext-dev libfreetype6-dev libwebkit2gtk-4.1-dev libglu1-mesa-dev xvfb ninja-build libcurl4-openssl-dev
 
       - name: Install Ninja (Windows)
         if: runner.os == 'Windows'
@@ -88,9 +88,8 @@ jobs:
                 -DCMAKE_CXX_COMPILER_LAUNCHER=sccache \
                 ${{ matrix.extra-flags }}
 
-      #TODO VB: PUT BACK
-      # - name: Build debug
-      #   run: cmake --build build --config Debug --parallel
+      - name: Build debug
+        run: cmake --build build --config Debug --parallel
 
       - name: Build release
         run: cmake --build build --config Release --parallel
