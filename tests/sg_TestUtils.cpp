@@ -227,7 +227,7 @@ void AudioBufferComparator::writeCachedBuffersToDisk(juce::StringRef testName,
     cachedBuffers.clear();
 }
 
-#define PRINT_BUFFERS 0
+#define PRINT_BUFFERS 1
 
 void AudioBufferComparator::compareBuffers(const float * const curBuffer, const juce::AudioBuffer<float> & savedBuffer)
 {
@@ -238,18 +238,17 @@ void AudioBufferComparator::compareBuffers(const float * const curBuffer, const 
         const auto savedSample = savedBuffer.getSample(0, i);
 
 #if PRINT_BUFFERS
-        if (std::abs (curSample - savedSample) >= .001f)
-        {
+        if (std::abs(curSample - savedSample) >= .001f) {
             jassertfalse;
-            DBG ("curBuffer:");
-            for (int i = 0; i < savedBuffer.getNumSamples (); ++i)
-                DBG (curBuffer[i]);
+            DBG("curBuffer:");
+            for (int i = 0; i < savedBuffer.getNumSamples(); ++i)
+                DBG(curBuffer[i]);
 
-            DBG ("savedBuffer:");
-            for (int i = 0; i < savedBuffer.getNumSamples (); ++i)
-                DBG (savedBuffer.getSample (0, i));
+            DBG("savedBuffer:");
+            for (int i = 0; i < savedBuffer.getNumSamples(); ++i)
+                DBG(savedBuffer.getSample(0, i));
 
-            DBG ("done");
+            DBG("done");
         }
 #endif
 
