@@ -119,8 +119,11 @@ static void testUsingProjectData(juce::StringRef testName,
     const auto numSources{ config->sourcesAudioConfig.size() };
     const auto numSpeakers{ config->speakersAudioConfig.size() };
 
+    SpeakerBufferComparator speakerComparator;
+
     // for every test buffer size
-    for (int bufferSize : bufferSizes) {
+    for (int bufferSize : bufferSizes)
+    {
         std::cout << "\tTesting audio loop with buffer size: " << bufferSize << "...\n";
         data.appData.audioSettings.bufferSize = bufferSize;
 
@@ -160,11 +163,11 @@ static void testUsingProjectData(juce::StringRef testName,
             algo->process(*config, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks, nullptr);
 
             // check that the audio output is valid
-            makeSureSpeakerBufferMatchesSavedVersion(testName,
-                                                     config->speakersAudioConfig,
-                                                     speakerBuffer,
-                                                     bufferSize,
-                                                     i);
+            speakerComparator.makeSureSpeakerBufferMatchesSavedVersion(testName,
+                                                                      config->speakersAudioConfig,
+                                                                      speakerBuffer,
+                                                                      bufferSize,
+                                                                      i);
             // makeSureStereoBufferMatchesSavedVersion (stereoBuffer);
         }
     }

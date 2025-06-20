@@ -154,6 +154,7 @@ target_compile_definitions(AlgoGRIS
 # Tests
 add_library(MainTest STATIC
   tests/Catch2Main.cpp
+  tests/sg_TestUtils.cpp
   tests/sg_TestUtils.hpp
 )
 
