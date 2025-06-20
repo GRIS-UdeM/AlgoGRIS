@@ -18,9 +18,9 @@
 #define ENABLE_TESTS 1
 #define ENABLE_BENCHMARKS 1
 #define ENABLE_CATCH2_BENCHMARKS 1
-#define USE_FIXED_NUM_LOOPS 1
+#define USE_FIXED_NUM_LOOPS 0
 #define USE_ONLY_TWO_BUFFER_SIZES 1
-#define WRITE_TEST_OUTPUT 0
+#define WRITE_TEST_OUTPUT 1
 
 #define REQUIRE_MESSAGE(cond, msg)                                                                                     \
     do {                                                                                                               \

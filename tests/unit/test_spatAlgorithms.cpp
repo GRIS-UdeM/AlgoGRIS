@@ -257,47 +257,46 @@ static SpatGrisData getSpatGrisDataFromFiles(const std::string & projectFilename
     return spatGrisData;
 }
 
-TEST_CASE(vbapTestName, "[spat]")
+//TEST_CASE(vbapTestName, "[spat]")
+//{
+//    SpatGrisData vbapData = getSpatGrisDataFromFiles("default_preset.xml", "default_speaker_setup.xml");
+//    vbapData.project.spatMode = SpatMode::vbap;
+//    vbapData.appData.stereoMode = {};
+//
+//    SourceAudioBuffer sourceBuffer;
+//    SpeakerAudioBuffer speakerBuffer;
+//    juce::AudioBuffer<float> stereoBuffer;
+//    SourcePeaks sourcePeaks;
+//
+//    std::cout << "Starting " << vbapTestName << " tests:\n";
+//#if WRITE_TEST_OUTPUT
+//    renderProjectOutput(vbapTestName, vbapData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
+//#endif
+//    testUsingProjectData(vbapTestName, vbapData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
+//    std::cout << vbapTestName << " tests done.\n";
+//    benchmarkUsingProjectData("vbap benchmark", vbapData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
+//}
+
+TEST_CASE(stereoTestName, "[spat]")
 {
-    SpatGrisData vbapData = getSpatGrisDataFromFiles("default_preset.xml", "default_speaker_setup.xml");
-    vbapData.project.spatMode = SpatMode::vbap;
-    vbapData.appData.stereoMode = {};
+    SpatGrisData stereoData = getSpatGrisDataFromFiles("default_preset.xml", "STEREO_SPEAKER_SETUP.xml");
+    stereoData.project.spatMode = SpatMode::vbap;
+    stereoData.appData.stereoMode = StereoMode::stereo;
 
     SourceAudioBuffer sourceBuffer;
     SpeakerAudioBuffer speakerBuffer;
     juce::AudioBuffer<float> stereoBuffer;
     SourcePeaks sourcePeaks;
 
-    std::cout << "Starting " << vbapTestName << " tests:\n";
+    std::cout << "Starting " << stereoTestName << " tests:\n";
 #if WRITE_TEST_OUTPUT
-    renderProjectOutput(vbapTestName, vbapData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
+    renderProjectOutput(stereoTestName, stereoData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
 #endif
-    testUsingProjectData(vbapTestName, vbapData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
-    std::cout << vbapTestName << " tests done.\n";
-    benchmarkUsingProjectData("vbap benchmark", vbapData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
+    testUsingProjectData(stereoTestName, stereoData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
+    std::cout << stereoTestName << " tests done.\n";
+
+    benchmarkUsingProjectData("stereo benchmark", stereoData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
 }
-
-// TEST_CASE(stereoTestName, "[spat]")
-// {
-//     SpatGrisData stereoData = getSpatGrisDataFromFiles("default_preset.xml", "STEREO_SPEAKER_SETUP.xml");
-//     stereoData.project.spatMode = SpatMode::vbap;
-//     stereoData.appData.stereoMode = StereoMode::stereo;
-
-//     SourceAudioBuffer sourceBuffer;
-//     SpeakerAudioBuffer speakerBuffer;
-//     juce::AudioBuffer<float> stereoBuffer;
-//     SourcePeaks sourcePeaks;
-
-//     std::cout << "Starting " << stereoTestName << " tests:\n";
-// #if WRITE_TEST_OUTPUT
-//     renderProjectOutput(stereoTestName, stereoData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
-// #endif
-//     testUsingProjectData(stereoTestName, stereoData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
-//     std::cout << stereoTestName << " tests done.\n";
-
-//     benchmarkUsingProjectData("stereo benchmark", stereoData, sourceBuffer, speakerBuffer, stereoBuffer,
-//     sourcePeaks);
-// }
 
 TEST_CASE(mbapTestName, "[spat]")
 {
@@ -322,23 +321,23 @@ TEST_CASE(mbapTestName, "[spat]")
     benchmarkUsingProjectData("mbap benchmark", mbapData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
 }
 
-// TEST_CASE(hrtfTestName, "[spat]")
-// {
-//     SpatGrisData hrtfData = getSpatGrisDataFromFiles("default_preset.xml", "BINAURAL_SPEAKER_SETUP.xml");
-//     hrtfData.project.spatMode = SpatMode::vbap;
-//     hrtfData.appData.stereoMode = StereoMode::hrtf;
+TEST_CASE(hrtfTestName, "[spat]")
+{
+    SpatGrisData hrtfData = getSpatGrisDataFromFiles("default_preset.xml", "BINAURAL_SPEAKER_SETUP.xml");
+    hrtfData.project.spatMode = SpatMode::vbap;
+    hrtfData.appData.stereoMode = StereoMode::hrtf;
 
-//     SourceAudioBuffer sourceBuffer;
-//     SpeakerAudioBuffer speakerBuffer;
-//     juce::AudioBuffer<float> stereoBuffer;
-//     SourcePeaks sourcePeaks;
+    SourceAudioBuffer sourceBuffer;
+    SpeakerAudioBuffer speakerBuffer;
+    juce::AudioBuffer<float> stereoBuffer;
+    SourcePeaks sourcePeaks;
 
-//     std::cout << "Starting " << hrtfTestName << " tests:\n";
-// #if WRITE_TEST_OUTPUT
-//     renderProjectOutput(hrtfTestName, hrtfData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
-// #endif
-//     testUsingProjectData(hrtfTestName, hrtfData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
-//     std::cout << hrtfTestName << " tests done.\n";
+    std::cout << "Starting " << hrtfTestName << " tests:\n";
+#if WRITE_TEST_OUTPUT
+    renderProjectOutput(hrtfTestName, hrtfData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
+#endif
+    testUsingProjectData(hrtfTestName, hrtfData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
+    std::cout << hrtfTestName << " tests done.\n";
 
-//     benchmarkUsingProjectData("hrtf benchmark", hrtfData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
-// }
+    benchmarkUsingProjectData("hrtf benchmark", hrtfData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
+}
