@@ -165,7 +165,7 @@ static void testUsingProjectData(juce::StringRef testName,
             stereoBuffer.clear();
             algo->process(*config, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks, nullptr);
 
-            checkSpeakerBufferValidity (speakerBuffer);
+            checkSpeakerBufferValidity(speakerBuffer);
 
             // check that the audio output is valid
             speakerBufferComparator.makeSureSpeakerBufferMatchesSavedVersion(testName + "/speaker",

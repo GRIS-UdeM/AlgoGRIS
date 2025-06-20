@@ -85,20 +85,20 @@ void checkSourceBufferValidity(const SourceAudioBuffer & buffer)
     }
 }
 
- void checkSpeakerBufferValidity(const SpeakerAudioBuffer & buffer)
- {
-     for (auto const & speaker : buffer) {
-         auto const * speakerBuffer = speaker.value->getReadPointer(0);
+void checkSpeakerBufferValidity(const SpeakerAudioBuffer & buffer)
+{
+    for (auto const & speaker : buffer) {
+        auto const * speakerBuffer = speaker.value->getReadPointer(0);
 
-         for (int sampleNumber = 0; sampleNumber < buffer.getNumSamples(); ++sampleNumber) {
-             const auto sampleValue = speakerBuffer[sampleNumber];
+        for (int sampleNumber = 0; sampleNumber < buffer.getNumSamples(); ++sampleNumber) {
+            const auto sampleValue = speakerBuffer[sampleNumber];
 
-             REQUIRE_MESSAGE(std::isfinite(sampleValue), "Output contains NaN or Inf values!");
-             REQUIRE_MESSAGE((sampleValue >= -1.f && sampleValue <= 1.f),
-                             "Output " + juce::String(sampleValue) + " exceeds valid range!");
-         }
-     }
- }
+            REQUIRE_MESSAGE(std::isfinite(sampleValue), "Output contains NaN or Inf values!");
+            REQUIRE_MESSAGE((sampleValue >= -1.f && sampleValue <= 1.f),
+                            "Output " + juce::String(sampleValue) + " exceeds valid range!");
+        }
+    }
+}
 
 void AudioBufferComparator::forAllSpatializedSpeakers(const SpeakersAudioConfig & speakersAudioConfig,
                                                       const SpeakerAudioBuffer & newSpeakerBuffers,
@@ -123,9 +123,9 @@ void AudioBufferComparator::forAllSpatializedSpeakers(const SpeakersAudioConfig 
     }
 }
 
-void AudioBufferComparator::cacheSpeakerBuffersInMemory (const SpeakersAudioConfig & speakersAudioConfig,
-                                                 const SpeakerAudioBuffer & newSpeakerBuffers,
-                                                 int bufferSize)
+void AudioBufferComparator::cacheSpeakerBuffersInMemory(const SpeakersAudioConfig & speakersAudioConfig,
+                                                        const SpeakerAudioBuffer & newSpeakerBuffers,
+                                                        int bufferSize)
 {
     forAllSpatializedSpeakers(
         speakersAudioConfig,
@@ -155,7 +155,8 @@ void AudioBufferComparator::cacheSpeakerBuffersInMemory (const SpeakersAudioConf
         });
 }
 
-void AudioBufferComparator::cacheStereoBuffersInMemory (const juce::AudioBuffer<float> & newStereoBuffers, int bufferSize)
+void AudioBufferComparator::cacheStereoBuffersInMemory(const juce::AudioBuffer<float> & newStereoBuffers,
+                                                       int bufferSize)
 {
     jassert(newStereoBuffers.getNumChannels() == 2);
     for (int curChannel = 0; curChannel < 2; ++curChannel) {
@@ -238,18 +239,17 @@ void AudioBufferComparator::compareBuffers(const float * const curBuffer, const 
         const auto savedSample = savedBuffer.getSample(0, i);
 
 #if PRINT_BUFFERS
-        if (std::abs (curSample - savedSample) >= .001f)
-        {
+        if (std::abs(curSample - savedSample) >= .001f) {
             jassertfalse;
-            DBG ("curBuffer:");
-            for (int i = 0; i < savedBuffer.getNumSamples (); ++i)
-                DBG (curBuffer[i]);
+            DBG("curBuffer:");
+            for (int i = 0; i < savedBuffer.getNumSamples(); ++i)
+                DBG(curBuffer[i]);
 
-            DBG ("savedBuffer:");
-            for (int i = 0; i < savedBuffer.getNumSamples (); ++i)
-                DBG (savedBuffer.getSample (0, i));
+            DBG("savedBuffer:");
+            for (int i = 0; i < savedBuffer.getNumSamples(); ++i)
+                DBG(savedBuffer.getSample(0, i));
 
-            DBG ("done");
+            DBG("done");
         }
 #endif
 

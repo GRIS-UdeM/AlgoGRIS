@@ -103,7 +103,7 @@ void checkSourceBufferValidity(const SourceAudioBuffer & buffer);
  *
  * @param buffer The SpeakerAudioBuffer to check.
  */
-void checkSpeakerBufferValidity (const SpeakerAudioBuffer& buffer);
+void checkSpeakerBufferValidity(const SpeakerAudioBuffer & buffer);
 
 struct AudioBufferComparator {
     std::map<int, juce::AudioBuffer<float>> cachedBuffers;

@@ -127,6 +127,7 @@ public:
                                                                      SourcesData const & sources,
                                                                      double sampleRate,
                                                                      int bufferSize);
+
 private:
     //==============================================================================
     JUCE_LEAK_DETECTOR(AbstractSpatAlgorithm)
