@@ -198,18 +198,6 @@ void HrtfSpatAlgorithm::process(AudioConfig const & config,
 
     convolutionBuffer.clear();
 
-#if USE_FORK_UNION
-    ashvardanian::fork_union::for_n_dynamic(threadPool, speakerIds.size(), [&](std::size_t i) noexcept {
-        processSpeaker(i,
-                       config,
-                       speakerIds[i],
-                       sourcePeaks,
-                       sourcesBuffer,
-                       mHrtfData.speakersAudioConfig,
-                       speakersBuffer,
-                       stereoBuffer);
-    });
-#else
     for (int i = 0; i < speakerIds.size(); ++i) {
         processSpeaker(i,
                        config,
@@ -220,7 +208,6 @@ void HrtfSpatAlgorithm::process(AudioConfig const & config,
                        speakersBuffer,
                        stereoBuffer);
     }
-#endif
 }
 
 //==============================================================================

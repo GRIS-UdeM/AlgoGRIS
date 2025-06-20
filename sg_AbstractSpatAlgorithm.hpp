@@ -33,12 +33,6 @@
 #include <cstdint>
 #include <memory>
 
-#define USE_FORK_UNION 0
-
-#if USE_FORK_UNION
-#include <fork_union.hpp>
-#endif
-
 namespace gris
 {
 //==============================================================================
@@ -77,7 +71,7 @@ public:
         flatDomeSpeakersTooFarApart,
     };
     //==============================================================================
-    AbstractSpatAlgorithm();
+    AbstractSpatAlgorithm() = default;
     virtual ~AbstractSpatAlgorithm() = default;
     SG_DELETE_COPY_AND_MOVE(AbstractSpatAlgorithm)
     //==============================================================================
@@ -133,11 +127,6 @@ public:
                                                                      SourcesData const & sources,
                                                                      double sampleRate,
                                                                      int bufferSize);
-protected:
-#if USE_FORK_UNION
-    ashvardanian::fork_union::thread_pool_t threadPool;
-#endif
-
 private:
     //==============================================================================
     JUCE_LEAK_DETECTOR(AbstractSpatAlgorithm)

@@ -96,15 +96,8 @@ void StereoSpatAlgorithm::process(AudioConfig const & config,
 
     auto const sourceIds{ config.sourcesAudioConfig.getKeys() };
 
-#if USE_FORK_UNION
-    ashvardanian::fork_union::for_n(threadPool, sourceIds.size(), [&](std::size_t i) noexcept {
+    for (int i = 0; i < sourceIds.size(); ++i)
         processSource(config, sourceIds[i], sourcePeaks, sourcesBuffer, config.speakersAudioConfig, speakersBuffer, stereoBuffer);
-    });
-#else
-    for (int i = 0; i < sourceIds.size(); ++i) {
-        processSource(config, sourceIds[i], sourcePeaks, sourcesBuffer, config.speakersAudioConfig, speakersBuffer, stereoBuffer);
-    }
-#endif
 
     // Apply gain compensation.
     auto const compensation{ std::pow(10.0f, (narrow<float>(config.sourcesAudioConfig.size()) - 1.0f) * -0.005f) };

@@ -117,15 +117,8 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
     auto const & speakersAudioConfig{ altSpeakerConfig ? *altSpeakerConfig : config.speakersAudioConfig };
     auto const sourceIds{ config.sourcesAudioConfig.getKeys() };
 
-#if USE_FORK_UNION
-    ashvardanian::fork_union::for_n_dynamic(threadPool, sourceIds.size(), [&](std::size_t i) noexcept {
+    for (int i = 0; i < sourceIds.size(); ++i)
         processSource(config, sourceIds[i], sourcePeaks, sourcesBuffer, speakersAudioConfig, speakersBuffer);
-    });
-#else
-    for (int i = 0; i < sourceIds.size(); ++i) {
-        processSource(config, sourceIds[i], sourcePeaks, sourcesBuffer, speakersAudioConfig, speakersBuffer);
-    }
-#endif
 }
 
 inline void VbapSpatAlgorithm::processSource(const gris::AudioConfig & config,

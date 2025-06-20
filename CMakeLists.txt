@@ -17,8 +17,6 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(Catch2)
 
-add_subdirectory (submodules/fork_union)
-
 # Global CMake configuration
 set(CMAKE_INCLUDE_CURRENT_DIR 1)
 set(CMAKE_CXX_SCAN_FOR_MODULES 0)
@@ -143,7 +141,6 @@ target_link_libraries(AlgoGRIS
     juce::juce_graphics
     juce::juce_gui_basics
     juce::juce_dsp
-    fork_union
 )
 
 target_compile_definitions(AlgoGRIS
