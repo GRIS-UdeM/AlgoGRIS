@@ -85,20 +85,20 @@ void checkSourceBufferValidity(const SourceAudioBuffer & buffer)
     }
 }
 
-// void checkSpeakerBufferValidity(const SpeakerAudioBuffer & buffer)
-// {
-//     for (auto const & speaker : buffer) {
-//         auto const * speakerBuffer = speaker.value->getReadPointer(0);
+ void checkSpeakerBufferValidity(const SpeakerAudioBuffer & buffer)
+ {
+     for (auto const & speaker : buffer) {
+         auto const * speakerBuffer = speaker.value->getReadPointer(0);
 
-//         for (int sampleNumber = 0; sampleNumber < buffer.getNumSamples(); ++sampleNumber) {
-//             const auto sampleValue = speakerBuffer[sampleNumber];
+         for (int sampleNumber = 0; sampleNumber < buffer.getNumSamples(); ++sampleNumber) {
+             const auto sampleValue = speakerBuffer[sampleNumber];
 
-//             REQUIRE_MESSAGE(std::isfinite(sampleValue), "Output contains NaN or Inf values!");
-//             REQUIRE_MESSAGE((sampleValue >= -1.f && sampleValue <= 1.f),
-//                             "Output " + juce::String(sampleValue) + " exceeds valid range!");
-//         }
-//     }
-// }
+             REQUIRE_MESSAGE(std::isfinite(sampleValue), "Output contains NaN or Inf values!");
+             REQUIRE_MESSAGE((sampleValue >= -1.f && sampleValue <= 1.f),
+                             "Output " + juce::String(sampleValue) + " exceeds valid range!");
+         }
+     }
+ }
 
 void AudioBufferComparator::forAllSpatializedSpeakers(const SpeakersAudioConfig & speakersAudioConfig,
                                                       const SpeakerAudioBuffer & newSpeakerBuffers,

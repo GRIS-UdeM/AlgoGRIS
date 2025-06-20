@@ -20,7 +20,7 @@
 #define ENABLE_CATCH2_BENCHMARKS 1
 #define USE_FIXED_NUM_LOOPS 0
 #define USE_ONLY_TWO_BUFFER_SIZES 0
-#define WRITE_TEST_OUTPUT 0
+#define WRITE_TEST_OUTPUT_TO_DISK 0
 
 #define REQUIRE_MESSAGE(cond, msg)                                                                                     \
     do {                                                                                                               \
@@ -41,7 +41,7 @@ auto constexpr static hrtfTestName = "HRTF";
 int constexpr static numTestLoops{ 3 };
 #else
 /** Duration of the audio loop used for the spatialisation tests. */
-float constexpr static testDurationSeconds{ 1.f };
+float constexpr static testDurationSeconds{ .5f };
 #endif
 
 /** A list of buffer sizes used for testing. */
@@ -96,17 +96,17 @@ void fillSourceBuffersWithSine(const size_t numSources,
  */
 void checkSourceBufferValidity(const SourceAudioBuffer & buffer);
 
+/**
+ * @brief Checks the validity of the speaker buffer.
+ *
+ * Ensures that all values are finite and within the range [-1.0, 1.0].
+ *
+ * @param buffer The SpeakerAudioBuffer to check.
+ */
+void checkSpeakerBufferValidity (const SpeakerAudioBuffer& buffer);
+
 struct AudioBufferComparator {
     std::map<int, juce::AudioBuffer<float>> cachedBuffers;
-
-    /**
-     * @brief Checks the validity of the speaker buffer.
-     *
-     * Ensures that all values are finite and within the range [-1.0, 1.0].
-     *
-     * @param buffer The SpeakerAudioBuffer to check.
-     */
-    // void checkSpeakerBufferValidity(const SpeakerAudioBuffer & buffer);
 
     static void forAllSpatializedSpeakers(const SpeakersAudioConfig & speakersAudioConfig,
                                           const SpeakerAudioBuffer & newSpeakerBuffers,

@@ -21,7 +21,6 @@ static void distributeSourcesOnSphere(AbstractSpatAlgorithm * algo, SpatGrisData
         auto & source{ data.project.sources[sourceIndex] };
 
         source.position = PolarVector(radians_t{ curAzimuth }, radians_t{ curRing * elevSteps }, 1.f);
-        // DBG ("src " << i << ": " << source.position->getPolar ().toString ());
         curAzimuth += azimSteps;
 
         algo->updateSpatData(sourceIndex, source);
@@ -48,7 +47,7 @@ static void incrementAllSourcesAzimuth(AbstractSpatAlgorithm * algo, SpatGrisDat
     }
 }
 
-#if WRITE_TEST_OUTPUT
+#if WRITE_TEST_OUTPUT_TO_DISK
 static void renderProjectOutput(juce::StringRef testName,
                                 gris::SpatGrisData & data,
                                 SourceAudioBuffer & sourceBuffer,
@@ -166,6 +165,8 @@ static void testUsingProjectData(juce::StringRef testName,
             stereoBuffer.clear();
             algo->process(*config, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks, nullptr);
 
+            checkSpeakerBufferValidity (speakerBuffer);
+
             // check that the audio output is valid
             speakerBufferComparator.makeSureSpeakerBufferMatchesSavedVersion(testName + "/speaker",
                                                                              config->speakersAudioConfig,
@@ -276,7 +277,7 @@ TEST_CASE(vbapTestName, "[spat]")
     SourcePeaks sourcePeaks;
 
     std::cout << "Starting " << vbapTestName << " tests:\n";
-#if WRITE_TEST_OUTPUT
+#if WRITE_TEST_OUTPUT_TO_DISK
     renderProjectOutput(vbapTestName, vbapData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
 #endif
     testUsingProjectData(vbapTestName, vbapData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
@@ -296,7 +297,7 @@ TEST_CASE(stereoTestName, "[spat]")
     SourcePeaks sourcePeaks;
 
     std::cout << "Starting " << stereoTestName << " tests:\n";
-#if WRITE_TEST_OUTPUT
+#if WRITE_TEST_OUTPUT_TO_DISK
     renderProjectOutput(stereoTestName, stereoData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
 #endif
     testUsingProjectData(stereoTestName, stereoData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
@@ -319,7 +320,7 @@ TEST_CASE(mbapTestName, "[spat]")
     SourcePeaks sourcePeaks;
 
     std::cout << "Starting " << mbapTestName << " tests:\n";
-#if WRITE_TEST_OUTPUT
+#if WRITE_TEST_OUTPUT_TO_DISK
     renderProjectOutput(mbapTestName, mbapData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
 #endif
     testUsingProjectData(mbapTestName, mbapData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
@@ -340,7 +341,7 @@ TEST_CASE(hrtfTestName, "[spat]")
     SourcePeaks sourcePeaks;
 
     std::cout << "Starting " << hrtfTestName << " tests:\n";
-#if WRITE_TEST_OUTPUT
+#if WRITE_TEST_OUTPUT_TO_DISK
     renderProjectOutput(hrtfTestName, hrtfData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
 #endif
     testUsingProjectData(hrtfTestName, hrtfData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);

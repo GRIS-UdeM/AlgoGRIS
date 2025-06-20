@@ -52,7 +52,6 @@ class VbapSpatAlgorithm final : public AbstractSpatAlgorithm
 {
     std::unique_ptr<VbapData> mSetupData{};
     VbapSourcesData mData{};
-    float gainRamp[4096];
 
 public:
     //==============================================================================
