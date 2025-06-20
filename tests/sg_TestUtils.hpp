@@ -95,7 +95,7 @@ void fillSourceBuffersWithSine(const size_t numSources,
  */
 void checkSourceBufferValidity(const SourceAudioBuffer & buffer);
 
-struct SpeakerBufferComparator {
+struct AudioBufferComparator {
     std::map<int, juce::AudioBuffer<float>> cachedSpeakerBuffers;
 
     /**
@@ -122,10 +122,17 @@ struct SpeakerBufferComparator {
                                                          int bufferSize,
                                                          int curLoop);
 
+    static void makeSureStereoBufferMatchesSavedVersion(juce::StringRef testName,
+                                                        const juce::AudioBuffer<float> & stereoAudioBuffer,
+                                                        int bufferSize,
+                                                        int curLoop);
+
     void cacheSpeakerBuffersInMemory(const SpeakersAudioConfig & speakersAudioConfig,
                                      const SpeakerAudioBuffer & newSpeakerBuffers,
                                      int bufferSize);
 
-    void writeCachedSpeakerBuffersToDisk(juce::StringRef testName, int bufferSize, double sampleRate = 48000.0);
+    void cacheStereoBuffersInMemory(const juce::AudioBuffer<float> & newStereoBuffers, int bufferSize);
+
+    void writeCachedBuffersToDisk(juce::StringRef testName, int bufferSize, double sampleRate = 48000.0);
 };
 } // namespace gris::tests

@@ -100,31 +100,32 @@ void checkSourceBufferValidity(const SourceAudioBuffer & buffer)
 //     }
 // }
 
-void SpeakerBufferComparator::forAllSpatializedSpeakers(const SpeakersAudioConfig & speakersAudioConfig,
-                                                        const SpeakerAudioBuffer & newSpeakerBuffers,
-                                                        int bufferSize,
-                                                        std::function<void(int, const float * const, int)> func)
+void AudioBufferComparator::forAllSpatializedSpeakers(const SpeakersAudioConfig & speakersAudioConfig,
+                                                      const SpeakerAudioBuffer & newSpeakerBuffers,
+                                                      int bufferSize,
+                                                      std::function<void(int, const float * const, int)> func)
 {
     juce::Array<output_patch_t> const keys{ speakersAudioConfig.getKeys() };
     juce::Array<float const *> usableNewBuffers = newSpeakerBuffers.getArrayOfReadPointers(keys);
 
     // then for each spatialized, unmuted speaker
     for (const auto & speaker : speakersAudioConfig) {
-        if (speaker.value.isMuted || speaker.value.isDirectOutOnly || speaker.value.gain < SMALL_GAIN)
-            continue;
-
         // get the new data
         const int speakerId = speaker.key.get();
         const float * const newIndividualSpeakerBuffer = usableNewBuffers[speakerId];
-        jassert(newIndividualSpeakerBuffer != nullptr);
+
+        // skip this speaker if it's not spatialized or muted
+        if (speaker.value.isMuted || speaker.value.isDirectOutOnly || speaker.value.gain < SMALL_GAIN
+            || newIndividualSpeakerBuffer == nullptr)
+            continue;
 
         func(speakerId, newIndividualSpeakerBuffer, bufferSize);
     }
 }
 
-void SpeakerBufferComparator::cacheSpeakerBuffersInMemory(const SpeakersAudioConfig & speakersAudioConfig,
-                                                          const SpeakerAudioBuffer & newSpeakerBuffers,
-                                                          int bufferSize)
+void AudioBufferComparator::cacheSpeakerBuffersInMemory (const SpeakersAudioConfig & speakersAudioConfig,
+                                                 const SpeakerAudioBuffer & newSpeakerBuffers,
+                                                 int bufferSize)
 {
     forAllSpatializedSpeakers(
         speakersAudioConfig,
@@ -154,9 +155,34 @@ void SpeakerBufferComparator::cacheSpeakerBuffersInMemory(const SpeakersAudioCon
         });
 }
 
-juce::File SpeakerBufferComparator::SpeakerBufferComparator::getSpeakerWavFile(juce::StringRef testName,
-                                                                               int bufferSize,
-                                                                               int speakerId)
+void AudioBufferComparator::cacheStereoBuffersInMemory (const juce::AudioBuffer<float> & newStereoBuffers, int bufferSize)
+{
+    jassert(newStereoBuffers.getNumChannels() == 2);
+    for (int curChannel = 0; curChannel < 2; ++curChannel) {
+        // get the cached data
+        juce::AudioSampleBuffer & cachedBuffer = cachedSpeakerBuffers[curChannel];
+
+        const int oldSize = cachedBuffer.getNumSamples();
+        const int newSize = oldSize + bufferSize;
+
+        // if the cached buffer is empty
+        if (cachedBuffer.getNumChannels() == 0)
+            cachedBuffer.setSize(1, newSize, false, true); // resize and wipe it
+        else
+            cachedBuffer.setSize(1, newSize, true, true); // otherwise resize and preserve existing
+
+        // finally copy the new data
+        cachedBuffer.copyFrom(0, oldSize, newStereoBuffers.getReadPointer(curChannel), bufferSize);
+
+        // for (int i = 0; i < cachedBuffer.getNumSamples(); ++i)
+        //     DBG(cachedBuffer.getSample(0, i));
+        // DBG ("done");
+    }
+}
+
+juce::File AudioBufferComparator::AudioBufferComparator::getSpeakerWavFile(juce::StringRef testName,
+                                                                           int bufferSize,
+                                                                           int speakerId)
 {
     auto const curTestDirName{ "tests/util/buffer_dumps/" + testName + "/" + juce::String(bufferSize) };
     auto const outputDir = getValidCurrentDirectory().getChildFile(curTestDirName);
@@ -167,9 +193,9 @@ juce::File SpeakerBufferComparator::SpeakerBufferComparator::getSpeakerWavFile(j
     return outputDir.getChildFile("speaker_" + juce::String(speakerId) + ".wav");
 }
 
-void SpeakerBufferComparator::writeCachedSpeakerBuffersToDisk(juce::StringRef testName,
-                                                              int bufferSize,
-                                                              double sampleRate /*= 48000.0*/)
+void AudioBufferComparator::writeCachedBuffersToDisk(juce::StringRef testName,
+                                                            int bufferSize,
+                                                            double sampleRate /*= 48000.0*/)
 {
     juce::WavAudioFormat wavFormat;
 
@@ -201,8 +227,7 @@ void SpeakerBufferComparator::writeCachedSpeakerBuffersToDisk(juce::StringRef te
     cachedSpeakerBuffers.clear();
 }
 
-void SpeakerBufferComparator::compareBuffers(const float * const curBuffer,
-                                             const juce::AudioBuffer<float> & savedBuffer)
+void AudioBufferComparator::compareBuffers(const float * const curBuffer, const juce::AudioBuffer<float> & savedBuffer)
 {
     REQUIRE_MESSAGE(curBuffer != nullptr, "Current buffer is null!");
     REQUIRE_MESSAGE(savedBuffer.getNumSamples() > 0, "Saved buffer has no samples!");
@@ -215,11 +240,11 @@ void SpeakerBufferComparator::compareBuffers(const float * const curBuffer,
     }
 }
 
-void SpeakerBufferComparator::makeSureSpeakerBufferMatchesSavedVersion(juce::StringRef testName,
-                                                                       const SpeakersAudioConfig & speakersAudioConfig,
-                                                                       const SpeakerAudioBuffer & speakerAudioBuffer,
-                                                                       int bufferSize,
-                                                                       int curLoop)
+void AudioBufferComparator::makeSureSpeakerBufferMatchesSavedVersion(juce::StringRef testName,
+                                                                     const SpeakersAudioConfig & speakersAudioConfig,
+                                                                     const SpeakerAudioBuffer & speakerAudioBuffer,
+                                                                     int bufferSize,
+                                                                     int curLoop)
 {
     forAllSpatializedSpeakers(
         speakersAudioConfig,
@@ -248,6 +273,36 @@ void SpeakerBufferComparator::makeSureSpeakerBufferMatchesSavedVersion(juce::Str
             // compare the current and saved buffers
             compareBuffers(individualSpeakerBuffer, wavBuffer);
         });
+}
+
+void AudioBufferComparator::makeSureStereoBufferMatchesSavedVersion(juce::StringRef testName,
+                                                                    const juce::AudioBuffer<float> & stereoAudioBuffer,
+                                                                    int bufferSize,
+                                                                    int curLoop)
+{
+    jassert(stereoAudioBuffer.getNumChannels() == 2);
+    for (int curChannel = 0; curChannel < 2; ++curChannel) {
+        const auto speakerWavFile = getSpeakerWavFile(testName, bufferSize, curChannel);
+
+        // this whole thing needs to be a function
+        juce::AudioBuffer<float> wavBuffer(1, bufferSize);
+        {
+            juce::AudioFormatManager formatManager;
+            formatManager.registerFormat(new juce::WavAudioFormat(), true);
+            std::unique_ptr<juce::AudioFormatReader> reader(formatManager.createReaderFor(speakerWavFile));
+
+            REQUIRE_MESSAGE(reader != nullptr,
+                            "Failed to create reader for file: " << speakerWavFile.getFullPathName());
+
+            REQUIRE_MESSAGE(reader->numChannels == 1, "File is not mono! Number of channels: " << reader->numChannels);
+            // read the stored wave data into wavBuffer
+            const auto readOk = reader->read(&wavBuffer, 0, bufferSize, curLoop * bufferSize, true, false);
+            REQUIRE_MESSAGE(readOk, "Could not read from file: " << speakerWavFile.getFullPathName());
+        }
+
+        // compare the current and saved buffers
+        compareBuffers(stereoAudioBuffer.getReadPointer(curChannel), wavBuffer);
+    }
 }
 
 } // namespace gris::tests

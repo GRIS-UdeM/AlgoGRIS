@@ -59,7 +59,8 @@ static void renderProjectOutput(juce::StringRef testName,
     const auto config{ data.toAudioConfig() };
     const auto numSources{ config->sourcesAudioConfig.size() };
     const auto numSpeakers{ config->speakersAudioConfig.size() };
-    SpeakerBufferComparator comparator;
+    AudioBufferComparator speakerBuffercomparator;
+    AudioBufferComparator stereoBuffercomparator;
 
     // for every test buffer size
     for (int bufferSize : bufferSizes) {
@@ -98,13 +99,14 @@ static void renderProjectOutput(juce::StringRef testName,
             stereoBuffer.clear();
             algo->process(*config, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks, nullptr);
 
-            // rite, so this fails because the stereo algorithm fills the stereoBuffer, and not the speakerBuffer
             //  cache the output buffers to memory
-            comparator.cacheSpeakerBuffersInMemory(config->speakersAudioConfig, speakerBuffer, bufferSize);
+            speakerBuffercomparator.cacheSpeakerBuffersInMemory(config->speakersAudioConfig, speakerBuffer, bufferSize);
+            stereoBuffercomparator.cacheStereoBuffersInMemory(stereoBuffer, bufferSize);
         }
 
         // and once all loops are done, write the cached buffers to disk
-        comparator.writeCachedSpeakerBuffersToDisk(testName, bufferSize);
+        speakerBuffercomparator.writeCachedBuffersToDisk(testName, bufferSize);
+        stereoBuffercomparator.writeCachedBuffersToDisk(testName, bufferSize);
     }
 }
 #endif
@@ -121,7 +123,8 @@ static void testUsingProjectData(juce::StringRef testName,
     const auto numSources{ config->sourcesAudioConfig.size() };
     const auto numSpeakers{ config->speakersAudioConfig.size() };
 
-    SpeakerBufferComparator speakerComparator;
+    AudioBufferComparator speakerBufferComparator;
+    AudioBufferComparator stereoBufferComparator;
 
     // for every test buffer size
     for (int bufferSize : bufferSizes) {
@@ -164,12 +167,13 @@ static void testUsingProjectData(juce::StringRef testName,
             algo->process(*config, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks, nullptr);
 
             // check that the audio output is valid
-            speakerComparator.makeSureSpeakerBufferMatchesSavedVersion(testName,
-                                                                       config->speakersAudioConfig,
-                                                                       speakerBuffer,
-                                                                       bufferSize,
-                                                                       i);
-            // makeSureStereoBufferMatchesSavedVersion (stereoBuffer);
+            speakerBufferComparator.makeSureSpeakerBufferMatchesSavedVersion(testName,
+                                                                             config->speakersAudioConfig,
+                                                                             speakerBuffer,
+                                                                             bufferSize,
+                                                                             i);
+
+            stereoBufferComparator.makeSureStereoBufferMatchesSavedVersion(testName, stereoBuffer, bufferSize, i);
         }
     }
 #endif
@@ -257,25 +261,25 @@ static SpatGrisData getSpatGrisDataFromFiles(const std::string & projectFilename
     return spatGrisData;
 }
 
-//TEST_CASE(vbapTestName, "[spat]")
-//{
-//    SpatGrisData vbapData = getSpatGrisDataFromFiles("default_preset.xml", "default_speaker_setup.xml");
-//    vbapData.project.spatMode = SpatMode::vbap;
-//    vbapData.appData.stereoMode = {};
-//
-//    SourceAudioBuffer sourceBuffer;
-//    SpeakerAudioBuffer speakerBuffer;
-//    juce::AudioBuffer<float> stereoBuffer;
-//    SourcePeaks sourcePeaks;
-//
-//    std::cout << "Starting " << vbapTestName << " tests:\n";
-//#if WRITE_TEST_OUTPUT
-//    renderProjectOutput(vbapTestName, vbapData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
-//#endif
-//    testUsingProjectData(vbapTestName, vbapData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
-//    std::cout << vbapTestName << " tests done.\n";
-//    benchmarkUsingProjectData("vbap benchmark", vbapData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
-//}
+ TEST_CASE(vbapTestName, "[spat]")
+{
+     SpatGrisData vbapData = getSpatGrisDataFromFiles("default_preset.xml", "default_speaker_setup.xml");
+     vbapData.project.spatMode = SpatMode::vbap;
+     vbapData.appData.stereoMode = {};
+
+     SourceAudioBuffer sourceBuffer;
+     SpeakerAudioBuffer speakerBuffer;
+     juce::AudioBuffer<float> stereoBuffer;
+     SourcePeaks sourcePeaks;
+
+     std::cout << "Starting " << vbapTestName << " tests:\n";
+ #if WRITE_TEST_OUTPUT
+     renderProjectOutput(vbapTestName, vbapData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
+ #endif
+     testUsingProjectData(vbapTestName, vbapData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
+     std::cout << vbapTestName << " tests done.\n";
+     benchmarkUsingProjectData("vbap benchmark", vbapData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
+ }
 
 TEST_CASE(stereoTestName, "[spat]")
 {
