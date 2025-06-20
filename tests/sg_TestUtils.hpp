@@ -20,11 +20,12 @@
 #define ENABLE_CATCH2_BENCHMARKS 1
 #define USE_FIXED_NUM_LOOPS 0
 #define USE_ONLY_TWO_BUFFER_SIZES 1
-#define WRITE_TEST_OUTPUT 1
+#define WRITE_TEST_OUTPUT 0
 
 #define REQUIRE_MESSAGE(cond, msg)                                                                                     \
     do {                                                                                                               \
         INFO(msg);                                                                                                     \
+        jassert(cond);                                                                                                 \
         REQUIRE(cond);                                                                                                 \
     } while (0)
 
@@ -96,7 +97,7 @@ void fillSourceBuffersWithSine(const size_t numSources,
 void checkSourceBufferValidity(const SourceAudioBuffer & buffer);
 
 struct AudioBufferComparator {
-    std::map<int, juce::AudioBuffer<float>> cachedSpeakerBuffers;
+    std::map<int, juce::AudioBuffer<float>> cachedBuffers;
 
     /**
      * @brief Checks the validity of the speaker buffer.

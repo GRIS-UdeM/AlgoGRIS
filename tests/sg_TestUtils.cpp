@@ -56,7 +56,7 @@ void fillSourceBuffersWithSine(const size_t numSources,
         auto curPhase = lastPhase;
 
         for (int s = 0; s < bufferSize; ++s) {
-            sourceBuffer[sourceIndex].setSample(0, s, std::sin(curPhase) * 0.25f);
+            sourceBuffer[sourceIndex].setSample(0, s, std::sin(curPhase) * 0.05f);
 
             curPhase += phaseIncrement;
             if (curPhase > juce::MathConstants<float>::twoPi)
@@ -135,7 +135,7 @@ void AudioBufferComparator::cacheSpeakerBuffersInMemory (const SpeakersAudioConf
             jassert(newIndividualSpeakerBuffer != nullptr);
 
             // get the cached data
-            juce::AudioSampleBuffer & cachedBuffer = cachedSpeakerBuffers[speakerId];
+            juce::AudioSampleBuffer & cachedBuffer = cachedBuffers[speakerId];
 
             const int oldSize = cachedBuffer.getNumSamples();
             const int newSize = oldSize + bufferSize;
@@ -160,7 +160,7 @@ void AudioBufferComparator::cacheStereoBuffersInMemory (const juce::AudioBuffer<
     jassert(newStereoBuffers.getNumChannels() == 2);
     for (int curChannel = 0; curChannel < 2; ++curChannel) {
         // get the cached data
-        juce::AudioSampleBuffer & cachedBuffer = cachedSpeakerBuffers[curChannel];
+        juce::AudioSampleBuffer & cachedBuffer = cachedBuffers[curChannel];
 
         const int oldSize = cachedBuffer.getNumSamples();
         const int newSize = oldSize + bufferSize;
@@ -194,12 +194,12 @@ juce::File AudioBufferComparator::AudioBufferComparator::getSpeakerWavFile(juce:
 }
 
 void AudioBufferComparator::writeCachedBuffersToDisk(juce::StringRef testName,
-                                                            int bufferSize,
-                                                            double sampleRate /*= 48000.0*/)
+                                                     int bufferSize,
+                                                     double sampleRate /*= 48000.0*/)
 {
     juce::WavAudioFormat wavFormat;
 
-    for (const auto & [speakerId, buffer] : cachedSpeakerBuffers) {
+    for (const auto & [speakerId, buffer] : cachedBuffers) {
         // for (int i = 0; i < buffer.getNumSamples(); ++i)
         //     DBG(buffer.getSample(0, i));
         // DBG("done");
@@ -224,8 +224,10 @@ void AudioBufferComparator::writeCachedBuffersToDisk(juce::StringRef testName,
         }
     }
 
-    cachedSpeakerBuffers.clear();
+    cachedBuffers.clear();
 }
+
+#define PRINT_BUFFERS 0
 
 void AudioBufferComparator::compareBuffers(const float * const curBuffer, const juce::AudioBuffer<float> & savedBuffer)
 {
@@ -234,6 +236,23 @@ void AudioBufferComparator::compareBuffers(const float * const curBuffer, const 
     for (int i = 0; i < savedBuffer.getNumSamples(); ++i) {
         const auto curSample = curBuffer[i];
         const auto savedSample = savedBuffer.getSample(0, i);
+
+#if PRINT_BUFFERS
+        if (std::abs (curSample - savedSample) >= .001f)
+        {
+            jassertfalse;
+            DBG ("curBuffer:");
+            for (int i = 0; i < savedBuffer.getNumSamples (); ++i)
+                DBG (curBuffer[i]);
+
+            DBG ("savedBuffer:");
+            for (int i = 0; i < savedBuffer.getNumSamples (); ++i)
+                DBG (savedBuffer.getSample (0, i));
+
+            DBG ("done");
+        }
+#endif
+
         REQUIRE_MESSAGE(std::abs(curSample - savedSample) < .001f,
                         "Buffers do not match at sample " + juce::String(i) + ": " + juce::String(curSample) + " vs "
                             + juce::String(savedSample));
