@@ -184,7 +184,7 @@ juce::File AudioBufferComparator::AudioBufferComparator::getSpeakerWavFile(juce:
                                                                            int bufferSize,
                                                                            int speakerId)
 {
-    auto const curTestDirName{ "tests/util/buffer_dumps/" + testName + "/" + juce::String(bufferSize) };
+    auto const curTestDirName{ "tests/util/buffer_wav_files/" + testName + "/" + juce::String(bufferSize) };
     auto const outputDir = getValidCurrentDirectory().getChildFile(curTestDirName);
 
     if (!outputDir.exists())
