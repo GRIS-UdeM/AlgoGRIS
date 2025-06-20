@@ -116,6 +116,7 @@ void SpeakerBufferComparator::forAllSpatializedSpeakers(const SpeakersAudioConfi
         // get the new data
         const int speakerId = speaker.key.get();
         const float * const newIndividualSpeakerBuffer = usableNewBuffers[speakerId];
+        jassert(newIndividualSpeakerBuffer != nullptr);
 
         func(speakerId, newIndividualSpeakerBuffer, bufferSize);
     }
@@ -130,6 +131,8 @@ void SpeakerBufferComparator::cacheSpeakerBuffersInMemory(const SpeakersAudioCon
         newSpeakerBuffers,
         bufferSize,
         [this](int speakerId, const float * newIndividualSpeakerBuffer, int bufferSize) {
+            jassert(newIndividualSpeakerBuffer != nullptr);
+
             // get the cached data
             juce::AudioSampleBuffer & cachedBuffer = cachedSpeakerBuffers[speakerId];
 
@@ -144,6 +147,10 @@ void SpeakerBufferComparator::cacheSpeakerBuffersInMemory(const SpeakersAudioCon
 
             // finally copy the new data
             cachedBuffer.copyFrom(0, oldSize, newIndividualSpeakerBuffer, bufferSize);
+
+            // for (int i = 0; i < cachedBuffer.getNumSamples(); ++i)
+            //     DBG(cachedBuffer.getSample(0, i));
+            // DBG ("done");
         });
 }
 
@@ -167,6 +174,10 @@ void SpeakerBufferComparator::writeCachedSpeakerBuffersToDisk(juce::StringRef te
     juce::WavAudioFormat wavFormat;
 
     for (const auto & [speakerId, buffer] : cachedSpeakerBuffers) {
+        // for (int i = 0; i < buffer.getNumSamples(); ++i)
+        //     DBG(buffer.getSample(0, i));
+        // DBG("done");
+
         juce::File wavFile = getSpeakerWavFile(testName, bufferSize, speakerId);
         std::unique_ptr<juce::FileOutputStream> outputStream(wavFile.createOutputStream());
 

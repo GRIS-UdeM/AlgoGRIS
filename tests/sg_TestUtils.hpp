@@ -61,11 +61,11 @@ std::array<int, 4> constexpr static bufferSizes{ 1, 512, 1024, SourceAudioBuffer
  * @param stereoBuffer Reference to the stereo juce::AudioBuffer<float> to initialize.
  */
 void initBuffers(const int bufferSize,
-                        const size_t numSources,
-                        const size_t numSpeakers,
-                        SourceAudioBuffer & sourceBuffer,
-                        SpeakerAudioBuffer & speakerBuffer,
-                        juce::AudioBuffer<float> & stereoBuffer);
+                 const size_t numSources,
+                 const size_t numSpeakers,
+                 SourceAudioBuffer & sourceBuffer,
+                 SpeakerAudioBuffer & speakerBuffer,
+                 juce::AudioBuffer<float> & stereoBuffer);
 
 /**
  * @brief Fills the source buffers with pink noise and calculates the peak values.
