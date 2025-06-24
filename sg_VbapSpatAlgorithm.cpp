@@ -116,11 +116,7 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
 
     auto const & speakersAudioConfig{ altSpeakerConfig ? *altSpeakerConfig : config.speakersAudioConfig };
 
-#if JUCE_LINUX
-    juce::Array<gris::source_index_t> const sourceIds;
-#else
-    juce::Array<gris::source_index_t> const sourceIds{ config.sourcesAudioConfig.getKeys() };
-#endif
+    auto const sourceIds{ config.sourcesAudioConfig.getKeyVector() };
 
     for (int i = 0; i < sourceIds.size(); ++i)
         processSource(config, sourceIds[i], sourcePeaks, sourcesBuffer, speakersAudioConfig, speakersBuffer);
