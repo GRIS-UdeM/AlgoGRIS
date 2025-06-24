@@ -81,6 +81,15 @@ void fillSourceBuffersWithNoise(const size_t numSources,
                                 const int bufferSize,
                                 SourcePeaks & sourcePeaks);
 
+/**
+ * @brief Fills the source buffers with a 440 Hz sine wave and calculates the peak values.
+ *
+ * @param numSources Number of source channels.
+ * @param sourceBuffer Reference to the SourceAudioBuffer to fill.
+ * @param bufferSize Number of samples per buffer.
+ * @param sourcePeaks Reference to the SourcePeaks to store calculated peak values.
+ * @param lastPhase Reference to the last phase of the sine wave, used for continuity.
+ */
 void fillSourceBuffersWithSine(const size_t numSources,
                                SourceAudioBuffer & sourceBuffer,
                                const int bufferSize,
@@ -105,35 +114,106 @@ void checkSourceBufferValidity(const SourceAudioBuffer & buffer);
  */
 void checkSpeakerBufferValidity(const SpeakerAudioBuffer & buffer);
 
+/**
+ * @brief Utility struct for comparing and managing audio buffers during tests.
+ *
+ * AudioBufferComparator provides methods to compare, cache, and write audio buffers
+ * for speaker and stereo configurations. It is used to ensure that generated audio
+ * matches expected results and to facilitate regression testing by comparing against
+ * saved buffer data.
+ */
 struct AudioBufferComparator {
+    /**
+     * @brief Cached audio buffers, indexed by speaker ID.
+     */
     std::map<int, juce::AudioBuffer<float>> cachedBuffers;
 
+    /**
+     * @brief Utility function to easily iterates over all non-direct and non-muted speakers and apply a function to
+     * their buffers.
+     *
+     * @param speakersAudioConfig The configuration of the speakers.
+     * @param speakerBuffers The buffer containing new speaker audio data.
+     * @param bufferSize The number of samples in each buffer.
+     * @param func The function to apply, taking (speakerId, buffer pointer, bufferSize).
+     */
     static void forAllSpatializedSpeakers(const SpeakersAudioConfig & speakersAudioConfig,
-                                          const SpeakerAudioBuffer & newSpeakerBuffers,
+                                          const SpeakerAudioBuffer & speakerBuffers,
                                           int bufferSize,
                                           std::function<void(int, const float * const, int)> func);
 
+    /**
+     * @brief Gets the file path for a saved speaker WAV file for a given test.
+     *
+     * @param testName The name of the test.
+     * @param bufferSize The test buffer size.
+     * @param speakerId The ID of the speaker.
+     * @return juce::File The file object representing the WAV file.
+     */
     static juce::File getSpeakerWavFile(juce::StringRef testName, int bufferSize, int speakerId);
 
+    /**
+     * @brief Compares a current buffer with a buffer.
+     *
+     * @param curBuffer Pointer to the current buffer data.
+     * @param savedBuffer The saved buffer to compare against.
+     */
     static void compareBuffers(const float * const curBuffer, const juce::AudioBuffer<float> & savedBuffer);
 
+    /**
+     * @brief Ensures the speaker buffer matches the saved version for a given test.
+     *
+     * @param testName The name of the test.
+     * @param speakersAudioConfig The configuration of the speakers.
+     * @param speakerAudioBuffer The buffer containing speaker audio data.
+     * @param bufferSize The buffer size.
+     * @param curLoop The current test loop iteration.
+     */
     static void makeSureSpeakerBufferMatchesSavedVersion(juce::StringRef testName,
                                                          const SpeakersAudioConfig & speakersAudioConfig,
                                                          const SpeakerAudioBuffer & speakerAudioBuffer,
                                                          int bufferSize,
                                                          int curLoop);
 
+    /**
+     * @brief Ensures the stereo buffer matches the saved version for a given test.
+     *
+     * @param testName The name of the test.
+     * @param stereoAudioBuffer The buffer containing stereo audio data.
+     * @param bufferSize The buffer size.
+     * @param curLoop The current test loop iteration.
+     */
     static void makeSureStereoBufferMatchesSavedVersion(juce::StringRef testName,
                                                         const juce::AudioBuffer<float> & stereoAudioBuffer,
                                                         int bufferSize,
                                                         int curLoop);
 
+    /**
+     * @brief Caches the current speaker buffers in memory for later comparison or writing.
+     *
+     * @param speakersAudioConfig The configuration of the speakers.
+     * @param newSpeakerBuffers The buffer containing new speaker audio data.
+     * @param bufferSize The buffer size.
+     */
     void cacheSpeakerBuffersInMemory(const SpeakersAudioConfig & speakersAudioConfig,
-                                     const SpeakerAudioBuffer & newSpeakerBuffers,
+                                     const SpeakerAudioBuffer & speakerBuffers,
                                      int bufferSize);
 
-    void cacheStereoBuffersInMemory(const juce::AudioBuffer<float> & newStereoBuffers, int bufferSize);
+    /**
+     * @brief Caches the current stereo buffers in memory for later comparison or writing.
+     *
+     * @param newStereoBuffers The buffer containing new stereo audio data.
+     * @param bufferSize The buffer size.
+     */
+    void cacheStereoBuffersInMemory(const juce::AudioBuffer<float> & stereoBuffers, int bufferSize);
 
+    /**
+     * @brief Writes all cached buffers to disk as WAV files for regression testing.
+     *
+     * @param testName The name of the test.
+     * @param bufferSize The buffer size.
+     * @param sampleRate The sample rate to use for the WAV files (default: 48000.0).
+     */
     void writeCachedBuffersToDisk(juce::StringRef testName, int bufferSize, double sampleRate = 48000.0);
 };
 } // namespace gris::tests

@@ -105,8 +105,6 @@ jobs:
 
           if [[ "$RUNNER_OS" == "Windows" ]]; then
             ./Release/test_spatAlgorithms.exe --reporter xml --out benchmarks/${RUNNER_OS}/${{ github.sha }}.xml
-          elif [[ "$RUNNER_OS" == "macOS" ]]; then
-            ./Release/test_spatAlgorithms --reporter xml --out benchmarks/${RUNNER_OS}/${{ github.sha }}.xml
           else
             ./Release/test_spatAlgorithms --reporter xml --out benchmarks/${RUNNER_OS}/${{ github.sha }}.xml
           fi
