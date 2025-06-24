@@ -94,7 +94,7 @@ void StereoSpatAlgorithm::process(AudioConfig const & config,
 
     mInnerAlgorithm->process(config, sourcesBuffer, speakersBuffer, stereoBuffer, sourcePeaks, altSpeakerConfig);
 
-    auto const sourceIds{ config.sourcesAudioConfig.getKeys() };
+    juce::Array <gris::source_index_t> const sourceIds{ config.sourcesAudioConfig.getKeys() };
 
     for (int i = 0; i < sourceIds.size(); ++i)
         processSource(config,
