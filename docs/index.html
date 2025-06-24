@@ -89,9 +89,9 @@
       return messages;
     }
 
-
     async function fetchBenchmarkFiles() {
       const allBenchmarks = {}; // { commitHash: { os: [xmlDoc, ...] } }
+      const commitTimes = {}; // commitHash: earliest Date
       const parser = new DOMParser();
 
       for (const os of OS_DIRS) {
@@ -110,13 +110,16 @@
             const parsed = parseFilename(file.name);
             if (!parsed) continue;
 
-            const { commitHash } = parsed;
+            const { commitHash, date } = parsed;
 
             if (!allBenchmarks[commitHash]) {
               allBenchmarks[commitHash] = {};
             }
             if (!allBenchmarks[commitHash][os]) {
               allBenchmarks[commitHash][os] = [];
+            }
+            if (!commitTimes[commitHash] || date < commitTimes[commitHash]) {
+              commitTimes[commitHash] = date;
             }
 
             const xmlRes = await fetch(file.download_url);
@@ -174,7 +177,7 @@
 
     // We need to order commitHashes by their earliest timestamp (from the files)
     // So let's get timestamps per commitHash from filenames again
-    async function getCommitOrder(allBenchmarks) {
+    async function getCommitOrder() {
       const commitTimes = {}; // commitHash: earliest Date
 
       // Fetch file list once again for timestamps
