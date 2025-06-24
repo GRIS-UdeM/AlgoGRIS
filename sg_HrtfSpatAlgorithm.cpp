@@ -193,8 +193,11 @@ void HrtfSpatAlgorithm::process(AudioConfig const & config,
         mInnerAlgorithm
             ->process(config, sourcesBuffer, hrtfBuffer, stereoBuffer, sourcePeaks, &mHrtfData.speakersAudioConfig);
 
-    auto const numSamples{ sourcesBuffer.getNumSamples() };
+#if JUCE_LINUX
+    juce::Array<gris::output_patch_t> speakerIds;
+#else
     juce::Array<gris::output_patch_t> const speakerIds{ mHrtfData.speakersAudioConfig.getKeys() };
+#endif
 
     convolutionBuffer.clear();
 

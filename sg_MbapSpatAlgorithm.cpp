@@ -105,7 +105,12 @@ void MbapSpatAlgorithm::process(AudioConfig const & config,
     ASSERT_AUDIO_THREAD;
 
     auto const & speakersAudioConfig{ altSpeakerConfig ? *altSpeakerConfig : config.speakersAudioConfig };
+
+#if JUCE_LINUX
+    juce::Array<gris::source_index_t> sourceIds;
+#else
     auto const sourceIds{ config.sourcesAudioConfig.getKeys() };
+#endif
 
     for (int i = 0; i < sourceIds.size(); ++i)
         processSource(config, sourceIds[i], sourcePeaks, sourceBuffer, speakersAudioConfig, speakersBuffer);
