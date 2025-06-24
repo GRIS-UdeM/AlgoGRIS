@@ -90,8 +90,8 @@
     }
 
     async function fetchBenchmarkFiles() {
-      const allBenchmarks = {}; // { commitHash: { os: [xmlDoc, ...] } }
-      const commitTimes = {}; // commitHash: earliest Date
+      const allBenchmarks = {};
+      const commitTimes = {};
       const parser = new DOMParser();
 
       for (const os of OS_DIRS) {
@@ -112,12 +112,9 @@
 
             const { commitHash, date } = parsed;
 
-            if (!allBenchmarks[commitHash]) {
-              allBenchmarks[commitHash] = {};
-            }
-            if (!allBenchmarks[commitHash][os]) {
-              allBenchmarks[commitHash][os] = [];
-            }
+            if (!allBenchmarks[commitHash]) allBenchmarks[commitHash] = {};
+            if (!allBenchmarks[commitHash][os]) allBenchmarks[commitHash][os] = [];
+
             if (!commitTimes[commitHash] || date < commitTimes[commitHash]) {
               commitTimes[commitHash] = date;
             }
@@ -132,7 +129,16 @@
           console.error(`Error fetching files for OS ${os}:`, e);
         }
       }
-      return allBenchmarks;
+
+      // Sort by earliest benchmark timestamp
+      const sorted = Object.entries(allBenchmarks)
+        .sort((a, b) => commitTimes[a[0]] - commitTimes[b[0]])
+        .reduce((acc, [commit, osData]) => {
+          acc[commit] = osData;
+          return acc;
+        }, {});
+
+      return sorted;
     }
 
     // Combine multiple xml docs for same commitHash & OS by averaging means for each test
@@ -175,42 +181,12 @@
       return resultsByTestName;
     }
 
-    // We need to order commitHashes by their earliest timestamp (from the files)
-    // So let's get timestamps per commitHash from filenames again
-    async function getCommitOrder() {
-      const commitTimes = {}; // commitHash: earliest Date
-
-      // Fetch file list once again for timestamps
-      for (const os of OS_DIRS) {
-        const apiURL = `https://api.github.com/repos/${REPO}/contents/benchmarks/${os}?ref=${BRANCH}`;
-        try {
-          const response = await fetch(apiURL);
-          if (!response.ok) continue;
-          const files = await response.json();
-
-          for (const file of files) {
-            const parsed = parseFilename(file.name);
-            if (!parsed) continue;
-
-            const { commitHash, date } = parsed;
-            if (!commitTimes[commitHash] || date < commitTimes[commitHash]) {
-              commitTimes[commitHash] = date;
-            }
-          }
-        } catch (e) {
-          // Ignore errors here
-        }
-      }
-      // Sort commit hashes by earliest timestamp ascending
-      return Object.entries(commitTimes)
-        .sort((a, b) => a[1] - b[1])
-        .map(e => e[0]);
-    }
-
     async function render() {
       const allBenchmarks = await fetchBenchmarkFiles();
       const resultsByTestName = parseBenchmarks(allBenchmarks);
-      const commitHashes = await getCommitOrder(allBenchmarks);
+
+      // Derive ordered commit hashes directly from sorted object
+      const commitHashes = Object.keys(allBenchmarks);
       const commitMessages = await fetchCommitMessages(commitHashes);
 
       // Clear old charts
@@ -218,7 +194,6 @@
       document.querySelectorAll('h2.chart-title').forEach(h => h.remove());
 
       for (const [testName, commitData] of Object.entries(resultsByTestName)) {
-        // Use commitHashes in order for labels
         const labels = commitHashes.map(hash => commitMessages[hash] || hash.slice(0, 7));
 
         const datasets = OS_DIRS.map(os => ({
@@ -269,6 +244,7 @@
         });
       }
     }
+
 
     render();
   </script>
