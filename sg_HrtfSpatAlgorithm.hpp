@@ -93,12 +93,9 @@ public:
 private:
     //==============================================================================
     void processSpeaker(int speakerIndex,
-                        const gris::AudioConfig & config,
                         const gris::output_patch_t & speakerId,
-                        const gris::SourcePeaks & sourcePeaks,
                         gris::SourceAudioBuffer & sourcesBuffer,
                         const gris::SpeakersAudioConfig & speakersAudioConfig,
-                        gris::SpeakerAudioBuffer & speakersBuffer,
                         juce::AudioBuffer<float> & stereoBuffer);
 
     juce::AudioBuffer<float> convolutionBuffer;

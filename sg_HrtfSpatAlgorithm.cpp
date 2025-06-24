@@ -193,38 +193,21 @@ void HrtfSpatAlgorithm::process(AudioConfig const & config,
         mInnerAlgorithm
             ->process(config, sourcesBuffer, hrtfBuffer, stereoBuffer, sourcePeaks, &mHrtfData.speakersAudioConfig);
 
-#if JUCE_LINUX
-    juce::Array<gris::output_patch_t> speakerIds;
-#else
-    juce::Array<gris::output_patch_t> const speakerIds{ mHrtfData.speakersAudioConfig.getKeys() };
-#endif
-
+    auto const speakerIds{ mHrtfData.speakersAudioConfig.getKeyVector() };
     convolutionBuffer.clear();
 
-    for (int i = 0; i < speakerIds.size(); ++i) {
-        processSpeaker(i,
-                       config,
-                       speakerIds[i],
-                       sourcePeaks,
-                       sourcesBuffer,
-                       mHrtfData.speakersAudioConfig,
-                       speakersBuffer,
-                       stereoBuffer);
+    for (size_t i = 0; i < speakerIds.size(); ++i) {
+        processSpeaker(i, speakerIds[i], sourcesBuffer, mHrtfData.speakersAudioConfig, stereoBuffer);
     }
 }
 
 //==============================================================================
 inline void HrtfSpatAlgorithm::processSpeaker(int speakerIndex,
-                                              const gris::AudioConfig & config,
                                               const gris::output_patch_t & speakerId,
-                                              const gris::SourcePeaks & sourcePeaks,
                                               gris::SourceAudioBuffer & sourcesBuffer,
                                               const gris::SpeakersAudioConfig & speakersAudioConfig,
-                                              gris::SpeakerAudioBuffer & speakersBuffer,
                                               juce::AudioBuffer<float> & stereoBuffer)
 {
-    auto const & speaker = speakersAudioConfig[speakerId];
-
     auto const numSamples{ sourcesBuffer.getNumSamples() };
     auto & hrtfBuffer{ mHrtfData.speakersBuffer };
     auto const magnitude{ hrtfBuffer[speakerId].getMagnitude(0, numSamples) };
