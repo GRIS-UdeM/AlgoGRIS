@@ -37,11 +37,8 @@ static void incrementAllSourcesAzimuth(AbstractSpatAlgorithm * algo, SpatGrisDat
     for (int i = 1; i <= data.project.sources.size(); ++i) {
         const auto sourceIndex{ source_index_t{ i } };
         auto & source{ data.project.sources[sourceIndex] };
-
-        // DBG ("src " << i << " before: " << source.position->getPolar ().toString ());
         auto const curPosition = source.position;
         source.position = curPosition->withAzimuth(curPosition->getPolar().azimuth + azimuthIncrement);
-        // DBG ("src " << i << " after: " << source.position->getPolar ().toString ());
 
         algo->updateSpatData(sourceIndex, source);
     }
