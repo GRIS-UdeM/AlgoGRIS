@@ -105,10 +105,9 @@ void MbapSpatAlgorithm::process(AudioConfig const & config,
     ASSERT_AUDIO_THREAD;
 
     auto const & speakersAudioConfig{ altSpeakerConfig ? *altSpeakerConfig : config.speakersAudioConfig };
-    auto const sourceIds{ config.sourcesAudioConfig.getKeyVector() };
 
-    for (int i = 0; i < sourceIds.size(); ++i)
-        processSource(config, sourceIds[i], sourcePeaks, sourceBuffer, speakersAudioConfig, speakersBuffer);
+    for (auto const & source : config.sourcesAudioConfig)
+        processSource(config, source.key, sourcePeaks, sourceBuffer, speakersAudioConfig, speakersBuffer);
 }
 
 inline void MbapSpatAlgorithm::processSource(const gris::AudioConfig & config,

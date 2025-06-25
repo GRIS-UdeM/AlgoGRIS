@@ -95,7 +95,6 @@ private:
     void processSpeaker(int speakerIndex,
                         const gris::output_patch_t & speakerId,
                         gris::SourceAudioBuffer & sourcesBuffer,
-                        const gris::SpeakersAudioConfig & speakersAudioConfig,
                         juce::AudioBuffer<float> & stereoBuffer);
 
     juce::AudioBuffer<float> convolutionBuffer;

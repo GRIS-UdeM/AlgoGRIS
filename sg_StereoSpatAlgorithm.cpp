@@ -94,16 +94,8 @@ void StereoSpatAlgorithm::process(AudioConfig const & config,
 
     mInnerAlgorithm->process(config, sourcesBuffer, speakersBuffer, stereoBuffer, sourcePeaks, altSpeakerConfig);
 
-    auto const sourceIds{ config.sourcesAudioConfig.getKeyVector() };
-
-    for (int i = 0; i < sourceIds.size(); ++i)
-        processSource(config,
-                      sourceIds[i],
-                      sourcePeaks,
-                      sourcesBuffer,
-                      config.speakersAudioConfig,
-                      speakersBuffer,
-                      stereoBuffer);
+    for (auto const & source : config.sourcesAudioConfig)
+        processSource(config, source.key, sourcePeaks, sourcesBuffer, stereoBuffer);
 
     // Apply gain compensation.
     auto const compensation{ std::pow(10.0f, (narrow<float>(config.sourcesAudioConfig.size()) - 1.0f) * -0.005f) };
@@ -115,8 +107,6 @@ inline void StereoSpatAlgorithm::processSource(const gris::AudioConfig & config,
                                                const gris::source_index_t & sourceId,
                                                const gris::SourcePeaks & sourcePeaks,
                                                gris::SourceAudioBuffer & sourcesBuffer,
-                                               const gris::SpeakersAudioConfig & speakersAudioConfig,
-                                               gris::SpeakerAudioBuffer & speakersBuffer,
                                                juce::AudioBuffer<float> & stereoBuffer)
 {
     auto const & source = config.sourcesAudioConfig[sourceId];

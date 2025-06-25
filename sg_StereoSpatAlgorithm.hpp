@@ -82,8 +82,6 @@ private:
                        const gris::source_index_t & sourceId,
                        const gris::SourcePeaks & sourcePeaks,
                        gris::SourceAudioBuffer & sourcesBuffer,
-                       const gris::SpeakersAudioConfig & speakersAudioConfig,
-                       gris::SpeakerAudioBuffer & speakersBuffer,
                        juce::AudioBuffer<float> & stereoBuffer);
 
     JUCE_LEAK_DETECTOR(StereoSpatAlgorithm)

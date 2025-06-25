@@ -193,11 +193,11 @@ void HrtfSpatAlgorithm::process(AudioConfig const & config,
         mInnerAlgorithm
             ->process(config, sourcesBuffer, hrtfBuffer, stereoBuffer, sourcePeaks, &mHrtfData.speakersAudioConfig);
 
-    auto const speakerIds{ mHrtfData.speakersAudioConfig.getKeyVector() };
     convolutionBuffer.clear();
 
-    for (size_t i = 0; i < speakerIds.size(); ++i) {
-        processSpeaker(i, speakerIds[i], sourcesBuffer, mHrtfData.speakersAudioConfig, stereoBuffer);
+    int i = 0;
+    for (auto const & speaker : mHrtfData.speakersAudioConfig) {
+        processSpeaker(i++, speaker.key, sourcesBuffer, stereoBuffer);
     }
 }
 
@@ -205,7 +205,6 @@ void HrtfSpatAlgorithm::process(AudioConfig const & config,
 inline void HrtfSpatAlgorithm::processSpeaker(int speakerIndex,
                                               const gris::output_patch_t & speakerId,
                                               gris::SourceAudioBuffer & sourcesBuffer,
-                                              const gris::SpeakersAudioConfig & speakersAudioConfig,
                                               juce::AudioBuffer<float> & stereoBuffer)
 {
     auto const numSamples{ sourcesBuffer.getNumSamples() };
