@@ -37,7 +37,6 @@ juce::File getHrtfDirectory()
 {
 #if defined(__linux__) || defined(WIN32)
     juce::File dir{ juce::File::getCurrentWorkingDirectory() };
-
 #elif defined(__APPLE__)
     juce::File dir = juce::File::getSpecialLocation(juce::File::currentApplicationFile);
     if (dir.getFileName() == "SpatGRIS.app")
@@ -47,9 +46,10 @@ juce::File getHrtfDirectory()
 #else
     static_assert(false, "What are you building this on?");
 #endif
-
-    if (dir.getFileName().contains("VisualStudio"))
+    if (auto const curFileName{ dir.getFileName() }; curFileName.contains("VisualStudio"))
         dir = dir.getChildFile("../../submodules/AlgoGRIS/");
+    else if (curFileName == "SpatGRIS")
+        dir = dir.getChildFile("submodules/AlgoGRIS/");
 
     DBG(dir.getFullPathName());
 
