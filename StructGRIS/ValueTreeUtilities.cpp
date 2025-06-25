@@ -40,6 +40,10 @@ juce::File getHrtfDirectory()
 
 #elif defined(__APPLE__)
     juce::File dir = juce::File::getSpecialLocation(juce::File::currentApplicationFile);
+    if (dir.getFileName() == "SpatGRIS.app")
+        dir = dir.getChildFile("../../../../../submodules/AlgoGRIS/");
+    else
+        dir = dir.getChildFile("../../");
 #else
     static_assert(false, "What are you building this on?");
 #endif
