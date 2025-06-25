@@ -51,14 +51,8 @@ juce::File getHrtfDirectory()
     else if (curFileName == "SpatGRIS")
         dir = dir.getChildFile("submodules/AlgoGRIS/");
 
-    DBG(dir.getFullPathName());
-
-    jassert(dir.getFileName() == "AlgoGRIS");
-    jassert(dir.exists());
-
     dir = dir.getChildFile("hrtf_compact");
     jassert(dir.exists());
-
     return dir;
 }
 
