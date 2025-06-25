@@ -34,7 +34,7 @@ bool convertProperties(const juce::ValueTree & source, juce::ValueTree & dest)
     auto const sourceType = source.getType().toString();
 
     if (sourceType == SPEAKER_SETUP.toString()) {
-        if (!source.hasProperty(SPAT_MODE) || !source.hasProperty(DIFFUSION) || !source.hasProperty(GENERAL_MUTE)) {
+        if (!source.hasProperty(SPAT_MODE) || !source.hasProperty(DIFFUSION)) {
             jassertfalse;
             return false;
         }
@@ -42,7 +42,7 @@ bool convertProperties(const juce::ValueTree & source, juce::ValueTree & dest)
         dest.setProperty(SPEAKER_SETUP_VERSION, CURRENT_SPEAKER_SETUP_VERSION, nullptr);
         dest.setProperty(SPAT_MODE, source[SPAT_MODE], nullptr);
         dest.setProperty(DIFFUSION, source[DIFFUSION], nullptr);
-        dest.setProperty(GENERAL_MUTE, source[GENERAL_MUTE], nullptr);
+        dest.setProperty(GENERAL_MUTE, source.getProperty(GENERAL_MUTE, "0"), nullptr);
         return true;
 
     } else if (sourceType.contains("SPEAKER_")) {
