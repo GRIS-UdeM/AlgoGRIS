@@ -37,15 +37,23 @@ juce::File getHrtfDirectory()
 {
 #if defined(__linux__) || defined(WIN32)
     juce::File dir{ juce::File::getCurrentWorkingDirectory() };
+    if (dir.getFileName() == "build" || dir.getFileName() == "Builds")
+        dir = dir.getParentDirectory(); // if we get here we're probably on the pipeline
 #elif defined(__APPLE__)
-    juce::File dir = juce::File::getSpecialLocation(juce::File::currentApplicationFile);
-    if (dir.getFileName() == "SpatGRIS.app")
-        dir = dir.getChildFile("../../../../../submodules/AlgoGRIS/");
-    else
-        dir = dir.getChildFile("../../");
+    juce::File dir{ juce::File::getCurrentWorkingDirectory() };
+    if (dir.exists() && dir.getFileName() == "build" || dir.getFileName() == "Builds") {
+        dir = dir.getParentDirectory(); // if we get here we're probably on the pipeline
+    } else {
+        juce::File dir = juce::File::getSpecialLocation(juce::File::currentApplicationFile);
+        if (dir.getFileName() == "SpatGRIS.app")
+            dir = dir.getChildFile("../../../../../submodules/AlgoGRIS/");
+        else
+            dir = dir.getChildFile("../../");
+    }
 #else
     static_assert(false, "What are you building this on?");
 #endif
+
     if (auto const curFileName{ dir.getFileName() }; curFileName.contains("VisualStudio"))
         dir = dir.getChildFile("../../submodules/AlgoGRIS/");
     else if (curFileName == "SpatGRIS")
