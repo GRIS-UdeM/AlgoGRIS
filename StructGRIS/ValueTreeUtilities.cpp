@@ -41,10 +41,10 @@ juce::File getHrtfDirectory()
         dir = dir.getParentDirectory(); // if we get here we're probably on the pipeline
 #elif defined(__APPLE__)
     juce::File dir{ juce::File::getCurrentWorkingDirectory() };
-    if (dir.exists() && dir.getFileName() == "build" || dir.getFileName() == "Builds") {
+    if (dir.exists() && (dir.getFileName() == "build" || dir.getFileName() == "Builds")) {
         dir = dir.getParentDirectory(); // if we get here we're probably on the pipeline
     } else {
-        juce::File dir = juce::File::getSpecialLocation(juce::File::currentApplicationFile);
+        dir = juce::File::getSpecialLocation(juce::File::currentApplicationFile);
         if (dir.getFileName() == "SpatGRIS.app")
             dir = dir.getChildFile("../../../../../submodules/AlgoGRIS/");
         else
