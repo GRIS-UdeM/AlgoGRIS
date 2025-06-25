@@ -5,7 +5,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Benchmark Results Over Time</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="deps/chart.js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -131,6 +131,10 @@
       }
 
       // Sort by earliest benchmark timestamp
+
+      // This code works because object keys which are string are guaranteed to
+      // be retrieved by their insertion order. If we were to add interger
+      // keys to the returned object, the assuption this code is based on would be falsified.
       const sorted = Object.entries(allBenchmarks)
         .sort((a, b) => commitTimes[a[0]] - commitTimes[b[0]])
         .reduce((acc, [commit, osData]) => {
