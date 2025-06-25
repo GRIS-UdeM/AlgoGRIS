@@ -54,7 +54,7 @@ HrtfSpatAlgorithm::HrtfSpatAlgorithm(SpeakerSetup const & speakerSetup,
 {
     JUCE_ASSERT_MESSAGE_THREAD;
 
-    static auto const hrtfDir{ getValidCurrentDirectory().getChildFile("hrtf_compact") };
+    static auto const hrtfDir{ getHrtfDirectory() };
     if (!hrtfDir.exists()) {
         jassertfalse;
         return;
@@ -95,7 +95,7 @@ HrtfSpatAlgorithm::HrtfSpatAlgorithm(SpeakerSetup const & speakerSetup,
     static auto const FILES = GET_HRTF_IR_FILES();
 
     // Init inner spat algorithm
-    auto const hrtfSpeakerSetupFile{ getValidCurrentDirectory().getChildFile("tests/util/BINAURAL_SPEAKER_SETUP.xml") };
+    auto const hrtfSpeakerSetupFile{ getHrtfDirectory().getSiblingFile("tests/util/BINAURAL_SPEAKER_SETUP.xml") };
     if (!hrtfSpeakerSetupFile.existsAsFile()) {
         jassertfalse;
         return;

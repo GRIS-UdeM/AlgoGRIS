@@ -26,8 +26,34 @@ juce::File getValidCurrentDirectory()
     if (dir.getFileName() == "build" || dir.getFileName() == "Builds")
         dir = dir.getParentDirectory();
 
-    if (dir.getFileName() == "Debug" || dir.getFileName() == "Release" || dir.getFileName() == "RelWithDebInfo")
+    if (dir.getFileName() == "Debug" || dir.getFileName() == "Release" || dir.getFileName() == "RelWithDebInfo"
+        || dir.getFileName() == "VisualStudio2022")
         dir = dir.getParentDirectory().getParentDirectory();
+
+    return dir;
+}
+
+juce::File getHrtfDirectory()
+{
+#if defined(__linux__) || defined(WIN32)
+    juce::File dir{ juce::File::getCurrentWorkingDirectory() };
+
+#elif defined(__APPLE__)
+    juce::File dir = juce::File::getSpecialLocation(juce::File::currentApplicationFile);
+#else
+    static_assert(false, "What are you building this on?");
+#endif
+
+    if (dir.getFileName().contains("VisualStudio"))
+        dir = dir.getChildFile("../../submodules/AlgoGRIS/");
+
+    DBG(dir.getFullPathName());
+
+    jassert(dir.getFileName() == "AlgoGRIS");
+    jassert(dir.exists());
+
+    dir = dir.getChildFile("hrtf_compact");
+    jassert(dir.exists());
 
     return dir;
 }

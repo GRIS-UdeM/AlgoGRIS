@@ -27,6 +27,8 @@ namespace gris
  */
 juce::File getValidCurrentDirectory();
 
+juce::File getHrtfDirectory();
+
 /** Converts properties between versions of Speaker Setups.
  * Returns true if the conversion was successful, false if something unexpected happened.
  */
