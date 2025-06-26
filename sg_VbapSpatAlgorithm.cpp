@@ -114,76 +114,87 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
 {
     ASSERT_AUDIO_THREAD;
 
+    auto const & speakersAudioConfig{ altSpeakerConfig ? *altSpeakerConfig : config.speakersAudioConfig };
+
+    for (auto const & source : config.sourcesAudioConfig)
+        processSource(config, source.key, sourcePeaks, sourcesBuffer, speakersAudioConfig, speakersBuffer);
+}
+
+inline void VbapSpatAlgorithm::processSource(const gris::AudioConfig & config,
+                                             const gris::source_index_t & sourceId,
+                                             const gris::SourcePeaks & sourcePeaks,
+                                             gris::SourceAudioBuffer & sourcesBuffer,
+                                             const gris::SpeakersAudioConfig & speakersAudioConfig,
+                                             gris::SpeakerAudioBuffer & speakersBuffer)
+{
+    auto const & source = config.sourcesAudioConfig[sourceId];
+    if (source.isMuted || source.directOut || sourcePeaks[sourceId] < SMALL_GAIN) {
+        // source silent
+        return;
+    }
+
+    auto & data{ mData[sourceId] };
+    data.spatDataQueue.getMostRecent(data.currentSpatData);
+    if (data.currentSpatData == nullptr) {
+        // no spat data
+        return;
+    }
+
+    auto const numSamples{ sourcesBuffer.getNumSamples() };
+    auto const & gains{ data.currentSpatData->get() };
+    auto & lastGains{ data.lastGains };
+    auto const * inputSamples{ sourcesBuffer[sourceId].getReadPointer(0) };
     auto const & gainInterpolation{ config.spatGainsInterpolation };
     auto const gainFactor{ std::pow(gainInterpolation, 0.1f) * 0.0099f + 0.99f };
 
-    auto const & speakersAudioConfig{ altSpeakerConfig ? *altSpeakerConfig : config.speakersAudioConfig };
-
-    auto const numSamples{ sourcesBuffer.getNumSamples() };
-    for (auto const & source : config.sourcesAudioConfig) {
-        if (source.value.isMuted || source.value.directOut || sourcePeaks[source.key] < SMALL_GAIN) {
-            // source silent
+    for (auto const & speaker : speakersAudioConfig) {
+        if (speaker.value.isMuted || speaker.value.isDirectOutOnly || speaker.value.gain < SMALL_GAIN) {
+            // speaker silent
             continue;
         }
 
-        auto & data{ mData[source.key] };
-        data.spatDataQueue.getMostRecent(data.currentSpatData);
-        if (data.currentSpatData == nullptr) {
-            // no spat data
+        auto & currentGain{ lastGains[speaker.key] };
+        auto const & targetGain{ gains[speaker.key] };
+
+        auto const gainDiff{ targetGain - currentGain };
+        auto const gainSlope{ gainDiff / narrow<float>(numSamples) };
+
+        auto * outputSamples{ speakersBuffer[speaker.key].getWritePointer(0) };
+
+        if (juce::approximatelyEqual(gainSlope, 0.f) || std::abs(gainDiff) < SMALL_GAIN) {
+            // no interpolation
+            currentGain = targetGain;
+            if (currentGain >= SMALL_GAIN) {
+                juce::FloatVectorOperations::addWithMultiply(outputSamples, inputSamples, currentGain, numSamples);
+            }
             continue;
         }
 
-        auto const & gains{ data.currentSpatData->get() };
-        auto & lastGains{ data.lastGains };
-        auto const * inputSamples{ sourcesBuffer[source.key].getReadPointer(0) };
-
-        for (auto const & speaker : speakersAudioConfig) {
-            if (speaker.value.isMuted || speaker.value.isDirectOutOnly || speaker.value.gain < SMALL_GAIN) {
-                // speaker silent
-                continue;
+        // interpolation necessary
+        if (juce::approximatelyEqual(gainInterpolation, 0.f)) {
+            // linear interpolation over buffer size
+            for (int sampleIndex{}; sampleIndex < numSamples; ++sampleIndex) {
+                currentGain += gainSlope;
+                outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
+                jassert(outputSamples[sampleIndex] >= -1.f && outputSamples[sampleIndex] <= 1.f);
             }
-
-            auto & currentGain{ lastGains[speaker.key] };
-            auto const & targetGain{ gains[speaker.key] };
-            auto * outputSamples{ speakersBuffer[speaker.key].getWritePointer(0) };
-            auto const gainDiff{ targetGain - currentGain };
-            auto const gainSlope{ gainDiff / narrow<float>(numSamples) };
-
-            if (juce::approximatelyEqual(gainSlope, 0.f) || std::abs(gainDiff) < SMALL_GAIN) {
-                // no interpolation
-                currentGain = targetGain;
-                if (currentGain >= SMALL_GAIN) {
-                    juce::FloatVectorOperations::addWithMultiply(outputSamples, inputSamples, currentGain, numSamples);
-                }
-                continue;
-            }
-
-            // interpolation necessary
-            if (juce::approximatelyEqual(gainInterpolation, 0.f)) {
-                // linear interpolation over buffer size
-                for (int sampleIndex{}; sampleIndex < numSamples; ++sampleIndex) {
-                    currentGain += gainSlope;
-                    outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
-                    jassert(outputSamples[sampleIndex] >= -1.f && outputSamples[sampleIndex] <= 1.f);
-                }
-            } else {
-                // log interpolation with 1st order filter
-                if (targetGain < SMALL_GAIN) {
-                    // targeting silence
-                    for (int sampleIndex{}; sampleIndex < numSamples && currentGain >= SMALL_GAIN; ++sampleIndex) {
-                        currentGain = targetGain + (currentGain - targetGain) * gainFactor;
-                        outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
-                        jassert(outputSamples[sampleIndex] >= -1.f && outputSamples[sampleIndex] <= 1.f);
-                    }
-                    continue;
-                }
-
-                // not targeting silence
-                for (int sampleIndex{}; sampleIndex < numSamples; ++sampleIndex) {
+        } else {
+            // log interpolation with 1st order filter
+            if (targetGain < SMALL_GAIN) {
+                // targeting silence
+                for (int sampleIndex{}; sampleIndex < numSamples && currentGain >= SMALL_GAIN; ++sampleIndex) {
                     currentGain = targetGain + (currentGain - targetGain) * gainFactor;
                     outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
                     jassert(outputSamples[sampleIndex] >= -1.f && outputSamples[sampleIndex] <= 1.f);
                 }
+                continue;
+            }
+
+            // not targeting silence
+            for (int sampleIndex{}; sampleIndex < numSamples; ++sampleIndex) {
+                currentGain = targetGain + (currentGain - targetGain) * gainFactor;
+                outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
+                jassert(outputSamples[sampleIndex] >= -1.f && outputSamples[sampleIndex] <= 1.f);
             }
         }
     }

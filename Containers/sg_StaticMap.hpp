@@ -25,6 +25,7 @@
 #include <bitset>
 #include <cstddef>
 #include <iterator>
+#include <vector>
 #include "../Data/StrongTypes/sg_StrongIndex.hpp"
 #include "../Data/sg_Macros.hpp"
 
@@ -138,6 +139,7 @@ public:
     [[nodiscard]] bool isEmpty() const;
     [[nodiscard]] size_t size() const;
     [[nodiscard]] juce::Array<KeyType> getKeys() const noexcept;
+    [[nodiscard]] std::vector<KeyType> getKeyVector() const noexcept;
     [[nodiscard]] bool contains(KeyType key) const noexcept;
     [[nodiscard]] bool hasSameKeys(StaticMap const & other) const noexcept;
     [[nodiscard]] ValueType & operator[](KeyType key);
@@ -376,8 +378,21 @@ juce::Array<KeyType> StaticMap<KeyType, ValueType, Capacity>::getKeys() const no
     JUCE_ASSERT_MESSAGE_THREAD;
     juce::Array<KeyType> result{};
     result.ensureStorageAllocated(narrow<int>(size()));
-    for (auto const node : *this) {
+    for (auto const & node : *this) {
         result.add(node.key);
+    }
+    return result;
+}
+
+//==============================================================================
+template<typename KeyType, typename ValueType, size_t Capacity>
+std::vector<KeyType> StaticMap<KeyType, ValueType, Capacity>::getKeyVector() const noexcept
+{
+    JUCE_ASSERT_MESSAGE_THREAD;
+    std::vector<KeyType> result{};
+    result.reserve(size());
+    for (auto const & node : *this) {
+        result.push_back(node.key);
     }
     return result;
 }
