@@ -54,7 +54,11 @@ HrtfSpatAlgorithm::HrtfSpatAlgorithm(SpeakerSetup const & speakerSetup,
 {
     JUCE_ASSERT_MESSAGE_THREAD;
 
-    static auto const hrtfDir{ juce::File::getCurrentWorkingDirectory().getChildFile("hrtf_compact") };
+    static auto const hrtfDir{ getHrtfDirectory() };
+    if (!hrtfDir.exists()) {
+        jassertfalse;
+        return;
+    }
     static auto const HRTF_FOLDER_0{ hrtfDir.getChildFile("elev0") };
     static auto const HRTF_FOLDER_40{ hrtfDir.getChildFile("elev40") };
     static auto const HRTF_FOLDER_80{ hrtfDir.getChildFile("elev80") };
@@ -91,7 +95,7 @@ HrtfSpatAlgorithm::HrtfSpatAlgorithm(SpeakerSetup const & speakerSetup,
     static auto const FILES = GET_HRTF_IR_FILES();
 
     // Init inner spat algorithm
-    auto const hrtfSpeakerSetupFile{ getCurDir().getChildFile("tests/util/BINAURAL_SPEAKER_SETUP.xml") };
+    auto const hrtfSpeakerSetupFile{ getHrtfDirectory().getSiblingFile("tests/util/BINAURAL_SPEAKER_SETUP.xml") };
     if (!hrtfSpeakerSetupFile.existsAsFile()) {
         jassertfalse;
         return;
@@ -149,6 +153,8 @@ HrtfSpatAlgorithm::HrtfSpatAlgorithm(SpeakerSetup const & speakerSetup,
         convolution.reset();
     }
 
+    convolutionBuffer.setSize(2, bufferSize);
+
     fixDirectOutsIntoPlace(sources, speakerSetup, projectSpatMode);
 }
 
@@ -187,45 +193,52 @@ void HrtfSpatAlgorithm::process(AudioConfig const & config,
         mInnerAlgorithm
             ->process(config, sourcesBuffer, hrtfBuffer, stereoBuffer, sourcePeaks, &mHrtfData.speakersAudioConfig);
 
+    convolutionBuffer.clear();
+
+    int i = 0;
+    for (auto const & speaker : mHrtfData.speakersAudioConfig) {
+        processSpeaker(i++, speaker.key, sourcesBuffer, stereoBuffer);
+    }
+}
+
+//==============================================================================
+inline void HrtfSpatAlgorithm::processSpeaker(int speakerIndex,
+                                              const gris::output_patch_t & speakerId,
+                                              gris::SourceAudioBuffer & sourcesBuffer,
+                                              juce::AudioBuffer<float> & stereoBuffer)
+{
     auto const numSamples{ sourcesBuffer.getNumSamples() };
+    auto & hrtfBuffer{ mHrtfData.speakersBuffer };
+    auto const magnitude{ hrtfBuffer[speakerId].getMagnitude(0, numSamples) };
+    auto & hadSoundLastBlock{ mHrtfData.hadSoundLastBlock[speakerId] };
 
-    static juce::AudioBuffer<float> convolutionBuffer{};
-    convolutionBuffer.setSize(2, numSamples);
+    // We can skip the speaker if the gain is small enough, but we have to perform one last block so that the
+    // convolution's inner state stays coherent.
+    if (magnitude <= SMALL_GAIN) {
+        if (!hadSoundLastBlock) {
+            return;
+        }
+        hadSoundLastBlock = false;
+    } else {
+        hadSoundLastBlock = true;
+    }
 
-    size_t speakerIndex{};
+    jassert(convolutionBuffer.getNumSamples() == numSamples);
+    convolutionBuffer.copyFrom(0, 0, hrtfBuffer[speakerId], 0, 0, numSamples);
+    convolutionBuffer.copyFrom(1, 0, hrtfBuffer[speakerId], 0, 0, numSamples);
+    juce::dsp::AudioBlock<float> block{ convolutionBuffer };
+    juce::dsp::ProcessContextReplacing<float> const context{ block };
+    mConvolutions[speakerIndex].process(context);
+
     static constexpr std::array<bool, 16> REVERSE{ true, false, false, false, false, true, true, true,
                                                    true, false, false, false, true,  true, true, false };
-    for (auto const & speaker : mHrtfData.speakersAudioConfig) {
-        auto const magnitude{ hrtfBuffer[speaker.key].getMagnitude(0, numSamples) };
-        auto & hadSoundLastBlock{ mHrtfData.hadSoundLastBlock[speaker.key] };
 
-        // We can skip the speaker if the gain is small enough, but we have to perform one last block so that the
-        // convolution's inner state stays coherent.
-        if (magnitude <= SMALL_GAIN) {
-            if (!hadSoundLastBlock) {
-                speakerIndex++;
-                continue;
-            }
-            hadSoundLastBlock = false;
-        } else {
-            hadSoundLastBlock = true;
-        }
-
-        convolutionBuffer.copyFrom(0, 0, hrtfBuffer[speaker.key], 0, 0, numSamples);
-        convolutionBuffer.copyFrom(1, 0, hrtfBuffer[speaker.key], 0, 0, numSamples);
-        juce::dsp::AudioBlock<float> block{ convolutionBuffer };
-        juce::dsp::ProcessContextReplacing<float> const context{ block };
-        mConvolutions[speakerIndex].process(context);
-        // auto const & result{ context.getOutputBlock() };
-        if (!REVERSE[speakerIndex]) {
-            stereoBuffer.addFrom(0, 0, convolutionBuffer, 0, 0, numSamples);
-            stereoBuffer.addFrom(1, 0, convolutionBuffer, 1, 0, numSamples);
-        } else {
-            stereoBuffer.addFrom(0, 0, convolutionBuffer, 1, 0, numSamples);
-            stereoBuffer.addFrom(1, 0, convolutionBuffer, 0, 0, numSamples);
-        }
-
-        speakerIndex++;
+    if (!REVERSE[speakerIndex]) {
+        stereoBuffer.addFrom(0, 0, convolutionBuffer, 0, 0, numSamples);
+        stereoBuffer.addFrom(1, 0, convolutionBuffer, 1, 0, numSamples);
+    } else {
+        stereoBuffer.addFrom(0, 0, convolutionBuffer, 1, 0, numSamples);
+        stereoBuffer.addFrom(1, 0, convolutionBuffer, 0, 0, numSamples);
     }
 }
 

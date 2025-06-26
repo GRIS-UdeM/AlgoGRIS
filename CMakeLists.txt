@@ -15,7 +15,6 @@ FetchContent_Declare(
     GIT_REPOSITORY https://github.com/catchorg/Catch2.git
     GIT_TAG        v3.4.0
 )
-
 FetchContent_MakeAvailable(Catch2)
 
 # Global CMake configuration
@@ -152,6 +151,7 @@ target_compile_definitions(AlgoGRIS
 # Tests
 add_library(MainTest STATIC
   tests/Catch2Main.cpp
+  tests/sg_TestUtils.cpp
   tests/sg_TestUtils.hpp
 )
 
