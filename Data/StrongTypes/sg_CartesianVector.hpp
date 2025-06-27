@@ -38,7 +38,7 @@ struct PolarVector;
 struct CartesianVector {
     //==============================================================================
     struct XmlTags {
-        static juce::String const MAIN_TAG;
+        static juce::String const POSITION;
         static juce::String const X;
         static juce::String const Y;
         static juce::String const Z;
@@ -56,6 +56,7 @@ struct CartesianVector {
     //==============================================================================
     [[nodiscard]] constexpr bool operator==(CartesianVector const & other) const noexcept;
     [[nodiscard]] constexpr bool operator!=(CartesianVector const & other) const noexcept;
+    [[nodiscard]] constexpr CartesianVector operator+(CartesianVector const & other) const noexcept;
     [[nodiscard]] constexpr CartesianVector operator-(CartesianVector const & other) const noexcept;
     [[nodiscard]] constexpr CartesianVector operator/(float scalar) const noexcept;
     [[nodiscard]] constexpr CartesianVector operator-() const noexcept;
@@ -92,6 +93,11 @@ struct CartesianVector {
     [[nodiscard]] CartesianVector crossProduct(CartesianVector const & other) const noexcept;
     /** @return an XML representation of this vector. */
     [[nodiscard]] std::unique_ptr<juce::XmlElement> toXml() const noexcept;
+
+    juce::String toString() const noexcept;
+
+    static tl::optional<CartesianVector> fromString(const juce::String & str) noexcept;
+
     //==============================================================================
     /** @return the CartesianVector encoded in an XML element. tl::nullopt if parsing fails. */
     [[nodiscard]] static tl::optional<CartesianVector> fromXml(juce::XmlElement const & xml);
@@ -121,6 +127,13 @@ constexpr bool CartesianVector::operator!=(CartesianVector const & other) const 
 constexpr CartesianVector CartesianVector::operator-(CartesianVector const & other) const noexcept
 {
     CartesianVector const result{ x - other.x, y - other.y, z - other.z };
+    return result;
+}
+
+//==============================================================================
+constexpr CartesianVector CartesianVector::operator+(CartesianVector const & other) const noexcept
+{
+    CartesianVector const result{ x + other.x, y + other.y, z + other.z };
     return result;
 }
 
@@ -221,7 +234,9 @@ template<typename T>
 static constexpr T sqrtNewtonRaphson(T const x, T const current, T const previous)
 {
     static_assert(std::is_floating_point_v<T>, "only works with floating point values");
-    return current == previous ? current : sqrtNewtonRaphson(x, static_cast<T>(0.5) * (current + x / current), current);
+    return juce::approximatelyEqual(current, previous)
+               ? current
+               : sqrtNewtonRaphson(x, static_cast<T>(0.5) * (current + x / current), current);
 }
 
 //==============================================================================

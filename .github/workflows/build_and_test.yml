@@ -1,6 +1,6 @@
 # Taken from https://github.com/sudara/pamplejuce/tree/main
 # But with most things removed as they aren't needed for a library
-name: Pamplejuce
+name: AlgoGRIS Build & Test
 
 on:
   workflow_dispatch: # lets you run a build from the UI
@@ -42,7 +42,6 @@ jobs:
 
           - name: Windows
             os: windows-latest
-            extra-flags:
 
     steps:
       # Setup MSVC toolchain and developer command prompt (Windows)
@@ -95,6 +94,43 @@ jobs:
       - name: Build release
         run: cmake --build build --config Release --parallel
 
-      - name: Test & Benchmarks
+      - name: Test
         working-directory: build
         run: ctest --verbose --output-on-failure
+
+      - name: Benchmark
+        working-directory: build
+        run: |
+          mkdir -p benchmarks/${RUNNER_OS}
+
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            ./Release/test_spatAlgorithms.exe --reporter xml --out benchmarks/${RUNNER_OS}/${{ github.sha }}.xml
+          else
+            ./Release/test_spatAlgorithms --reporter xml --out benchmarks/${RUNNER_OS}/${{ github.sha }}.xml
+          fi
+
+          echo "===== Benchmark XML Output ====="
+          cat benchmarks/${RUNNER_OS}/${{ github.sha }}.xml
+          echo "================================"
+
+      - name: Commit benchmark results to benchmarks branch
+        run: |
+          # Set up git account
+          git config --global user.email "ci-bot@example.com"
+          git config --global user.name "GitHub Actions"
+
+          # Clone the `benchmarks` branch of this repo into a benchmarks_branch directory
+          git clone --depth=1 --branch=benchmarks https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} benchmarks_branch
+
+          # Create OS-specific subdirectory if it doesn't exist
+          mkdir -p benchmarks_branch/benchmarks/${RUNNER_OS}
+
+          # Copy current benchmark XML into the appropriate subdirectory
+          TIMESTAMP=$(date -u +%Y%m%d_%H%M%S)
+          cp build/benchmarks/${RUNNER_OS}/${{ github.sha }}.xml benchmarks_branch/benchmarks/${RUNNER_OS}/${TIMESTAMP}_${{ github.sha }}.xml
+
+          # Commit and push to the benchmarks branch
+          cd benchmarks_branch
+          git add .
+          git commit -m "Add benchmark results for commit ${{ github.sha }} on ${RUNNER_OS}"
+          git push origin benchmarks

@@ -122,6 +122,7 @@ static void computeMatrix(MbapField & field)
                 for (size_t z{}; z < MBAP_MATRIX_SIZE; ++z) {
                     auto dist = std::sqrt(std::pow(narrow<float>(x) - px, 2.0f) + std::pow(narrow<float>(y) - py, 2.0f)
                                           + std::pow(narrow<float>(z) - pz, 2.0f));
+
                     dist = std::pow(std::pow(10.0f, 1.0f / 20), dist);          // root-power ratio
                     field.amplitudeMatrix[i][x][y][z] = 1.0f / std::sqrt(dist); // inverse square law
                 }
@@ -173,7 +174,7 @@ static void computeGains(MbapField const & field, SourceData const & source, flo
 
     jassert(field.speakerPositions.size() == field.amplitudeMatrix.size());
 
-    for (int i{}; i < field.speakerPositions.size(); ++i) {
+    for (size_t i{}; i < static_cast<size_t>(field.speakerPositions.size()); ++i) {
         distFromSource = std::sqrt(
             std::pow(field.speakerPositions[i].getCartesian().x - source.position->getCartesian().x, 2.0f)
             + std::pow(field.speakerPositions[i].getCartesian().y - source.position->getCartesian().y, 2.0f)

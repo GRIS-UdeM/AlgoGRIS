@@ -25,7 +25,13 @@ namespace gris
 {
 /** Strongly-typed source index.
  *
- * Starts at 1.
+ * Starts at 1. Here's how to easily iterate over them:
+ *
+ *  for (int i = 1; i <= numSources; ++i)
+ *  {
+ *      const auto sourceIndex{ source_index_t{ i } };
+ *      ...
+ *  }
  */
 using source_index_t = StrongIndex<int, struct SourceIndexT, 1>;
 

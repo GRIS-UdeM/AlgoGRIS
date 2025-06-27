@@ -76,6 +76,17 @@ public:
     [[nodiscard]] bool contains(KeyType const & key) const noexcept;
     [[nodiscard]] KeyType getNextUsedKey(KeyType const & key) const noexcept;
     [[nodiscard]] KeyType getFirstUsedKey() const noexcept;
+    [[nodiscard]] juce::String toString() const noexcept
+    {
+        juce::String result("(");
+
+        for (auto const & node : *this)
+            result << node.key.toString() << " ";
+
+        result.trim();
+        result << ")";
+        return result;
+    }
     //==============================================================================
     class iterator
     {

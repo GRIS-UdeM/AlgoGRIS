@@ -15,7 +15,6 @@ FetchContent_Declare(
     GIT_REPOSITORY https://github.com/catchorg/Catch2.git
     GIT_TAG        v3.4.0
 )
-
 FetchContent_MakeAvailable(Catch2)
 
 # Global CMake configuration
@@ -48,6 +47,8 @@ add_library(AlgoGRIS
   sg_HybridSpatAlgorithm.hpp
   sg_MbapSpatAlgorithm.cpp
   sg_MbapSpatAlgorithm.hpp
+  sg_PinkNoiseGenerator.cpp
+  sg_PinkNoiseGenerator.hpp
   sg_StereoSpatAlgorithm.cpp
   sg_StereoSpatAlgorithm.hpp
   sg_VbapSpatAlgorithm.cpp
@@ -101,6 +102,9 @@ add_library(AlgoGRIS
   Implementations/sg_vbap.cpp
   Implementations/sg_vbap.hpp
 
+  StructGRIS/ValueTreeUtilities.cpp
+  StructGRIS/ValueTreeUtilities.hpp
+
   tl/optional.hpp
 )
 
@@ -147,6 +151,7 @@ target_compile_definitions(AlgoGRIS
 # Tests
 add_library(MainTest STATIC
   tests/Catch2Main.cpp
+  tests/sg_TestUtils.cpp
   tests/sg_TestUtils.hpp
 )
 
@@ -165,9 +170,11 @@ if(TARGET Catch2::Catch2WithMain)
     get_filename_component(_testname "${_filename}" NAME_WE)
     add_executable("${_testname}" "${_filename}")
     target_link_libraries("${_testname}" PRIVATE MainTest)
+    target_compile_options("${_testname}" PRIVATE -O0)
     catch_discover_tests("${_testname}")
   endfunction()
 
   algogris_add_test("tests/unit/test_core.cpp")
-#  algogris_add_test("tests/unit/test_AbstractSpatAlgorithm.cpp")
+  algogris_add_test("tests/unit/test_spatAlgorithms.cpp")
+  algogris_add_test("tests/unit/test_speaker_setup_conversion.cpp")
 endif()

@@ -49,9 +49,14 @@ constexpr auto DEFAULT_OSC_INPUT_PORT = 18032;
 constexpr auto MAX_OSC_INPUT_PORT = 65535;
 
 //==============================================================================
-/** The classical states of a mixing slice (input or output). */
+// TODO: rename SliceState to SpeakerIOState to better reflect its purpose
+/** I/O state of a speaker, whether it's muted, soloed, or just normal */
 enum class SliceState : std::uint8_t { normal, muted, solo };
+
+// TODO: rename sliceStateToString() to IOStateToString() to better reflect its purpose
 [[nodiscard]] juce::String sliceStateToString(SliceState state);
+
+// TODO: rename stringToSliceState() to stringToIOState() to better reflect its purpose
 [[nodiscard]] tl::optional<SliceState> stringToSliceState(juce::String const & string);
 
 //==============================================================================
@@ -220,10 +225,11 @@ struct SpeakerHighpassData {
     [[nodiscard]] SpeakerHighpassConfig toConfig(double sampleRate) const;
     [[nodiscard]] std::unique_ptr<juce::XmlElement> toXml() const;
     [[nodiscard]] static tl::optional<SpeakerHighpassData> fromXml(juce::XmlElement const & xml);
+    [[nodiscard]] static tl::optional<SpeakerHighpassData> fromVt(juce::ValueTree const & vt) noexcept;
     [[nodiscard]] bool operator==(SpeakerHighpassData const & other) const noexcept;
     //==============================================================================
     struct XmlTags {
-        static juce::String const MAIN_TAG;
+        static juce::String const HIGHPASS;
         static juce::String const FREQ;
     };
 };
@@ -241,7 +247,31 @@ struct SpeakerData {
     [[nodiscard]] SpeakerAudioConfig toConfig(bool soloMode, double sampleRate) const noexcept;
     [[nodiscard]] ViewportSpeakerConfig toViewportConfig() const noexcept;
     [[nodiscard]] std::unique_ptr<juce::XmlElement> toXml(output_patch_t outputPatch) const noexcept;
+    [[nodiscard]] juce::ValueTree toVt(output_patch_t outputPatch) const noexcept;
     [[nodiscard]] static tl::optional<SpeakerData> fromXml(juce::XmlElement const & xml) noexcept;
+    [[nodiscard]] static tl::optional<SpeakerData> fromVt(juce::ValueTree vt) noexcept;
+
+    /**
+     * @brief Returns the absolute position of a speaker from a given ValueTree.
+     *
+     * This function extracts and returns the absolute position of a speaker with regards to the origin,
+     * even if the speaker is inside a group, from the provided ValueTree.
+     *
+     * @param vt The ValueTree containing the speaker data.
+     * @return tl::optional<Position> The absolute position if available, otherwise tl::nullopt.
+     */
+    static tl::optional<Position> getAbsoluteSpeakerPosition(juce::ValueTree vt);
+
+    /**
+     * @brief Computes the absolute position of a speaker given its local position and the position of its parent.
+     *
+     * @param localSpeakerPosition The position of the speaker relative to its parent.
+     * @param parentPosition The absolute position of the parent.
+     * @return tl::optional<Position> The absolute position of the speaker if calculation is possible, otherwise
+     * tl::nullopt.
+     */
+    static tl::optional<Position> getAbsoluteSpeakerPosition(Position localSpeakerPosition, Position parentPosition);
+
     [[nodiscard]] bool operator==(SpeakerData const & other) const noexcept;
     //==============================================================================
     struct XmlTags {
@@ -378,8 +408,10 @@ struct AppData {
     CartesianVector cameraPosition{ -0.5256794095039368f, -2.008379459381104f, 1.312143206596375f };
     juce::Point<int> speakerViewWindowPosition{};
     juce::Point<int> speakerViewWindowSize{};
-    juce::String lastSpeakerSetup{ DEFAULT_SPEAKER_SETUP_FILE.getFullPathName() };
-    juce::String lastProject{ DEFAULT_PROJECT_FILE.getFullPathName() };
+
+    /** The full path to the last loaded speaker setup file. */
+    juce::String lastSpeakerSetup{};
+    juce::String lastProject{};
     juce::String lastRecordingDirectory{
         juce::File::getSpecialLocation(juce::File::SpecialLocationType::userDesktopDirectory).getFullPathName()
     };
@@ -419,6 +451,9 @@ using SpeakersOrdering = juce::Array<output_patch_t>;
 
 //==============================================================================
 struct SpeakerSetup {
+    // for now this is doubled data, but in time it will replace/supplement the rest of the data in here
+    juce::ValueTree speakerSetupValueTree;
+
     SpeakersData speakers{};
     SpeakersOrdering ordering{};
     SpatMode spatMode{};
@@ -432,6 +467,7 @@ struct SpeakerSetup {
     [[nodiscard]] bool isDomeLike() const noexcept;
     [[nodiscard]] SpeakersAudioConfig toAudioConfig(double sampleRate) const noexcept;
     [[nodiscard]] int numOfSpatializedSpeakers() const noexcept;
+    [[nodiscard]] static juce::ValueTree toVt(const SpeakerSetup & legacySpeakerSetup);
     //==============================================================================
     struct XmlTags {
         static juce::String const MAIN_TAG;

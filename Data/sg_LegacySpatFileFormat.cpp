@@ -44,15 +44,21 @@ tl::optional<SpeakerSetup> readLegacySpeakerSetup(juce::XmlElement const & xml)
         return tl::nullopt;
     }
 
-    auto const spatMode{ static_cast<SpatMode>(xml.getIntAttribute("SpatMode")) };
+    auto const spatMode = [&]() {
+        auto const spatModeInt{ xml.getIntAttribute("SpatMode") };
+        if (spatModeInt == 3)
+            return SpatMode::vbap;
+        return static_cast<SpatMode>(spatModeInt);
+    }();
+
     if (spatMode != SpatMode::mbap && spatMode != SpatMode::vbap) {
         jassertfalse;
         return tl::nullopt;
     }
 
     juce::Array<std::pair<int, output_patch_t>> layout;
-    juce::OwnedArray<SpeakerData> duplicatedSpeakers{};
-    SpeakerSetup result{};
+    SpeakerSetup speakerSetup{};
+    juce::OwnedArray<SpeakerData> duplicatedSpeakerDataArray{};
 
     for (auto const * ring : xml.getChildIterator()) {
         if (ring->hasTagName("Ring")) {
@@ -91,11 +97,11 @@ tl::optional<SpeakerSetup> readLegacySpeakerSetup(juce::XmlElement const & xml)
                         = (highpass == hz_t{} ? tl::optional<SpeakerHighpassData>{} : SpeakerHighpassData{ highpass });
                     speakerData->isDirectOutOnly = isDirectOutOnly;
 
-                    if (!result.speakers.contains(outputPatch)) {
+                    if (!speakerSetup.speakers.contains(outputPatch)) {
                         layout.add(std::make_pair(layoutIndex, outputPatch));
-                        result.speakers.add(outputPatch, std::move(speakerData));
+                        speakerSetup.speakers.add(outputPatch, std::move(speakerData));
                     } else {
-                        duplicatedSpeakers.add(std::move(speakerData));
+                        duplicatedSpeakerDataArray.add(std::move(speakerData));
                     }
                 }
             }
@@ -118,33 +124,32 @@ tl::optional<SpeakerSetup> readLegacySpeakerSetup(juce::XmlElement const & xml)
 
     std::sort(layout.begin(), layout.end());
 
-    auto maxOutputPatch{ GET_MAX_OUTPUT_PATCH(result.speakers) };
+    auto maxOutputPatch{ GET_MAX_OUTPUT_PATCH(speakerSetup.speakers) };
     auto maxLayoutIndex{ layout.getLast().first };
 
-    for (auto * speaker : duplicatedSpeakers) {
+    for (auto * speaker : duplicatedSpeakerDataArray) {
         auto const outputPatch{ ++maxOutputPatch };
         auto const layoutIndex{ ++maxLayoutIndex };
-        result.speakers.add(outputPatch, std::unique_ptr<SpeakerData>(speaker));
+        speakerSetup.speakers.add(outputPatch, std::unique_ptr<SpeakerData>(speaker));
         layout.add(std::make_pair(layoutIndex, outputPatch));
     }
-    duplicatedSpeakers.clearQuick(false);
+    duplicatedSpeakerDataArray.clearQuick(false);
 
-    result.ordering.resize(layout.size());
+    speakerSetup.ordering.resize(layout.size());
     std::transform(layout.begin(),
                    layout.end(),
-                   result.ordering.begin(),
+                   speakerSetup.ordering.begin(),
                    [](std::pair<int, output_patch_t> const & indexOutputPair) { return indexOutputPair.second; });
 
     auto const getCorrectedSpatMode = [&]() {
-        if (!result.isDomeLike()) {
+        if (!speakerSetup.isDomeLike()) {
             return SpatMode::mbap;
         }
         return spatMode;
     };
 
-    result.spatMode = getCorrectedSpatMode();
-
-    return result;
+    speakerSetup.spatMode = getCorrectedSpatMode();
+    return speakerSetup;
 }
 
 //==============================================================================

@@ -92,6 +92,13 @@ public:
 
 private:
     //==============================================================================
+    void processSpeaker(int speakerIndex,
+                        const gris::output_patch_t & speakerId,
+                        gris::SourceAudioBuffer & sourcesBuffer,
+                        juce::AudioBuffer<float> & stereoBuffer);
+
+    juce::AudioBuffer<float> convolutionBuffer;
+
     JUCE_LEAK_DETECTOR(HrtfSpatAlgorithm)
 };
 
