@@ -54,7 +54,7 @@ HrtfSpatAlgorithm::HrtfSpatAlgorithm(SpeakerSetup const & speakerSetup,
 {
     JUCE_ASSERT_MESSAGE_THREAD;
 
-    static auto const hrtfDir{ getValidCurrentDirectory().getChildFile("hrtf_compact") };
+    static auto const hrtfDir{ getHrtfDirectory() };
     if (!hrtfDir.exists()) {
         jassertfalse;
         return;
@@ -95,7 +95,7 @@ HrtfSpatAlgorithm::HrtfSpatAlgorithm(SpeakerSetup const & speakerSetup,
     static auto const FILES = GET_HRTF_IR_FILES();
 
     // Init inner spat algorithm
-    auto const hrtfSpeakerSetupFile{ getValidCurrentDirectory().getChildFile("tests/util/BINAURAL_SPEAKER_SETUP.xml") };
+    auto const hrtfSpeakerSetupFile{ getHrtfDirectory().getSiblingFile("tests/util/BINAURAL_SPEAKER_SETUP.xml") };
     if (!hrtfSpeakerSetupFile.existsAsFile()) {
         jassertfalse;
         return;
@@ -193,48 +193,27 @@ void HrtfSpatAlgorithm::process(AudioConfig const & config,
         mInnerAlgorithm
             ->process(config, sourcesBuffer, hrtfBuffer, stereoBuffer, sourcePeaks, &mHrtfData.speakersAudioConfig);
 
-    auto const numSamples{ sourcesBuffer.getNumSamples() };
-    auto const speakerIds{ mHrtfData.speakersAudioConfig.getKeys() };
-
     convolutionBuffer.clear();
 
 #if USE_FORK_UNION
+    auto const speakerIds{ mHrtfData.speakersAudioConfig.getKeys() };
     ashvardanian::fork_union::for_n_dynamic(threadPool, speakerIds.size(), [&](std::size_t i) noexcept {
-        processSpeaker(i,
-                       config,
-                       speakerIds[i],
-                       sourcePeaks,
-                       sourcesBuffer,
-                       mHrtfData.speakersAudioConfig,
-                       speakersBuffer,
-                       stereoBuffer);
+        processSpeaker(i, speakerIds[i], sourcesBuffer, stereoBuffer);
     });
 #else
-    for (int i = 0; i < speakerIds.size(); ++i) {
-        processSpeaker(i,
-                       config,
-                       speakerIds[i],
-                       sourcePeaks,
-                       sourcesBuffer,
-                       mHrtfData.speakersAudioConfig,
-                       speakersBuffer,
-                       stereoBuffer);
+    int i = 0;
+    for (auto const & speaker : mHrtfData.speakersAudioConfig) {
+        processSpeaker(i++, speaker.key, sourcesBuffer, stereoBuffer);
     }
 #endif
 }
 
 //==============================================================================
 inline void HrtfSpatAlgorithm::processSpeaker(int speakerIndex,
-                                              const gris::AudioConfig & config,
                                               const gris::output_patch_t & speakerId,
-                                              const gris::SourcePeaks & sourcePeaks,
                                               gris::SourceAudioBuffer & sourcesBuffer,
-                                              const gris::SpeakersAudioConfig & speakersAudioConfig,
-                                              gris::SpeakerAudioBuffer & speakersBuffer,
                                               juce::AudioBuffer<float> & stereoBuffer)
 {
-    auto const & speaker = speakersAudioConfig[speakerId];
-
     auto const numSamples{ sourcesBuffer.getNumSamples() };
     auto & hrtfBuffer{ mHrtfData.speakersBuffer };
     auto const magnitude{ hrtfBuffer[speakerId].getMagnitude(0, numSamples) };

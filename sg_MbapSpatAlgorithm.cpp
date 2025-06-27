@@ -67,6 +67,7 @@ void MbapSpatAlgorithm::updateSpatData(source_index_t const sourceIndex, SourceD
 
     auto & exchanger{ data.dataQueue };
     auto * ticket{ exchanger.acquire() };
+    assert(ticket);
     auto & spatData{ ticket->get() };
 
     if (sourceData.position) {
@@ -105,16 +106,15 @@ void MbapSpatAlgorithm::process(AudioConfig const & config,
     ASSERT_AUDIO_THREAD;
 
     auto const & speakersAudioConfig{ altSpeakerConfig ? *altSpeakerConfig : config.speakersAudioConfig };
-    auto const sourceIds{ config.sourcesAudioConfig.getKeys() };
 
 #if USE_FORK_UNION
+    auto const sourceIds{ config.sourcesAudioConfig.getKeys() };
     ashvardanian::fork_union::for_n_dynamic(threadPool, sourceIds.size(), [&](std::size_t i) noexcept {
         processSource(config, sourceIds[i], sourcePeaks, sourceBuffer, speakersAudioConfig, speakersBuffer);
     });
 #else
-    for (int i = 0; i < sourceIds.size(); ++i) {
-        processSource(config, sourceIds[i], sourcePeaks, sourceBuffer, speakersAudioConfig, speakersBuffer);
-    }
+    for (auto const & source : config.sourcesAudioConfig)
+        processSource(config, source.key, sourcePeaks, sourceBuffer, speakersAudioConfig, speakersBuffer);
 #endif
 }
 

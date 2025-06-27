@@ -32,12 +32,43 @@ juce::File getValidCurrentDirectory()
     return dir;
 }
 
+juce::File getHrtfDirectory()
+{
+#if defined(__linux__) || defined(WIN32)
+    juce::File dir{ juce::File::getCurrentWorkingDirectory() };
+    if (dir.getFileName() == "build" || dir.getFileName() == "Builds")
+        dir = dir.getParentDirectory(); // if we get here we're probably on the pipeline
+#elif defined(__APPLE__)
+    juce::File dir{ juce::File::getCurrentWorkingDirectory() };
+    if (dir.exists() && (dir.getFileName() == "build" || dir.getFileName() == "Builds")) {
+        dir = dir.getParentDirectory(); // if we get here we're probably on the pipeline
+    } else {
+        dir = juce::File::getSpecialLocation(juce::File::currentApplicationFile);
+        if (dir.getFileName() == "SpatGRIS.app")
+            dir = dir.getChildFile("../../../../../submodules/AlgoGRIS/");
+        else
+            dir = dir.getChildFile("../../");
+    }
+#else
+    static_assert(false, "What are you building this on?");
+#endif
+
+    if (auto const curFileName{ dir.getFileName() }; curFileName.contains("VisualStudio"))
+        dir = dir.getChildFile("../../submodules/AlgoGRIS/");
+    else if (curFileName == "SpatGRIS")
+        dir = dir.getChildFile("submodules/AlgoGRIS/");
+
+    dir = dir.getChildFile("hrtf_compact");
+    jassert(dir.exists());
+    return dir;
+}
+
 bool convertProperties(const juce::ValueTree & source, juce::ValueTree & dest)
 {
     auto const sourceType = source.getType().toString();
 
     if (sourceType == SPEAKER_SETUP.toString()) {
-        if (!source.hasProperty(SPAT_MODE) || !source.hasProperty(DIFFUSION) || !source.hasProperty(GENERAL_MUTE)) {
+        if (!source.hasProperty(SPAT_MODE) || !source.hasProperty(DIFFUSION)) {
             jassertfalse;
             return false;
         }
@@ -45,7 +76,7 @@ bool convertProperties(const juce::ValueTree & source, juce::ValueTree & dest)
         dest.setProperty(SPEAKER_SETUP_VERSION, CURRENT_SPEAKER_SETUP_VERSION, nullptr);
         dest.setProperty(SPAT_MODE, source[SPAT_MODE], nullptr);
         dest.setProperty(DIFFUSION, source[DIFFUSION], nullptr);
-        dest.setProperty(GENERAL_MUTE, source[GENERAL_MUTE], nullptr);
+        dest.setProperty(GENERAL_MUTE, source.getProperty(GENERAL_MUTE, "0"), nullptr);
         return true;
 
     } else if (sourceType.contains("SPEAKER_")) {

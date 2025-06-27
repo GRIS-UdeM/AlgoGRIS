@@ -93,6 +93,7 @@ void VbapSpatAlgorithm::updateSpatData(source_index_t const sourceIndex, SourceD
 
     auto & spatDataQueue{ mData[sourceIndex].spatDataQueue };
     auto * ticket{ spatDataQueue.acquire() };
+    assert(ticket);
     auto & gains{ ticket->get() };
 
     if (sourceData.position) {
@@ -115,16 +116,15 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
     ASSERT_AUDIO_THREAD;
 
     auto const & speakersAudioConfig{ altSpeakerConfig ? *altSpeakerConfig : config.speakersAudioConfig };
-    auto const sourceIds{ config.sourcesAudioConfig.getKeys() };
 
 #if USE_FORK_UNION
+    auto const sourceIds{ config.sourcesAudioConfig.getKeys() };
     ashvardanian::fork_union::for_n_dynamic(threadPool, sourceIds.size(), [&](std::size_t i) noexcept {
         processSource(config, sourceIds[i], sourcePeaks, sourcesBuffer, speakersAudioConfig, speakersBuffer);
     });
 #else
-    for (int i = 0; i < sourceIds.size(); ++i) {
-        processSource(config, sourceIds[i], sourcePeaks, sourcesBuffer, speakersAudioConfig, speakersBuffer);
-    }
+    for (auto const & source : config.sourcesAudioConfig)
+        processSource(config, source.key, sourcePeaks, sourcesBuffer, speakersAudioConfig, speakersBuffer);
 #endif
 }
 
