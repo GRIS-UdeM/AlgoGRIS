@@ -105,7 +105,7 @@ void AudioBufferComparator::forAllSpatializedSpeakers(const SpeakersAudioConfig 
                                                       int bufferSize,
                                                       std::function<void(int, const float * const, int)> func)
 {
-    juce::Array<output_patch_t> const keys{ speakersAudioConfig.getKeys() };
+    juce::Array<output_patch_t> const keys(speakersAudioConfig.getKeys());
     juce::Array<float const *> usableNewBuffers = speakerBuffers.getArrayOfReadPointers(keys);
 
     // then for each spatialized, unmuted speaker
