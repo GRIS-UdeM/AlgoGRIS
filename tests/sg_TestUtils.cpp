@@ -33,6 +33,14 @@ void initBuffers(const int bufferSize,
     }
 
     std::vector<std::vector<AtomicWrapper<float>>> fuckyou;
+    fuckyou.resize(numSpeakers);
+    for (int i = 0; i < numSpeakers; ++i) {
+        fuckyou[i].clear();
+        for (int j = 0; j < bufferSize; ++j) {
+            fuckyou[i].emplace_back(0.0f);
+        }
+    }
+
 
     stereoBuffer.setSize(2, bufferSize);
     stereoBuffer.clear();
