@@ -1,5 +1,4 @@
 #include "sg_TestUtils.hpp"
-#include "../Data/sg_LogicStrucs.hpp"
 
 namespace gris::tests
 {
