@@ -1,4 +1,5 @@
 #include "sg_TestUtils.hpp"
+#include "../Data/sg_LogicStrucs.hpp"
 
 namespace gris::tests
 {
@@ -23,14 +24,15 @@ void initBuffers(const int bufferSize,
     speakerBuffer.init(speakerIndices);
     speakerBuffer.setNumSamples(bufferSize);
 
-tempSpeakerBuffer.resize(numSpeakers);
-for (int i = 0; i < numSpeakers; ++i) {
-    tempSpeakerBuffer[i].clear();
-    for (int j = 0; j < bufferSize; ++j)
-    {
-        // tempSpeakerBuffer[i].emplace_back(0.0f);
+    tempSpeakerBuffer.resize(numSpeakers);
+    for (int i = 0; i < numSpeakers; ++i) {
+        tempSpeakerBuffer[i].clear();
+        for (int j = 0; j < bufferSize; ++j) {
+            // tempSpeakerBuffer[i].emplace_back(0.0f);
+        }
     }
-}
+
+    std::vector<std::vector<AtomicWrapper<float>>> fuckyou;
 
     stereoBuffer.setSize(2, bufferSize);
     stereoBuffer.clear();
@@ -199,6 +201,9 @@ void AudioBufferComparator::writeCachedBuffersToDisk(juce::StringRef testName,
                                                      int bufferSize,
                                                      double sampleRate /*= 48000.0*/)
 {
+    // VB PUT. BACK
+#if 0
+
     juce::WavAudioFormat wavFormat;
 
     for (const auto & [speakerId, buffer] : cachedBuffers) {
@@ -223,6 +228,7 @@ void AudioBufferComparator::writeCachedBuffersToDisk(juce::StringRef testName,
     }
 
     cachedBuffers.clear();
+#endif
 }
 
 #define PRINT_BUFFERS 1
