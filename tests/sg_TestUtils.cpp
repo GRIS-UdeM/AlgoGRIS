@@ -9,7 +9,7 @@ void initBuffers(const int bufferSize,
                  const size_t numSpeakers,
                  SourceAudioBuffer & sourceBuffer,
                  SpeakerAudioBuffer & speakerBuffer,
-                 std::vector<std::vector<std::atomic<float>>> & tempSpeakerBuffer,
+                 std::vector<std::vector<AtomicWrapper<float>>> & tempSpeakerBuffer,
                  juce::AudioBuffer<float> & stereoBuffer)
 {
     juce::Array<source_index_t> sourcesIndices;
@@ -40,7 +40,6 @@ void initBuffers(const int bufferSize,
             fuckyou[i].emplace_back(0.0f);
         }
     }
-
 
     stereoBuffer.setSize(2, bufferSize);
     stereoBuffer.clear();

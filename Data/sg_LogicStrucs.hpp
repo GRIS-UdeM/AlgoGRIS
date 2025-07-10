@@ -27,6 +27,7 @@
 #include "Containers/sg_AtomicUpdater.hpp"
 #include "Containers/sg_StrongArray.hpp"
 #include "Data/StrongTypes/sg_OutputPatch.hpp"
+#include "Data/sg_LogicStrucs.hpp"
 #include "Data/sg_SpatMode.hpp"
 #include "Data/sg_constants.hpp"
 #include "sg_AudioStructs.hpp"

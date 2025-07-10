@@ -8,6 +8,7 @@
 #include "juce_core/juce_core.h"
 #include <Containers/sg_TaggedAudioBuffer.hpp>
 #include <Data/sg_AudioStructs.hpp>
+#include <Data/sg_LogicStrucs.hpp>
 #include <cmath>
 #include <array>
 #include <random>
@@ -66,7 +67,7 @@ void initBuffers(const int bufferSize,
                  const size_t numSpeakers,
                  SourceAudioBuffer & sourceBuffer,
                  SpeakerAudioBuffer & speakerBuffer,
-                 std::vector<std::vector<std::atomic<float>>> & tempSpeakerBuffer,
+                 std::vector<std::vector<AtomicWrapper<float>>> & tempSpeakerBuffer,
                  juce::AudioBuffer<float> & stereoBuffer);
 
 /**

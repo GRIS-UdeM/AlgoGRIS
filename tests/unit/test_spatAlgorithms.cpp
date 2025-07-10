@@ -112,7 +112,7 @@ static void testUsingProjectData(juce::StringRef testName,
                                  gris::SpatGrisData & data,
                                  SourceAudioBuffer & sourceBuffer,
                                  SpeakerAudioBuffer & speakerBuffer,
-                                 std::vector<std::vector<std::atomic<float>>> & tempSpeakerBuffer,
+                                 std::vector<std::vector<AtomicWrapper<float>>> & tempSpeakerBuffer,
                                  juce::AudioBuffer<float> & stereoBuffer,
                                  SourcePeaks & sourcePeaks)
 {
@@ -186,7 +186,7 @@ static void benchmarkUsingProjectData(std::string testName,
                                       gris::SpatGrisData & data,
                                       SourceAudioBuffer & sourceBuffer,
                                       SpeakerAudioBuffer & speakerBuffer,
-                                      std::vector<std::vector<std::atomic<float>>> & tempSpeakerBuffer,
+                                      std::vector<std::vector<AtomicWrapper<float>>> & tempSpeakerBuffer,
                                       juce::AudioBuffer<float> & stereoBuffer,
                                       SourcePeaks & sourcePeaks)
 {
@@ -273,7 +273,7 @@ TEST_CASE(vbapTestName, "[spat]")
 
     SourceAudioBuffer sourceBuffer;
     SpeakerAudioBuffer speakerBuffer;
-    std::vector<std::vector<std::atomic<float>>> tempSpeakerBuffer;
+    std::vector<std::vector<AtomicWrapper<float>>> tempSpeakerBuffer;
     juce::AudioBuffer<float> stereoBuffer;
     SourcePeaks sourcePeaks;
 
@@ -306,7 +306,7 @@ TEST_CASE(stereoTestName, "[spat]")
 
     SourceAudioBuffer sourceBuffer;
     SpeakerAudioBuffer speakerBuffer;
-    std::vector<std::vector<std::atomic<float>>> tempSpeakerBuffer;
+    std::vector<std::vector<AtomicWrapper<float>>> tempSpeakerBuffer;
     juce::AudioBuffer<float> stereoBuffer;
     SourcePeaks sourcePeaks;
 
@@ -342,7 +342,7 @@ TEST_CASE(mbapTestName, "[spat]")
 
     SourceAudioBuffer sourceBuffer;
     SpeakerAudioBuffer speakerBuffer;
-    std::vector<std::vector<std::atomic<float>>> tempSpeakerBuffer;
+    std::vector<std::vector<AtomicWrapper<float>>> tempSpeakerBuffer;
     juce::AudioBuffer<float> stereoBuffer;
     SourcePeaks sourcePeaks;
 
@@ -376,7 +376,7 @@ TEST_CASE(hrtfTestName, "[spat]")
 
     SourceAudioBuffer sourceBuffer;
     SpeakerAudioBuffer speakerBuffer;
-    std::vector<std::vector<std::atomic<float>>> tempSpeakerBuffer;
+    std::vector<std::vector<AtomicWrapper<float>>> tempSpeakerBuffer;
     juce::AudioBuffer<float> stereoBuffer;
     SourcePeaks sourcePeaks;
 
