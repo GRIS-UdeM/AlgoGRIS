@@ -27,18 +27,8 @@ void initBuffers(const int bufferSize,
     tempSpeakerBuffer.resize(numSpeakers);
     for (int i = 0; i < numSpeakers; ++i) {
         tempSpeakerBuffer[i].clear();
-        for (int j = 0; j < bufferSize; ++j) {
-            // tempSpeakerBuffer[i].emplace_back(0.0f);
-        }
-    }
-
-    std::vector<std::vector<AtomicWrapper<float>>> fuckyou;
-    fuckyou.resize(numSpeakers);
-    for (int i = 0; i < numSpeakers; ++i) {
-        fuckyou[i].clear();
-        for (int j = 0; j < bufferSize; ++j) {
-            fuckyou[i].emplace_back(0.0f);
-        }
+        for (int j = 0; j < bufferSize; ++j)
+            tempSpeakerBuffer[i].emplace_back(0.0f);
     }
 
     stereoBuffer.setSize(2, bufferSize);
