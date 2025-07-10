@@ -23,6 +23,15 @@ void initBuffers(const int bufferSize,
     speakerBuffer.init(speakerIndices);
     speakerBuffer.setNumSamples(bufferSize);
 
+tempSpeakerBuffer.resize(numSpeakers);
+for (int i = 0; i < numSpeakers; ++i) {
+    tempSpeakerBuffer[i].clear();
+    for (int j = 0; j < bufferSize; ++j)
+    {
+        // tempSpeakerBuffer[i].emplace_back(0.0f);
+    }
+}
+
     stereoBuffer.setSize(2, bufferSize);
     stereoBuffer.clear();
 }
