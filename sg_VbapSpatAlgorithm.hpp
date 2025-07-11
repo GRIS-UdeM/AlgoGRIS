@@ -80,7 +80,7 @@ private:
                        const gris::SourcePeaks & sourcePeaks,
                        gris::SourceAudioBuffer & sourcesBuffer,
                        const gris::SpeakersAudioConfig & speakersAudioConfig,
-                       gris::SpeakerAudioBuffer & speakersBuffer);
+                       std::vector<std::vector<AtomicWrapper<float>>>& atomicSpeakerBuffer);
 
     JUCE_LEAK_DETECTOR(VbapSpatAlgorithm)
 };
