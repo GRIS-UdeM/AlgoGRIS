@@ -108,6 +108,21 @@ static void renderProjectOutput(juce::StringRef testName,
 }
 #endif
 
+// Utility function to print the content of atomicSpeakerBuffer using DBG
+static void printAtomicSpeakerBuffer (const std::vector<std::vector<AtomicWrapper<float>>> & atomicSpeakerBuffer)
+{
+    for (size_t speakerIdx = 0; speakerIdx < atomicSpeakerBuffer.size (); ++speakerIdx)
+    {
+        DBG ("Speaker " << speakerIdx << ":");
+        const auto& buffer = atomicSpeakerBuffer[speakerIdx];
+        juce::String bufferContent;
+        for (size_t sampleIdx = 0; sampleIdx < buffer.size (); ++sampleIdx)
+            bufferContent += juce::String (buffer[sampleIdx]._a) + " ";
+
+        DBG (bufferContent);
+    }
+}
+
 static void testUsingProjectData(juce::StringRef testName,
                                  gris::SpatGrisData & data,
                                  SourceAudioBuffer & sourceBuffer,
@@ -162,6 +177,10 @@ static void testUsingProjectData(juce::StringRef testName,
             // process the audio
             speakerBuffer.silence();
             stereoBuffer.clear();
+            printAtomicSpeakerBuffer (atomicSpeakerBuffer);
+            //TODO VB: probably we need the atomic array to be a class and we need a clear() function
+
+
             algo->process(*config, sourceBuffer, speakerBuffer, atomicSpeakerBuffer, stereoBuffer, sourcePeaks, nullptr);
 
             checkSpeakerBufferValidity(speakerBuffer);
