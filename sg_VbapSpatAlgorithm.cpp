@@ -120,13 +120,10 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
     auto const & speakersAudioConfig{ altSpeakerConfig ? *altSpeakerConfig : config.speakersAudioConfig };
 
 #if USE_FORK_UNION
-    //auto const sourceIds{ config.sourcesAudioConfig.getKeys() };
-    //ashvardanian::fork_union::for_n_dynamic(threadPool, sourceIds.size(), [&](std::size_t i) noexcept {
-    //    processSource(config, sourceIds[i], sourcePeaks, sourcesBuffer, speakersAudioConfig, atomicSpeakerBuffer);
-    //});
-
-    for (auto const& source : config.sourcesAudioConfig)
-        processSource (config, source.key, sourcePeaks, sourcesBuffer, speakersAudioConfig, atomicSpeakerBuffer);
+    auto const sourceIds{ config.sourcesAudioConfig.getKeys() };
+    ashvardanian::fork_union::for_n_dynamic(threadPool, sourceIds.size(), [&](std::size_t i) noexcept {
+        processSource(config, sourceIds[i], sourcePeaks, sourcesBuffer, speakersAudioConfig, atomicSpeakerBuffer);
+    });
 
     // Copy atomicSpeakerBuffer into speakersBuffer
     size_t i = 0;
@@ -192,7 +189,6 @@ inline void VbapSpatAlgorithm::processSource(const gris::AudioConfig & config,
         auto const gainSlope{ gainDiff / narrow<float>(numSamples) };
 
         auto outputSamples{ atomicSpeakerBuffer[i++] };
-        DBG (i);
 
         if (juce::approximatelyEqual(gainSlope, 0.f) || std::abs(gainDiff) < SMALL_GAIN) {
             // no interpolation
