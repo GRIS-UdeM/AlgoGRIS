@@ -109,6 +109,7 @@ void VbapSpatAlgorithm::updateSpatData(source_index_t const sourceIndex, SourceD
 void VbapSpatAlgorithm::process(AudioConfig const & config,
                                 SourceAudioBuffer & sourcesBuffer,
                                 SpeakerAudioBuffer & speakersBuffer,
+                                std::vector<std::vector<AtomicWrapper<float>>>& atomicSpeakerBuffer,
                                 [[maybe_unused]] juce::AudioBuffer<float> & stereoBuffer,
                                 SourcePeaks const & sourcePeaks,
                                 SpeakersAudioConfig const * altSpeakerConfig)

@@ -112,7 +112,7 @@ static void testUsingProjectData(juce::StringRef testName,
                                  gris::SpatGrisData & data,
                                  SourceAudioBuffer & sourceBuffer,
                                  SpeakerAudioBuffer & speakerBuffer,
-                                 std::vector<std::vector<AtomicWrapper<float>>> & tempSpeakerBuffer,
+                                 std::vector<std::vector<AtomicWrapper<float>>> & atomicSpeakerBuffer,
                                  juce::AudioBuffer<float> & stereoBuffer,
                                  SourcePeaks & sourcePeaks)
 {
@@ -130,7 +130,7 @@ static void testUsingProjectData(juce::StringRef testName,
         data.appData.audioSettings.bufferSize = bufferSize;
 
         // init our buffers
-        initBuffers(bufferSize, numSources, numSpeakers, sourceBuffer, speakerBuffer, tempSpeakerBuffer, stereoBuffer);
+        initBuffers(bufferSize, numSources, numSpeakers, sourceBuffer, speakerBuffer, atomicSpeakerBuffer, stereoBuffer);
 
         // create our spatialization algorithm
         auto algo{ AbstractSpatAlgorithm::make(data.speakerSetup,
@@ -162,7 +162,7 @@ static void testUsingProjectData(juce::StringRef testName,
             // process the audio
             speakerBuffer.silence();
             stereoBuffer.clear();
-            algo->process(*config, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks, nullptr);
+            algo->process(*config, sourceBuffer, speakerBuffer, atomicSpeakerBuffer, stereoBuffer, sourcePeaks, nullptr);
 
             checkSpeakerBufferValidity(speakerBuffer);
 
@@ -186,7 +186,7 @@ static void benchmarkUsingProjectData(std::string testName,
                                       gris::SpatGrisData & data,
                                       SourceAudioBuffer & sourceBuffer,
                                       SpeakerAudioBuffer & speakerBuffer,
-                                      std::vector<std::vector<AtomicWrapper<float>>> & tempSpeakerBuffer,
+                                      std::vector<std::vector<AtomicWrapper<float>>> & atomicSpeakerBuffer,
                                       juce::AudioBuffer<float> & stereoBuffer,
                                       SourcePeaks & sourcePeaks)
 {
@@ -198,7 +198,7 @@ static void benchmarkUsingProjectData(std::string testName,
     data.appData.audioSettings.bufferSize = bufferSize;
 
     // init our buffers
-    initBuffers(bufferSize, numSources, numSpeakers, sourceBuffer, speakerBuffer, tempSpeakerBuffer, stereoBuffer);
+    initBuffers(bufferSize, numSources, numSpeakers, sourceBuffer, speakerBuffer, atomicSpeakerBuffer, stereoBuffer);
 
     // create our spatialization algorithm
     auto algo{ AbstractSpatAlgorithm::make(data.speakerSetup,
@@ -227,7 +227,7 @@ static void benchmarkUsingProjectData(std::string testName,
         // catch2 will run this benchmark section in a loop, so we need to clear the output buffers before each run
         speakerBuffer.silence();
         stereoBuffer.clear();
-        algo->process(*config, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks, nullptr);
+        algo->process(*config, sourceBuffer, speakerBuffer, atomicSpeakerBuffer, stereoBuffer, sourcePeaks, nullptr);
     };
 #endif
 }
@@ -273,7 +273,7 @@ TEST_CASE(vbapTestName, "[spat]")
 
     SourceAudioBuffer sourceBuffer;
     SpeakerAudioBuffer speakerBuffer;
-    std::vector<std::vector<AtomicWrapper<float>>> tempSpeakerBuffer;
+    std::vector<std::vector<AtomicWrapper<float>>> atomicSpeakerBuffer;
     juce::AudioBuffer<float> stereoBuffer;
     SourcePeaks sourcePeaks;
 
@@ -285,7 +285,7 @@ TEST_CASE(vbapTestName, "[spat]")
                          vbapData,
                          sourceBuffer,
                          speakerBuffer,
-                         tempSpeakerBuffer,
+                         atomicSpeakerBuffer,
                          stereoBuffer,
                          sourcePeaks);
     std::cout << vbapTestName << " tests done.\n";
@@ -293,7 +293,7 @@ TEST_CASE(vbapTestName, "[spat]")
                               vbapData,
                               sourceBuffer,
                               speakerBuffer,
-                              tempSpeakerBuffer,
+                              atomicSpeakerBuffer,
                               stereoBuffer,
                               sourcePeaks);
 }
@@ -306,7 +306,7 @@ TEST_CASE(stereoTestName, "[spat]")
 
     SourceAudioBuffer sourceBuffer;
     SpeakerAudioBuffer speakerBuffer;
-    std::vector<std::vector<AtomicWrapper<float>>> tempSpeakerBuffer;
+    std::vector<std::vector<AtomicWrapper<float>>> atomicSpeakerBuffer;
     juce::AudioBuffer<float> stereoBuffer;
     SourcePeaks sourcePeaks;
 
@@ -318,7 +318,7 @@ TEST_CASE(stereoTestName, "[spat]")
                          stereoData,
                          sourceBuffer,
                          speakerBuffer,
-                         tempSpeakerBuffer,
+                         atomicSpeakerBuffer,
                          stereoBuffer,
                          sourcePeaks);
     std::cout << stereoTestName << " tests done.\n";
@@ -327,7 +327,7 @@ TEST_CASE(stereoTestName, "[spat]")
                               stereoData,
                               sourceBuffer,
                               speakerBuffer,
-                              tempSpeakerBuffer, 
+                              atomicSpeakerBuffer,
                               stereoBuffer,
                               sourcePeaks);
 }
@@ -342,7 +342,7 @@ TEST_CASE(mbapTestName, "[spat]")
 
     SourceAudioBuffer sourceBuffer;
     SpeakerAudioBuffer speakerBuffer;
-    std::vector<std::vector<AtomicWrapper<float>>> tempSpeakerBuffer;
+    std::vector<std::vector<AtomicWrapper<float>>> atomicSpeakerBuffer;
     juce::AudioBuffer<float> stereoBuffer;
     SourcePeaks sourcePeaks;
 
@@ -354,7 +354,7 @@ TEST_CASE(mbapTestName, "[spat]")
                          mbapData,
                          sourceBuffer,
                          speakerBuffer,
-                         tempSpeakerBuffer,
+                         atomicSpeakerBuffer,
                          stereoBuffer,
                          sourcePeaks);
     std::cout << mbapTestName << " tests done.\n";
@@ -363,7 +363,7 @@ TEST_CASE(mbapTestName, "[spat]")
                               mbapData,
                               sourceBuffer,
                               speakerBuffer,
-                              tempSpeakerBuffer,
+                              atomicSpeakerBuffer,
                               stereoBuffer,
                               sourcePeaks);
 }
@@ -376,7 +376,7 @@ TEST_CASE(hrtfTestName, "[spat]")
 
     SourceAudioBuffer sourceBuffer;
     SpeakerAudioBuffer speakerBuffer;
-    std::vector<std::vector<AtomicWrapper<float>>> tempSpeakerBuffer;
+    std::vector<std::vector<AtomicWrapper<float>>> atomicSpeakerBuffer;
     juce::AudioBuffer<float> stereoBuffer;
     SourcePeaks sourcePeaks;
 
@@ -388,7 +388,7 @@ TEST_CASE(hrtfTestName, "[spat]")
                          hrtfData,
                          sourceBuffer,
                          speakerBuffer,
-                         tempSpeakerBuffer,
+                         atomicSpeakerBuffer,
                          stereoBuffer,
                          sourcePeaks);
     std::cout << hrtfTestName << " tests done.\n";
@@ -397,7 +397,7 @@ TEST_CASE(hrtfTestName, "[spat]")
                               hrtfData,
                               sourceBuffer,
                               speakerBuffer,
-                              tempSpeakerBuffer,
+                              atomicSpeakerBuffer,
                               stereoBuffer,
                               sourcePeaks);
 }

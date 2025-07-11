@@ -175,6 +175,7 @@ void HrtfSpatAlgorithm::updateSpatData(source_index_t const sourceIndex, SourceD
 void HrtfSpatAlgorithm::process(AudioConfig const & config,
                                 SourceAudioBuffer & sourcesBuffer,
                                 SpeakerAudioBuffer & speakersBuffer,
+                                std::vector<std::vector<AtomicWrapper<float>>>& atomicSpeakerBuffer,
                                 juce::AudioBuffer<float> & stereoBuffer,
                                 SourcePeaks const & sourcePeaks,
                                 [[maybe_unused]] SpeakersAudioConfig const * altSpeakerConfig)
@@ -191,7 +192,7 @@ void HrtfSpatAlgorithm::process(AudioConfig const & config,
 
     if (mInnerAlgorithm)
         mInnerAlgorithm
-            ->process(config, sourcesBuffer, hrtfBuffer, stereoBuffer, sourcePeaks, &mHrtfData.speakersAudioConfig);
+            ->process(config, sourcesBuffer, hrtfBuffer, atomicSpeakerBuffer, stereoBuffer, sourcePeaks, &mHrtfData.speakersAudioConfig);
 
     convolutionBuffer.clear();
 

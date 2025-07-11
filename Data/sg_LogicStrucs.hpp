@@ -66,7 +66,7 @@ enum class AttenuationBypassSate : std::uint8_t { invalid, on, off };
 [[nodiscard]] juce::String attenuationBypassStateToString(AttenuationBypassSate state);
 [[nodiscard]] AttenuationBypassSate stringToAttenuationBypassState(juce::String const & string);
 
-/* Taken from https://stackoverflow.com/questions/13193484/how-to-declare-a-vector-of-atomic-in-c 
+/* Taken from https://stackoverflow.com/questions/13193484/how-to-declare-a-vector-of-atomic-in-c
  **/
 template<typename T>
 struct AtomicWrapper {
@@ -78,7 +78,7 @@ struct AtomicWrapper {
 
     AtomicWrapper(const AtomicWrapper & other) : _a(other._a.load()) {}
 
-    /* This isn't atomic so shouldn't be done in concurent contextes! */
+    /* This isn't atomic so shouldn't be done in concurent contexts! */
     AtomicWrapper & operator=(const AtomicWrapper & other) { _a.store(other._a.load()); }
 };
 

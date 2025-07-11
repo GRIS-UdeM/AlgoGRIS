@@ -67,6 +67,7 @@ public:
     void process(AudioConfig const & config,
                  SourceAudioBuffer & sourcesBuffer,
                  SpeakerAudioBuffer & speakersBuffer,
+                 std::vector<std::vector<AtomicWrapper<float>>>& atomicSpeakerBuffer,
                  juce::AudioBuffer<float> & stereoBuffer,
                  SourcePeaks const & sourcePeaks,
                  SpeakersAudioConfig const * altSpeakerConfig) override;

@@ -58,12 +58,13 @@ void HybridSpatAlgorithm::updateSpatData(source_index_t const sourceIndex, Sourc
 void HybridSpatAlgorithm::process(AudioConfig const & config,
                                   SourceAudioBuffer & sourcesBuffer,
                                   SpeakerAudioBuffer & speakersBuffer,
+                                  std::vector<std::vector<AtomicWrapper<float>>>& atomicSpeakerBuffer,
                                   juce::AudioBuffer<float> & stereoBuffer,
                                   SourcePeaks const & sourcePeaks,
                                   SpeakersAudioConfig const * altSpeakerConfig)
 {
-    mVbap->process(config, sourcesBuffer, speakersBuffer, stereoBuffer, sourcePeaks, altSpeakerConfig);
-    mMbap->process(config, sourcesBuffer, speakersBuffer, stereoBuffer, sourcePeaks, altSpeakerConfig);
+    mVbap->process(config, sourcesBuffer, speakersBuffer, atomicSpeakerBuffer, stereoBuffer, sourcePeaks, altSpeakerConfig);
+    mMbap->process(config, sourcesBuffer, speakersBuffer, atomicSpeakerBuffer, stereoBuffer, sourcePeaks, altSpeakerConfig);
 }
 
 //==============================================================================
