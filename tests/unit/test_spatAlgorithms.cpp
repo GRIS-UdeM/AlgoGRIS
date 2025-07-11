@@ -179,7 +179,7 @@ static void testUsingProjectData(juce::StringRef testName,
             stereoBuffer.clear();
 
             //TODO VB: probably we need the atomic array to be a class and we need a clear() function
-            printAtomicSpeakerBuffer (atomicSpeakerBuffer);
+            //printAtomicSpeakerBuffer (atomicSpeakerBuffer);
             algo->process(*config, sourceBuffer, speakerBuffer, atomicSpeakerBuffer, stereoBuffer, sourcePeaks, nullptr);
 
             checkSpeakerBufferValidity(speakerBuffer);
