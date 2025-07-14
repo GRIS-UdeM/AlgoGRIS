@@ -74,12 +74,21 @@ public:
     static std::unique_ptr<AbstractSpatAlgorithm> make(SpeakerSetup const & speakerSetup);
 
 private:
+#if USE_ATOMIC_BUFFERS_IN_NON_FORK_UNION
     void processSource(const gris::AudioConfig & config,
                        const gris::source_index_t & sourceId,
                        const gris::SourcePeaks & sourcePeaks,
                        gris::SourceAudioBuffer & sourcesBuffer,
                        const gris::SpeakersAudioConfig & speakersAudioConfig,
                        std::vector<std::vector<AtomicWrapper<float>>>& atomicSpeakerBuffer);
+#else
+    void processSource (const gris::AudioConfig& config,
+                        const gris::source_index_t& sourceId,
+                        const gris::SourcePeaks& sourcePeaks,
+                        gris::SourceAudioBuffer& sourcesBuffer,
+                        const gris::SpeakersAudioConfig& speakersAudioConfig,
+                        SpeakerAudioBuffer& speakerBuffers);
+#endif
 
     JUCE_LEAK_DETECTOR(VbapSpatAlgorithm)
 };
