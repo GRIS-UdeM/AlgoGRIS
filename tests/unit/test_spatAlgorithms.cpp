@@ -295,7 +295,7 @@ TEST_CASE(vbapTestName, "[spat]")
     juce::AudioBuffer<float> stereoBuffer;
     SourcePeaks sourcePeaks;
 
-    std::cout << "Starting " << vbapTestName << " tests:\n";
+    std::cout << "Starting " << vbapTestName << " tests:" << std::endl;
 #if WRITE_TEST_OUTPUT_TO_DISK
     renderProjectOutput(vbapTestName, vbapData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
 #endif
@@ -306,7 +306,7 @@ TEST_CASE(vbapTestName, "[spat]")
                          atomicSpeakerBuffer,
                          stereoBuffer,
                          sourcePeaks);
-    std::cout << vbapTestName << " tests done.\n";
+    std::cout << vbapTestName << " tests done." << std::endl;
     benchmarkUsingProjectData("vbap benchmark",
                               vbapData,
                               sourceBuffer,
@@ -328,7 +328,7 @@ TEST_CASE(stereoTestName, "[spat]")
     juce::AudioBuffer<float> stereoBuffer;
     SourcePeaks sourcePeaks;
 
-    std::cout << "Starting " << stereoTestName << " tests:\n";
+    std::cout << "Starting " << stereoTestName << " tests:" << std::endl;
 #if WRITE_TEST_OUTPUT_TO_DISK
     renderProjectOutput(stereoTestName, stereoData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
 #endif
@@ -339,7 +339,7 @@ TEST_CASE(stereoTestName, "[spat]")
                          atomicSpeakerBuffer,
                          stereoBuffer,
                          sourcePeaks);
-    std::cout << stereoTestName << " tests done.\n";
+    std::cout << stereoTestName << " tests done." << std::endl;
 
     benchmarkUsingProjectData("stereo benchmark",
                               stereoData,
@@ -364,7 +364,7 @@ TEST_CASE(mbapTestName, "[spat]")
     juce::AudioBuffer<float> stereoBuffer;
     SourcePeaks sourcePeaks;
 
-    std::cout << "Starting " << mbapTestName << " tests:\n";
+    std::cout << "Starting " << mbapTestName << " tests:" << std::endl;
 #if WRITE_TEST_OUTPUT_TO_DISK
     renderProjectOutput(mbapTestName, mbapData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
 #endif
@@ -375,7 +375,7 @@ TEST_CASE(mbapTestName, "[spat]")
                          atomicSpeakerBuffer,
                          stereoBuffer,
                          sourcePeaks);
-    std::cout << mbapTestName << " tests done.\n";
+    std::cout << mbapTestName << " tests done." << std::endl;
 
     benchmarkUsingProjectData("mbap benchmark",
                               mbapData,
@@ -398,7 +398,7 @@ TEST_CASE(hrtfTestName, "[spat]")
     juce::AudioBuffer<float> stereoBuffer;
     SourcePeaks sourcePeaks;
 
-    std::cout << "Starting " << hrtfTestName << " tests:\n";
+    std::cout << "Starting " << hrtfTestName << " tests:" << std::endl;
 #if WRITE_TEST_OUTPUT_TO_DISK
     renderProjectOutput(hrtfTestName, hrtfData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
 #endif
@@ -409,7 +409,7 @@ TEST_CASE(hrtfTestName, "[spat]")
                          atomicSpeakerBuffer,
                          stereoBuffer,
                          sourcePeaks);
-    std::cout << hrtfTestName << " tests done.\n";
+    std::cout << hrtfTestName << " tests done." << std::endl;
 
     benchmarkUsingProjectData("hrtf benchmark",
                               hrtfData,

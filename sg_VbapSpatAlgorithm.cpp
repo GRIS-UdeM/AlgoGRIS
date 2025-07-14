@@ -140,11 +140,21 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
             outputSamples[sampleIdx] = atomicSpeakerBuffer[i][sampleIdx]._a;
 
         i++;
+
+        DBG("outputSamples:");
+        for (int s = 0; s < numSamples; ++s)
+            DBG(outputSamples[s]);
+
+        DBG("atomicSpeakerBuffer:");
+        for (int s = 0; s < numSamples; ++s)
+            DBG(atomicSpeakerBuffer[i][s]._a;);
+
+        DBG("done");
     }
 
 #else
     for (auto const & source : config.sourcesAudioConfig)
-        processSource(config, source.key, sourcePeaks, sourcesBuffer, speakersAudioConfig, speakersBuffer);
+        processSource(config, source.key, sourcePeaks, sourcesBuffer, speakersAudioConfig, atomicSpeakerBuffer);
 #endif
 }
 

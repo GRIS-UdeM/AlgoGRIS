@@ -114,20 +114,20 @@ void AudioBufferComparator::forAllSpatializedSpeakers(const SpeakersAudioConfig 
                                                       std::function<void(int, const float * const, int)> func)
 {
     juce::Array<output_patch_t> const keys{ speakersAudioConfig.getKeys() };
-    juce::Array<float const *> usableNewBuffers = speakerBuffers.getArrayOfReadPointers(keys);
+    juce::Array<float const *> floatSpeakerBuffers = speakerBuffers.getArrayOfReadPointers(keys);
 
     // then for each spatialized, unmuted speaker
     for (const auto & speaker : speakersAudioConfig) {
         // get the new data
         const int speakerId = speaker.key.get();
-        const float * const newIndividualSpeakerBuffer = usableNewBuffers[speakerId];
+        const float * const individualFloatSpeakerBuffer = floatSpeakerBuffers[speakerId];
 
         // skip this speaker if it's not spatialized or muted
         if (speaker.value.isMuted || speaker.value.isDirectOutOnly || speaker.value.gain < SMALL_GAIN
-            || newIndividualSpeakerBuffer == nullptr)
+            || individualFloatSpeakerBuffer == nullptr)
             continue;
 
-        func(speakerId, newIndividualSpeakerBuffer, bufferSize);
+        func(speakerId, individualFloatSpeakerBuffer, bufferSize);
     }
 }
 
