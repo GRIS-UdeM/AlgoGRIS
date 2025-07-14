@@ -158,6 +158,7 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
         processSource(config, source.key, sourcePeaks, sourcesBuffer, speakersAudioConfig, speakersBuffer);
 #else
         processSource (config, source.key, sourcePeaks, sourcesBuffer, speakersAudioConfig, atomicSpeakerBuffer);
+
     // Copy atomicSpeakerBuffer into speakersBuffer
     size_t i = 0;
     for (auto const& speaker : speakersAudioConfig) {
@@ -173,9 +174,9 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
         for (int sampleIdx = 0; sampleIdx < numSamples; ++sampleIdx)
             outputSamples[sampleIdx] = inputSamples[sampleIdx]._a;
 
+        //VB: this doesn't assert so we know the copy works
         for (int s = 0; s < numSamples; ++s)
             jassert (outputSamples[s] == inputSamples[s]._a);
-
     }
 #endif
 #endif
