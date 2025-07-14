@@ -155,6 +155,26 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
 #else
     for (auto const & source : config.sourcesAudioConfig)
         processSource(config, source.key, sourcePeaks, sourcesBuffer, speakersAudioConfig, atomicSpeakerBuffer);
+
+    // Copy atomicSpeakerBuffer into speakersBuffer
+    size_t i = 0;
+    for (auto const& speaker : speakersAudioConfig) {
+
+        //skip silent speaker
+        if (speaker.value.isMuted || speaker.value.isDirectOutOnly || speaker.value.gain < SMALL_GAIN)
+            continue;
+
+        auto const numSamples { sourcesBuffer.getNumSamples () };
+        auto* outputSamples { speakersBuffer[speaker.key].getWritePointer (0) };
+        auto& inputSamples { atomicSpeakerBuffer[i++] };
+
+        for (int sampleIdx = 0; sampleIdx < numSamples; ++sampleIdx)
+            outputSamples[sampleIdx] = inputSamples[sampleIdx]._a;
+
+        for (int s = 0; s < numSamples; ++s)
+            jassert (outputSamples[s] == inputSamples[s]._a);
+
+    }
 #endif
 }
 
@@ -198,7 +218,7 @@ inline void VbapSpatAlgorithm::processSource(const gris::AudioConfig & config,
         auto const gainDiff{ targetGain - currentGain };
         auto const gainSlope{ gainDiff / narrow<float>(numSamples) };
 
-        auto outputSamples{ atomicSpeakerBuffer[i++] };
+        auto& outputSamples{ atomicSpeakerBuffer[i++] };
 
         if (juce::approximatelyEqual(gainSlope, 0.f) || std::abs(gainDiff) < SMALL_GAIN) {
             // no interpolation
