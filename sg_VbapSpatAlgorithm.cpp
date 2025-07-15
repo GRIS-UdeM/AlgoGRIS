@@ -127,29 +127,18 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
 
     // Copy atomicSpeakerBuffer into speakersBuffer
     size_t i = 0;
-    for (auto const & speaker : speakersAudioConfig) {
+    for (auto const& speaker : speakersAudioConfig) {
 
         //skip silent speaker
         if (speaker.value.isMuted || speaker.value.isDirectOutOnly || speaker.value.gain < SMALL_GAIN)
             continue;
 
-        auto * outputSamples{ speakersBuffer[speaker.key].getWritePointer(0) };
+        auto const numSamples { sourcesBuffer.getNumSamples () };
+        auto* outputSamples { speakersBuffer[speaker.key].getWritePointer (0) };
+        auto& inputSamples { atomicSpeakerBuffer[i++] };
 
-        auto const numSamples{ sourcesBuffer.getNumSamples() };
         for (int sampleIdx = 0; sampleIdx < numSamples; ++sampleIdx)
-            outputSamples[sampleIdx] = atomicSpeakerBuffer[i][sampleIdx]._a;
-
-        i++;
-
-        DBG("outputSamples:");
-        for (int s = 0; s < numSamples; ++s)
-            DBG(outputSamples[s]);
-
-        DBG("atomicSpeakerBuffer:");
-        for (int s = 0; s < numSamples; ++s)
-            DBG(atomicSpeakerBuffer[i][s]._a;);
-
-        DBG("done");
+            outputSamples[sampleIdx] = inputSamples[sampleIdx]._a;
     }
 
 #else
