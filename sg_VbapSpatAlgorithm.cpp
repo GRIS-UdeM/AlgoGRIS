@@ -157,7 +157,25 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
 #if ! USE_ATOMIC_BUFFERS_IN_NON_FORK_UNION
         processSource(config, source.key, sourcePeaks, sourcesBuffer, speakersAudioConfig, speakersBuffer);
 #else
-        processSource (config, source.key, sourcePeaks, sourcesBuffer, speakersAudioConfig, atomicSpeakerBuffer);
+        processSource (config, source.key, sourcePeaks, sourcesBuffer, speakersAudioConfig, speakersBuffer, atomicSpeakerBuffer);
+
+    //so at this point, speakersBuffer contains the correct output, but atomicSpeaker... doesn't? Or it's the copy below that doesn't work
+
+    //size_t i = 0;
+    //for (auto const& speaker : speakersAudioConfig) {
+    //    DBG (speaker.key.get());
+    //    //skip silent speaker
+    //    if (speaker.value.isMuted || speaker.value.isDirectOutOnly || speaker.value.gain < SMALL_GAIN)
+    //        continue;
+
+    //    auto const numSamples { sourcesBuffer.getNumSamples () };
+    //    auto* outputSamples { speakersBuffer[speaker.key].getWritePointer (0) };
+    //    auto& inputSamples { atomicSpeakerBuffer[i++] };
+
+    //    for (int sampleIdx = 0; sampleIdx < numSamples; ++sampleIdx)
+    //        jassert (outputSamples[sampleIdx] == inputSamples[sampleIdx]._a);
+    //}
+
 
     // Copy atomicSpeakerBuffer into speakersBuffer
     size_t i = 0;
@@ -188,6 +206,7 @@ inline void VbapSpatAlgorithm::processSource(const gris::AudioConfig & config,
                                              const gris::SourcePeaks & sourcePeaks,
                                              gris::SourceAudioBuffer & sourcesBuffer,
                                              const gris::SpeakersAudioConfig & speakersAudioConfig,
+                                             SpeakerAudioBuffer& speakersBuffer,
                                              std::vector<std::vector<AtomicWrapper<float>>>& atomicSpeakerBuffer)
 #else
 inline void VbapSpatAlgorithm::processSource (const gris::AudioConfig& config,
@@ -233,6 +252,7 @@ inline void VbapSpatAlgorithm::processSource (const gris::AudioConfig& config,
 
 #if USE_ATOMIC_BUFFERS_IN_NON_FORK_UNION
         auto& outputSamples{ atomicSpeakerBuffer[i++] };
+        auto* outputSamplesOG { speakersBuffer[speaker.key].getWritePointer (0) };
 #else
         auto* outputSamples { speakerBuffers[speaker.key].getWritePointer (0) };
 #endif
@@ -241,12 +261,14 @@ inline void VbapSpatAlgorithm::processSource (const gris::AudioConfig& config,
             // no interpolation
             currentGain = targetGain;
             if (currentGain >= SMALL_GAIN) {
-                for (int sampleIndex {}; sampleIndex < numSamples; ++sampleIndex)
+                for (int sampleIndex {}; sampleIndex < numSamples; ++sampleIndex){
 #if USE_ATOMIC_BUFFERS_IN_NON_FORK_UNION
                     outputSamples[sampleIndex]._a += inputSamples[sampleIndex] * currentGain;
+                    outputSamplesOG[sampleIndex] += inputSamples[sampleIndex] * currentGain;
 #else
                     outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
 #endif
+                }
                 //juce::FloatVectorOperations::addWithMultiply(outputSamples, inputSamples, currentGain, numSamples);
             }
             continue;
@@ -259,6 +281,7 @@ inline void VbapSpatAlgorithm::processSource (const gris::AudioConfig& config,
                 currentGain += gainSlope;
 #if USE_ATOMIC_BUFFERS_IN_NON_FORK_UNION
                 outputSamples[sampleIndex]._a += inputSamples[sampleIndex] * currentGain;
+                outputSamplesOG[sampleIndex] += inputSamples[sampleIndex] * currentGain;
 #else
                 outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
 #endif
@@ -272,6 +295,7 @@ inline void VbapSpatAlgorithm::processSource (const gris::AudioConfig& config,
                     currentGain = targetGain + (currentGain - targetGain) * gainFactor;
 #if USE_ATOMIC_BUFFERS_IN_NON_FORK_UNION
                     outputSamples[sampleIndex]._a += inputSamples[sampleIndex] * currentGain;
+                    outputSamplesOG[sampleIndex] += inputSamples[sampleIndex] * currentGain;
 #else
                     outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
 #endif
@@ -285,6 +309,7 @@ inline void VbapSpatAlgorithm::processSource (const gris::AudioConfig& config,
                 currentGain = targetGain + (currentGain - targetGain) * gainFactor;
 #if USE_ATOMIC_BUFFERS_IN_NON_FORK_UNION
                 outputSamples[sampleIndex]._a += inputSamples[sampleIndex] * currentGain;
+                outputSamplesOG[sampleIndex] += inputSamples[sampleIndex] * currentGain;
 #else
                 outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
 #endif

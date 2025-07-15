@@ -177,6 +177,15 @@ static void testUsingProjectData(juce::StringRef testName,
             // process the audio
             speakerBuffer.silence();
             stereoBuffer.clear();
+            //TODO VB: atomic speakers should be a class and we call silence on it
+            //atomicSpeakerBuffer.silence ();
+            // this should also be possible if I override more operators probably
+            /*for (auto & speakerBufferAtomic : atomicSpeakerBuffer)
+                std::fill(speakerBufferAtomic.begin(), speakerBufferAtomic.end(), AtomicWrapper<float>{ 0.0f });*/
+
+            for (auto& speakerBufferAtomic : atomicSpeakerBuffer)
+                for (size_t i = 0; i < speakerBufferAtomic.size(); ++i)
+                    speakerBufferAtomic[i]._a.store(0.f);
 
             //TODO VB: probably we need the atomic array to be a class and we need a clear() function
             //printAtomicSpeakerBuffer (atomicSpeakerBuffer);

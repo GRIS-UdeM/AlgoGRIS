@@ -66,8 +66,11 @@ enum class AttenuationBypassSate : std::uint8_t { invalid, on, off };
 [[nodiscard]] juce::String attenuationBypassStateToString(AttenuationBypassSate state);
 [[nodiscard]] AttenuationBypassSate stringToAttenuationBypassState(juce::String const & string);
 
+#define ATOMIC_WRAPPER_ACTUALLY_ATOMIC 1
+
 /* Taken from https://stackoverflow.com/questions/13193484/how-to-declare-a-vector-of-atomic-in-c
  **/
+#if ATOMIC_WRAPPER_ACTUALLY_ATOMIC
 template<typename T>
 struct AtomicWrapper {
     std::atomic<T> _a;
@@ -81,6 +84,22 @@ struct AtomicWrapper {
     /* This isn't atomic so shouldn't be done in concurent contexts! */
     AtomicWrapper & operator=(const AtomicWrapper & other) { _a.store(other._a.load()); }
 };
+#else
+template<typename T>
+struct AtomicWrapper
+{
+    T _a;
+
+    AtomicWrapper () : _a () {}
+
+    AtomicWrapper (const std::atomic<T>& a) : _a (a) {}
+
+    AtomicWrapper (const AtomicWrapper& other) : _a (other._a) {}
+
+    /* This isn't atomic so shouldn't be done in concurent contexts! */
+    AtomicWrapper& operator=(const AtomicWrapper& other) { _a = other._a; }
+};
+#endif
 
 //==============================================================================
 /** For the following data structures, we use the following semantics:
