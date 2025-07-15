@@ -143,35 +143,11 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
 
 #else
     for (auto const & source : config.sourcesAudioConfig)
-#if ! USE_ATOMIC_BUFFERS_IN_NON_FORK_UNION
         processSource(config, source.key, sourcePeaks, sourcesBuffer, speakersAudioConfig, speakersBuffer);
-#else
-        processSource (config, source.key, sourcePeaks, sourcesBuffer, speakersAudioConfig, atomicSpeakerBuffer);
-
-    // Copy atomicSpeakerBuffer into speakersBuffer
-    size_t i = 0;
-    for (auto const& speaker : speakersAudioConfig) {
-
-        //skip silent speaker
-        if (speaker.value.isMuted || speaker.value.isDirectOutOnly || speaker.value.gain < SMALL_GAIN)
-            continue;
-
-        auto const numSamples { sourcesBuffer.getNumSamples () };
-        auto* outputSamples { speakersBuffer[speaker.key].getWritePointer (0) };
-        auto& inputSamples { atomicSpeakerBuffer[i++] };
-
-        for (int sampleIdx = 0; sampleIdx < numSamples; ++sampleIdx)
-            outputSamples[sampleIdx] = inputSamples[sampleIdx]._a;
-
-        //VB: this doesn't assert so we know the copy works
-        for (int s = 0; s < numSamples; ++s)
-            jassert (outputSamples[s] == inputSamples[s]._a);
-    }
-#endif
 #endif
 }
 
-#if USE_ATOMIC_BUFFERS_IN_NON_FORK_UNION
+#if USE_FORK_UNION
 inline void VbapSpatAlgorithm::processSource(const gris::AudioConfig & config,
                                              const gris::source_index_t & sourceId,
                                              const gris::SourcePeaks & sourcePeaks,
@@ -220,7 +196,7 @@ inline void VbapSpatAlgorithm::processSource (const gris::AudioConfig& config,
         auto const gainDiff{ targetGain - currentGain };
         auto const gainSlope{ gainDiff / narrow<float>(numSamples) };
 
-#if USE_ATOMIC_BUFFERS_IN_NON_FORK_UNION
+#if USE_FORK_UNION
         auto& outputSamples{ atomicSpeakerBuffer[i++] };
 #else
         auto* outputSamples { speakerBuffers[speaker.key].getWritePointer (0) };
@@ -231,7 +207,7 @@ inline void VbapSpatAlgorithm::processSource (const gris::AudioConfig& config,
             currentGain = targetGain;
             if (currentGain >= SMALL_GAIN) {
                 for (int sampleIndex {}; sampleIndex < numSamples; ++sampleIndex){
-#if USE_ATOMIC_BUFFERS_IN_NON_FORK_UNION
+#if USE_FORK_UNION
                     outputSamples[sampleIndex]._a += inputSamples[sampleIndex] * currentGain;
 #else
                     outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
@@ -247,7 +223,7 @@ inline void VbapSpatAlgorithm::processSource (const gris::AudioConfig& config,
             // linear interpolation over buffer size
             for (int sampleIndex{}; sampleIndex < numSamples; ++sampleIndex) {
                 currentGain += gainSlope;
-#if USE_ATOMIC_BUFFERS_IN_NON_FORK_UNION
+#if USE_FORK_UNION
                 outputSamples[sampleIndex]._a += inputSamples[sampleIndex] * currentGain;
 #else
                 outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
@@ -260,7 +236,7 @@ inline void VbapSpatAlgorithm::processSource (const gris::AudioConfig& config,
                 // targeting silence
                 for (int sampleIndex{}; sampleIndex < numSamples && currentGain >= SMALL_GAIN; ++sampleIndex) {
                     currentGain = targetGain + (currentGain - targetGain) * gainFactor;
-#if USE_ATOMIC_BUFFERS_IN_NON_FORK_UNION
+#if USE_FORK_UNION
                     outputSamples[sampleIndex]._a += inputSamples[sampleIndex] * currentGain;
 #else
                     outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
@@ -273,7 +249,7 @@ inline void VbapSpatAlgorithm::processSource (const gris::AudioConfig& config,
             // not targeting silence
             for (int sampleIndex{}; sampleIndex < numSamples; ++sampleIndex) {
                 currentGain = targetGain + (currentGain - targetGain) * gainFactor;
-#if USE_ATOMIC_BUFFERS_IN_NON_FORK_UNION
+#if USE_FORK_UNION
                 outputSamples[sampleIndex]._a += inputSamples[sampleIndex] * currentGain;
 #else
                 outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;

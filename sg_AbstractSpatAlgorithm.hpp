@@ -33,9 +33,7 @@
 #include <cstdint>
 #include <memory>
 
-#define USE_FORK_UNION 1
-
-#define USE_ATOMIC_BUFFERS_IN_NON_FORK_UNION 1
+#define USE_FORK_UNION 0
 
 #if USE_FORK_UNION
 #include <fork_union.hpp>
