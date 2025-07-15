@@ -80,7 +80,6 @@ private:
                        const gris::SourcePeaks & sourcePeaks,
                        gris::SourceAudioBuffer & sourcesBuffer,
                        const gris::SpeakersAudioConfig & speakersAudioConfig,
-                       SpeakerAudioBuffer& speakersBuffer,
                        std::vector<std::vector<AtomicWrapper<float>>>& atomicSpeakerBuffer);
 #else
     void processSource (const gris::AudioConfig& config,
