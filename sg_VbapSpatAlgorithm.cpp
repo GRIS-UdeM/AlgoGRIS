@@ -206,14 +206,12 @@ inline void VbapSpatAlgorithm::processSource (const gris::AudioConfig& config,
             // no interpolation
             currentGain = targetGain;
             if (currentGain >= SMALL_GAIN) {
-                for (int sampleIndex {}; sampleIndex < numSamples; ++sampleIndex){
 #if USE_FORK_UNION
+                for (int sampleIndex {}; sampleIndex < numSamples; ++sampleIndex)
                     outputSamples[sampleIndex]._a += inputSamples[sampleIndex] * currentGain;
 #else
-                    outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
+                juce::FloatVectorOperations::addWithMultiply(outputSamples, inputSamples, currentGain, numSamples);
 #endif
-                }
-                //juce::FloatVectorOperations::addWithMultiply(outputSamples, inputSamples, currentGain, numSamples);
             }
             continue;
         }

@@ -108,21 +108,6 @@ static void renderProjectOutput(juce::StringRef testName,
 }
 #endif
 
-// Utility function to print the content of atomicSpeakerBuffer using DBG
-static void printAtomicSpeakerBuffer (const std::vector<std::vector<AtomicWrapper<float>>> & atomicSpeakerBuffer)
-{
-    for (size_t speakerIdx = 0; speakerIdx < atomicSpeakerBuffer.size (); ++speakerIdx)
-    {
-        DBG ("Speaker " << speakerIdx << ":");
-        const auto& buffer = atomicSpeakerBuffer[speakerIdx];
-        juce::String bufferContent;
-        for (size_t sampleIdx = 0; sampleIdx < buffer.size (); ++sampleIdx)
-            bufferContent += juce::String (buffer[sampleIdx]._a) + " ";
-
-        DBG (bufferContent);
-    }
-}
-
 static void testUsingProjectData(juce::StringRef testName,
                                  gris::SpatGrisData & data,
                                  SourceAudioBuffer & sourceBuffer,
@@ -177,18 +162,10 @@ static void testUsingProjectData(juce::StringRef testName,
             // process the audio
             speakerBuffer.silence();
             stereoBuffer.clear();
-            //TODO VB: atomic speakers should be a class and we call silence on it
-            //atomicSpeakerBuffer.silence ();
-            // this should also be possible if I override more operators probably
-            /*for (auto & speakerBufferAtomic : atomicSpeakerBuffer)
-                std::fill(speakerBufferAtomic.begin(), speakerBufferAtomic.end(), AtomicWrapper<float>{ 0.0f });*/
+    #if USE_FORK_UNION
+            algo->clearAtomicSpeakerBuffer (atomicSpeakerBuffer);
+    #endif
 
-            for (auto& speakerBufferAtomic : atomicSpeakerBuffer)
-                for (size_t i = 0; i < speakerBufferAtomic.size(); ++i)
-                    speakerBufferAtomic[i]._a.store(0.f);
-
-            //TODO VB: probably we need the atomic array to be a class and we need a clear() function
-            //printAtomicSpeakerBuffer (atomicSpeakerBuffer);
             algo->process(*config, sourceBuffer, speakerBuffer, atomicSpeakerBuffer, stereoBuffer, sourcePeaks, nullptr);
 
             checkSpeakerBufferValidity(speakerBuffer);
@@ -209,8 +186,7 @@ static void testUsingProjectData(juce::StringRef testName,
 #endif
 }
 
-static void benchmarkUsingProjectData(std::string testName,
-                                      gris::SpatGrisData & data,
+static void benchmarkUsingProjectData(gris::SpatGrisData & data,
                                       SourceAudioBuffer & sourceBuffer,
                                       SpeakerAudioBuffer & speakerBuffer,
                                       std::vector<std::vector<AtomicWrapper<float>>> & atomicSpeakerBuffer,
@@ -242,18 +218,15 @@ static void benchmarkUsingProjectData(std::string testName,
     checkSourceBufferValidity(sourceBuffer);
 
     // process the audio
-    speakerBuffer.silence();
-    stereoBuffer.clear();
-    #if ENABLE_CATCH2_BENCHMARKS
     BENCHMARK("processing loop")
-    #else
-    std::cout << testName << "\n";
-    for (int i = 0; i < 1000; ++i)
-    #endif
     {
         // catch2 will run this benchmark section in a loop, so we need to clear the output buffers before each run
         speakerBuffer.silence();
         stereoBuffer.clear();
+#if USE_FORK_UNION
+        algo->clearAtomicSpeakerBuffer (atomicSpeakerBuffer);
+#endif
+
         algo->process(*config, sourceBuffer, speakerBuffer, atomicSpeakerBuffer, stereoBuffer, sourcePeaks, nullptr);
     };
 #endif
@@ -316,16 +289,13 @@ TEST_CASE(vbapTestName, "[spat]")
                          stereoBuffer,
                          sourcePeaks);
     std::cout << vbapTestName << " tests done." << std::endl;
-    benchmarkUsingProjectData("vbap benchmark",
-                              vbapData,
+    benchmarkUsingProjectData(vbapData,
                               sourceBuffer,
                               speakerBuffer,
                               atomicSpeakerBuffer,
                               stereoBuffer,
                               sourcePeaks);
 }
-
-#if 0
 
 TEST_CASE(stereoTestName, "[spat]")
 {
@@ -352,8 +322,7 @@ TEST_CASE(stereoTestName, "[spat]")
                          sourcePeaks);
     std::cout << stereoTestName << " tests done." << std::endl;
 
-    benchmarkUsingProjectData("stereo benchmark",
-                              stereoData,
+    benchmarkUsingProjectData(stereoData,
                               sourceBuffer,
                               speakerBuffer,
                               atomicSpeakerBuffer,
@@ -388,8 +357,7 @@ TEST_CASE(mbapTestName, "[spat]")
                          sourcePeaks);
     std::cout << mbapTestName << " tests done." << std::endl;
 
-    benchmarkUsingProjectData("mbap benchmark",
-                              mbapData,
+    benchmarkUsingProjectData(mbapData,
                               sourceBuffer,
                               speakerBuffer,
                               atomicSpeakerBuffer,
@@ -422,12 +390,10 @@ TEST_CASE(hrtfTestName, "[spat]")
                          sourcePeaks);
     std::cout << hrtfTestName << " tests done." << std::endl;
 
-    benchmarkUsingProjectData("hrtf benchmark",
-                              hrtfData,
+    benchmarkUsingProjectData(hrtfData,
                               sourceBuffer,
                               speakerBuffer,
                               atomicSpeakerBuffer,
                               stereoBuffer,
                               sourcePeaks);
 }
-#endif

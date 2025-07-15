@@ -64,6 +64,18 @@ AbstractSpatAlgorithm::AbstractSpatAlgorithm ()
 #endif
 }
 
+#if USE_FORK_UNION
+void AbstractSpatAlgorithm::clearAtomicSpeakerBuffer(
+    std::vector<std::vector<AtomicWrapper<float>>> & atomicSpeakerBuffer) noexcept
+{
+    ashvardanian::fork_union::for_n_dynamic(threadPool, atomicSpeakerBuffer.size(), [&](std::size_t i) noexcept {
+        auto & individualSpeakerBuffer{ atomicSpeakerBuffer[i] };
+        for (auto & wrapper : individualSpeakerBuffer)
+            wrapper._a.store(0.f, std::memory_order_relaxed);
+    });
+}
+#endif
+
 //==============================================================================
 void AbstractSpatAlgorithm::fixDirectOutsIntoPlace(SourcesData const & sources,
                                                    SpeakerSetup const & speakerSetup,

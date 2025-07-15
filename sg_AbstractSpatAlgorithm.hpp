@@ -33,7 +33,7 @@
 #include <cstdint>
 #include <memory>
 
-#define USE_FORK_UNION 0
+#define USE_FORK_UNION 1
 
 #if USE_FORK_UNION
 #include <fork_union.hpp>
@@ -80,6 +80,12 @@ public:
     AbstractSpatAlgorithm();
     virtual ~AbstractSpatAlgorithm() = default;
     SG_DELETE_COPY_AND_MOVE(AbstractSpatAlgorithm)
+
+
+#if USE_FORK_UNION
+    void clearAtomicSpeakerBuffer(std::vector<std::vector<AtomicWrapper<float>>>& atomicSpeakerBuffer) noexcept;
+#endif
+
     //==============================================================================
     /** Assigns the position of sources in direct out mode to their assigned speakers' positions.
      *
