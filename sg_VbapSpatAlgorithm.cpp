@@ -120,6 +120,8 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
     auto const & speakersAudioConfig{ altSpeakerConfig ? *altSpeakerConfig : config.speakersAudioConfig };
 
 #if USE_FORK_UNION
+    namespace fu = ashvardanian::fork_union;
+
     auto const sourceIds{ config.sourcesAudioConfig.getKeys() };
 
 #if 0
@@ -128,30 +130,19 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
         processSource(config, sourceIds[i], sourcePeaks, sourcesBuffer, speakersAudioConfig, atomicSpeakerBuffer);
     });
 #else
-    //ashvardanian::fork_union::for_slices(threadPool, sourceIds.size(), [&](std::size_t first_index, std::size_t count) noexcept
-    //    {
-    //        jassert(threadPool.is_lock_free());
-    //        processSource(config, sourceIds[i], sourcePeaks, sourcesBuffer, speakersAudioConfig, atomicSpeakerBuffer);
-    //    });
+    fu::for_n(threadPool, sourceIds.size(), [&](fu::prong_t prong) noexcept {
+        jassert(threadPool.is_lock_free());
 
-    ashvardanian::fork_union::for_slices(threadPool, sourceIds.size(), [&](ashvardanian::fork_union::prong_t prong, std::size_t count) noexcept
-    {
-        /*jassert(threadPool.is_lock_free());
-        processSource(config, sourceIds[i], sourcePeaks, sourcesBuffer, speakersAudioConfig, atomicSpeakerBuffer);*/
+        //DBG("Running prong " << prong.task_index << " on thread " << prong.thread_index);
+
+        processSource(config,
+                      sourceIds[prong.task_index],
+                      sourcePeaks,
+                      sourcesBuffer,
+                      speakersAudioConfig,
+                      atomicSpeakerBuffer);
     });
 
-    
-
-    /*
-    pool.for_n (1000, [](std::size_t task_index) noexcept {
-        std::printf ("Running task %zu of 3\n", task_index + 1);
-                });
-
-    pool.for_slices (1000, [](std::size_t first_index, std::size_t count) noexcept
-    {
-        std::printf ("Running slice [%zu, %zu)\n", first_index, first_index + count);
-    });
-    */
 #endif
 
     // Copy atomicSpeakerBuffer into speakersBuffer
