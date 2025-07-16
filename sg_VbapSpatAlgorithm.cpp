@@ -121,7 +121,8 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
 
 #if USE_FORK_UNION
     auto const sourceIds{ config.sourcesAudioConfig.getKeys() };
-    ashvardanian::fork_union::for_n_dynamic(threadPool, sourceIds.size(), [&](std::size_t i) noexcept {
+    ashvardanian::fork_union::for_n(threadPool, sourceIds.size(), [&](std::size_t i) noexcept {
+        jassert (threadPool.is_lock_free ());
         processSource(config, sourceIds[i], sourcePeaks, sourcesBuffer, speakersAudioConfig, atomicSpeakerBuffer);
     });
 
