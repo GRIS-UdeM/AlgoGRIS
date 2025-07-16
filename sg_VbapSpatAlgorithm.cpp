@@ -131,13 +131,7 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
     fu::for_n(threadPool, sourceIds.size(), [&](fu::prong_t prong) noexcept {
         jassert(threadPool.is_lock_free());
 
-        // DBG("Running prong " << prong.task_index << " on thread " << prong.thread_index);
-
-        processSource(config,
-                      sourceIds[prong.task_index],
-                      sourcePeaks,
-                      sourcesBuffer,
-                      speakersAudioConfig,
+        processSource(config, sourceIds[prong.task_index], sourcePeaks, sourcesBuffer, speakersAudioConfig,
     #if USE_ATOMIC_WRAPPER
                       atomicSpeakerBuffer);
     #else
