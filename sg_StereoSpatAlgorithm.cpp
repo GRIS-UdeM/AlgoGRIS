@@ -85,7 +85,11 @@ void StereoSpatAlgorithm::updateSpatData(source_index_t const sourceIndex, Sourc
 void StereoSpatAlgorithm::process(AudioConfig const & config,
                                   SourceAudioBuffer & sourcesBuffer,
                                   SpeakerAudioBuffer & speakersBuffer,
+#if USE_ATOMIC_WRAPPER
                                   std::vector<std::vector<AtomicWrapper<float>>>& atomicSpeakerBuffer,
+#else
+                                  std::vector<std::vector<std::vector<float>>>& threadSpeakerBuffer,
+#endif
                                   juce::AudioBuffer<float> & stereoBuffer,
                                   SourcePeaks const & sourcePeaks,
                                   [[maybe_unused]] SpeakersAudioConfig const * altSpeakerConfig)
@@ -94,7 +98,11 @@ void StereoSpatAlgorithm::process(AudioConfig const & config,
     jassert(!altSpeakerConfig);
     jassert(stereoBuffer.getNumChannels() == 2);
 
+#if USE_ATOMIC_WRAPPER
     mInnerAlgorithm->process(config, sourcesBuffer, speakersBuffer, atomicSpeakerBuffer, stereoBuffer, sourcePeaks, altSpeakerConfig);
+#else
+    mInnerAlgorithm->process (config, sourcesBuffer, speakersBuffer, threadSpeakerBuffer, stereoBuffer, sourcePeaks, altSpeakerConfig);
+#endif
 
 #if USE_FORK_UNION
     auto const sourceIds{ config.sourcesAudioConfig.getKeys() };

@@ -41,6 +41,8 @@
 #include "../Containers/sg_OwnedMap.hpp"
 #include "../Containers/sg_StaticMap.hpp"
 
+#define USE_ATOMIC_WRAPPER 1
+
 namespace gris
 {
 constexpr auto DEFAULT_UDP_INPUT_PORT = 18022;
@@ -66,6 +68,7 @@ enum class AttenuationBypassSate : std::uint8_t { invalid, on, off };
 [[nodiscard]] juce::String attenuationBypassStateToString(AttenuationBypassSate state);
 [[nodiscard]] AttenuationBypassSate stringToAttenuationBypassState(juce::String const & string);
 
+#if USE_ATOMIC_WRAPPER
 /* Taken from https://stackoverflow.com/questions/13193484/how-to-declare-a-vector-of-atomic-in-c
  **/
 template<typename T>
@@ -81,6 +84,7 @@ struct AtomicWrapper {
     /* This isn't atomic so shouldn't be done in concurent contexts! */
     AtomicWrapper & operator=(const AtomicWrapper & other) { _a.store(other._a.load()); }
 };
+#endif
 
 //==============================================================================
 /** For the following data structures, we use the following semantics:

@@ -83,7 +83,11 @@ public:
 
 
 #if USE_FORK_UNION
-    void clearAtomicSpeakerBuffer(std::vector<std::vector<AtomicWrapper<float>>>& atomicSpeakerBuffer) noexcept;
+    #if USE_ATOMIC_WRAPPER
+    void clearAtomicSpeakerBuffer(std::vector<std::vector<AtomicWrapper<float>>> & atomicSpeakerBuffer) noexcept;
+    #else
+    void silenceThreadSpeakerBuffer(std::vector<std::vector<std::vector<float>>> & threadSpeakerBuffer) noexcept;
+    #endif
 #endif
 
     //==============================================================================
@@ -113,7 +117,11 @@ public:
     virtual void process(AudioConfig const & config,
                          SourceAudioBuffer & sourcesBuffer,
                          SpeakerAudioBuffer & speakersBuffer,
+#if USE_ATOMIC_WRAPPER
                          std::vector<std::vector<AtomicWrapper<float>>>& atomicSpeakerBuffer,
+#else
+                         std::vector<std::vector<std::vector<float>>> & threadSpeakerBuffer,
+#endif
                          juce::AudioBuffer<float> & stereoBuffer,
                          SourcePeaks const & sourcePeaks,
                          SpeakersAudioConfig const * altSpeakerConfig)

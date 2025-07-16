@@ -110,7 +110,11 @@ void VbapSpatAlgorithm::updateSpatData(source_index_t const sourceIndex, SourceD
 void VbapSpatAlgorithm::process(AudioConfig const & config,
                                 SourceAudioBuffer & sourcesBuffer,
                                 SpeakerAudioBuffer & speakersBuffer,
+#if USE_ATOMIC_WRAPPER
                                 std::vector<std::vector<AtomicWrapper<float>>>& atomicSpeakerBuffer,
+#else
+                                std::vector<std::vector<std::vector<float>>>& threadSpeakerBuffer,
+#endif
                                 [[maybe_unused]] juce::AudioBuffer<float> & stereoBuffer,
                                 SourcePeaks const & sourcePeaks,
                                 SpeakersAudioConfig const * altSpeakerConfig)
@@ -124,27 +128,24 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
 
     auto const sourceIds{ config.sourcesAudioConfig.getKeys() };
 
-#if 0
-    ashvardanian::fork_union::for_n(threadPool, sourceIds.size(), [&](std::size_t i) noexcept {
-        jassert(threadPool.is_lock_free());
-        processSource(config, sourceIds[i], sourcePeaks, sourcesBuffer, speakersAudioConfig, atomicSpeakerBuffer);
-    });
-#else
     fu::for_n(threadPool, sourceIds.size(), [&](fu::prong_t prong) noexcept {
         jassert(threadPool.is_lock_free());
 
-        //DBG("Running prong " << prong.task_index << " on thread " << prong.thread_index);
+        // DBG("Running prong " << prong.task_index << " on thread " << prong.thread_index);
 
         processSource(config,
                       sourceIds[prong.task_index],
                       sourcePeaks,
                       sourcesBuffer,
                       speakersAudioConfig,
+    #if USE_ATOMIC_WRAPPER
                       atomicSpeakerBuffer);
+    #else
+                      threadSpeakerBuffer[prong.thread_index]);
+    #endif
     });
 
-#endif
-
+#if USE_ATOMIC_WRAPPER
     // Copy atomicSpeakerBuffer into speakersBuffer
     size_t i = 0;
     for (auto const& speaker : speakersAudioConfig) {
@@ -160,6 +161,25 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
         for (int sampleIdx = 0; sampleIdx < numSamples; ++sampleIdx)
             outputSamples[sampleIdx] = inputSamples[sampleIdx]._a;
     }
+#else
+    // Copy threadSpeakerBuffer into speakersBuffer
+    for (auto const & threadBuffers : threadSpeakerBuffer) {
+
+        size_t curSpeakerNumber = 0;
+        for (auto const & speaker : speakersAudioConfig) {
+            // skip silent speaker
+            if (speaker.value.isMuted || speaker.value.isDirectOutOnly || speaker.value.gain < SMALL_GAIN)
+                continue;
+
+            auto const numSamples{ sourcesBuffer.getNumSamples() };
+            auto * mainOutputSamples{ speakersBuffer[speaker.key].getWritePointer(0) };
+            auto & threadOutputSamples { threadBuffers[curSpeakerNumber++]};
+
+            for (int sampleIdx = 0; sampleIdx < numSamples; ++sampleIdx)
+                mainOutputSamples[sampleIdx] += threadOutputSamples[sampleIdx];
+        }
+    }
+    #endif
 
 #else
     for (auto const & source : config.sourcesAudioConfig)
@@ -173,7 +193,11 @@ inline void VbapSpatAlgorithm::processSource(const gris::AudioConfig & config,
                                              const gris::SourcePeaks & sourcePeaks,
                                              gris::SourceAudioBuffer & sourcesBuffer,
                                              const gris::SpeakersAudioConfig & speakersAudioConfig,
+#if USE_ATOMIC_WRAPPER
                                              std::vector<std::vector<AtomicWrapper<float>>>& atomicSpeakerBuffer)
+#else
+                                             std::vector<std::vector<float>>& speakerBuffer)
+#endif
 #else
 inline void VbapSpatAlgorithm::processSource (const gris::AudioConfig& config,
                                               const gris::source_index_t& sourceId,
@@ -217,7 +241,11 @@ inline void VbapSpatAlgorithm::processSource (const gris::AudioConfig& config,
         auto const gainSlope{ gainDiff / narrow<float>(numSamples) };
 
 #if USE_FORK_UNION
+#if USE_ATOMIC_WRAPPER
         auto& outputSamples{ atomicSpeakerBuffer[i++] };
+#else
+        auto& outputSamples { speakerBuffer[i++] };
+#endif
 #else
         auto* outputSamples { speakerBuffers[speaker.key].getWritePointer (0) };
 #endif
@@ -227,8 +255,13 @@ inline void VbapSpatAlgorithm::processSource (const gris::AudioConfig& config,
             currentGain = targetGain;
             if (currentGain >= SMALL_GAIN) {
 #if USE_FORK_UNION
+#if USE_ATOMIC_WRAPPER
                 for (int sampleIndex {}; sampleIndex < numSamples; ++sampleIndex)
                     outputSamples[sampleIndex]._a += inputSamples[sampleIndex] * currentGain;
+#else
+                for (int sampleIndex {}; sampleIndex < numSamples; ++sampleIndex)
+                    outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
+#endif
 #else
                 juce::FloatVectorOperations::addWithMultiply(outputSamples, inputSamples, currentGain, numSamples);
 #endif
@@ -242,7 +275,11 @@ inline void VbapSpatAlgorithm::processSource (const gris::AudioConfig& config,
             for (int sampleIndex{}; sampleIndex < numSamples; ++sampleIndex) {
                 currentGain += gainSlope;
 #if USE_FORK_UNION
+#if USE_ATOMIC_WRAPPER
                 outputSamples[sampleIndex]._a += inputSamples[sampleIndex] * currentGain;
+#else
+                outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
+#endif
 #else
                 outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
 #endif
@@ -255,7 +292,11 @@ inline void VbapSpatAlgorithm::processSource (const gris::AudioConfig& config,
                 for (int sampleIndex{}; sampleIndex < numSamples && currentGain >= SMALL_GAIN; ++sampleIndex) {
                     currentGain = targetGain + (currentGain - targetGain) * gainFactor;
 #if USE_FORK_UNION
+#if USE_ATOMIC_WRAPPER
                     outputSamples[sampleIndex]._a += inputSamples[sampleIndex] * currentGain;
+#else
+                    outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
+#endif
 #else
                     outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
 #endif
@@ -268,7 +309,11 @@ inline void VbapSpatAlgorithm::processSource (const gris::AudioConfig& config,
             for (int sampleIndex{}; sampleIndex < numSamples; ++sampleIndex) {
                 currentGain = targetGain + (currentGain - targetGain) * gainFactor;
 #if USE_FORK_UNION
+#if USE_ATOMIC_WRAPPER
                 outputSamples[sampleIndex]._a += inputSamples[sampleIndex] * currentGain;
+#else
+                outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
+#endif
 #else
                 outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
 #endif

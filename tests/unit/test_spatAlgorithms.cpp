@@ -112,7 +112,11 @@ static void testUsingProjectData(juce::StringRef testName,
                                  gris::SpatGrisData & data,
                                  SourceAudioBuffer & sourceBuffer,
                                  SpeakerAudioBuffer & speakerBuffer,
+#if USE_ATOMIC_WRAPPER
                                  std::vector<std::vector<AtomicWrapper<float>>> & atomicSpeakerBuffer,
+#else
+                                 std::vector <std::vector<std::vector<float>>>& threadSpeakerBuffer,
+#endif
                                  juce::AudioBuffer<float> & stereoBuffer,
                                  SourcePeaks & sourcePeaks)
 {
@@ -130,7 +134,11 @@ static void testUsingProjectData(juce::StringRef testName,
         data.appData.audioSettings.bufferSize = bufferSize;
 
         // init our buffers
+#if USE_ATOMIC_WRAPPER
         initBuffers(bufferSize, numSources, numSpeakers, sourceBuffer, speakerBuffer, atomicSpeakerBuffer, stereoBuffer);
+#else
+        initBuffers (bufferSize, numSources, numSpeakers, sourceBuffer, speakerBuffer, threadSpeakerBuffer, stereoBuffer);
+#endif
 
         // create our spatialization algorithm
         auto algo{ AbstractSpatAlgorithm::make(data.speakerSetup,
@@ -163,10 +171,16 @@ static void testUsingProjectData(juce::StringRef testName,
             speakerBuffer.silence();
             stereoBuffer.clear();
     #if USE_FORK_UNION
+#if USE_ATOMIC_WRAPPER
             algo->clearAtomicSpeakerBuffer (atomicSpeakerBuffer);
+            algo->process (*config, sourceBuffer, speakerBuffer, atomicSpeakerBuffer, stereoBuffer, sourcePeaks, nullptr);
+#else
+            algo->silenceThreadSpeakerBuffer (threadSpeakerBuffer);
+            algo->process (*config, sourceBuffer, speakerBuffer, threadSpeakerBuffer, stereoBuffer, sourcePeaks, nullptr);
+#endif
     #endif
 
-            algo->process(*config, sourceBuffer, speakerBuffer, atomicSpeakerBuffer, stereoBuffer, sourcePeaks, nullptr);
+            
 
             checkSpeakerBufferValidity(speakerBuffer);
 
@@ -189,7 +203,11 @@ static void testUsingProjectData(juce::StringRef testName,
 static void benchmarkUsingProjectData(gris::SpatGrisData & data,
                                       SourceAudioBuffer & sourceBuffer,
                                       SpeakerAudioBuffer & speakerBuffer,
-                                      std::vector<std::vector<AtomicWrapper<float>>> & atomicSpeakerBuffer,
+#if USE_ATOMIC_WRAPPER
+                                      std::vector<std::vector<AtomicWrapper<float>>>& atomicSpeakerBuffer,
+#else
+                                      std::vector <std::vector<std::vector<float>>>& threadSpeakerBuffer,
+#endif
                                       juce::AudioBuffer<float> & stereoBuffer,
                                       SourcePeaks & sourcePeaks)
 {
@@ -201,7 +219,11 @@ static void benchmarkUsingProjectData(gris::SpatGrisData & data,
     data.appData.audioSettings.bufferSize = bufferSize;
 
     // init our buffers
+#if USE_ATOMIC_WRAPPER
     initBuffers(bufferSize, numSources, numSpeakers, sourceBuffer, speakerBuffer, atomicSpeakerBuffer, stereoBuffer);
+#else
+    initBuffers (bufferSize, numSources, numSpeakers, sourceBuffer, speakerBuffer, threadSpeakerBuffer, stereoBuffer);
+#endif
 
     // create our spatialization algorithm
     auto algo{ AbstractSpatAlgorithm::make(data.speakerSetup,
@@ -224,10 +246,14 @@ static void benchmarkUsingProjectData(gris::SpatGrisData & data,
         speakerBuffer.silence();
         stereoBuffer.clear();
 #if USE_FORK_UNION
+#if USE_ATOMIC_WRAPPER
         algo->clearAtomicSpeakerBuffer (atomicSpeakerBuffer);
+        algo->process (*config, sourceBuffer, speakerBuffer, atomicSpeakerBuffer, stereoBuffer, sourcePeaks, nullptr);
+#else
+        algo->silenceThreadSpeakerBuffer (threadSpeakerBuffer);
+        algo->process (*config, sourceBuffer, speakerBuffer, threadSpeakerBuffer, stereoBuffer, sourcePeaks, nullptr);
 #endif
-
-        algo->process(*config, sourceBuffer, speakerBuffer, atomicSpeakerBuffer, stereoBuffer, sourcePeaks, nullptr);
+#endif
     };
 #endif
 }
@@ -273,7 +299,13 @@ TEST_CASE(vbapTestName, "[spat]")
 
     SourceAudioBuffer sourceBuffer;
     SpeakerAudioBuffer speakerBuffer;
+#if USE_ATOMIC_WRAPPER
     std::vector<std::vector<AtomicWrapper<float>>> atomicSpeakerBuffer;
+#else
+    //so here we have N threads each containing M speakers,each containing O samples
+    std::vector<std::vector<std::vector<float>>> threadSpeakerBuffer;
+#endif
+
     juce::AudioBuffer<float> stereoBuffer;
     SourcePeaks sourcePeaks;
 
@@ -285,14 +317,22 @@ TEST_CASE(vbapTestName, "[spat]")
                          vbapData,
                          sourceBuffer,
                          speakerBuffer,
+#if USE_ATOMIC_WRAPPER
                          atomicSpeakerBuffer,
+#else
+                         threadSpeakerBuffer,
+#endif
                          stereoBuffer,
                          sourcePeaks);
     std::cout << vbapTestName << " tests done." << std::endl;
     benchmarkUsingProjectData(vbapData,
                               sourceBuffer,
                               speakerBuffer,
+#if USE_ATOMIC_WRAPPER
                               atomicSpeakerBuffer,
+#else
+                              threadSpeakerBuffer,
+#endif
                               stereoBuffer,
                               sourcePeaks);
 }

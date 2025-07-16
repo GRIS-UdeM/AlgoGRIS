@@ -57,6 +57,7 @@ bool isProbablyAudioThread()
 AbstractSpatAlgorithm::AbstractSpatAlgorithm ()
 {
 #if USE_FORK_UNION
+    //TODO VB DRY std::thread::hardware_concurrency () somewhere
     if (!threadPool.try_spawn (std::thread::hardware_concurrency ())) {
         std::fprintf (stderr, "Failed to fork the threads\n");
         jassertfalse;
@@ -65,15 +66,38 @@ AbstractSpatAlgorithm::AbstractSpatAlgorithm ()
 }
 
 #if USE_FORK_UNION
+    #if USE_ATOMIC_WRAPPER
 void AbstractSpatAlgorithm::clearAtomicSpeakerBuffer(
     std::vector<std::vector<AtomicWrapper<float>>> & atomicSpeakerBuffer) noexcept
 {
-    ashvardanian::fork_union::for_n_dynamic(threadPool, atomicSpeakerBuffer.size(), [&](std::size_t i) noexcept {
+    ashvardanian::fork_union::for_n(threadPool, atomicSpeakerBuffer.size(), [&](std::size_t i) noexcept {
         auto & individualSpeakerBuffer{ atomicSpeakerBuffer[i] };
         for (auto & wrapper : individualSpeakerBuffer)
             wrapper._a.store(0.f, std::memory_order_relaxed);
     });
 }
+    #else
+void AbstractSpatAlgorithm::silenceThreadSpeakerBuffer(std::vector<std::vector<std::vector<float>>> & threadSpeakerBuffer) noexcept
+{
+    namespace fu = ashvardanian::fork_union;
+
+    //TODO VB: this is in one of the examples but somehow this function doesn't exist?
+    //threadPool.for_threads([&](std::size_t thread_index) noexcept {
+    //    std::printf("Hello from thread # %zu (of %zu)\n", thread_index + 1, pool.count_threads());
+    //});
+
+    fu::for_n(threadPool, threadSpeakerBuffer.size(), [&](fu::prong_t prong) noexcept {
+        jassert(threadPool.is_lock_free());
+
+        // for each thread buffer
+        auto & individualThreadBuffer{ threadSpeakerBuffer[prong.task_index] };
+
+        // for each speaker buffer in the thread buffer
+        for (auto & speakerBuffer : individualThreadBuffer)
+            std::fill(speakerBuffer.begin(), speakerBuffer.end(), 0.f); // silence all speaker samples
+    });
+}
+    #endif
 #endif
 
 //==============================================================================

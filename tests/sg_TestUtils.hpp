@@ -67,7 +67,11 @@ void initBuffers(const int bufferSize,
                  const size_t numSpeakers,
                  SourceAudioBuffer & sourceBuffer,
                  SpeakerAudioBuffer & speakerBuffer,
-                 std::vector<std::vector<AtomicWrapper<float>>> & atomicSpeakerBuffer,
+#if USE_ATOMIC_WRAPPER
+                 std::vector<std::vector<AtomicWrapper<float>>>& atomicSpeakerBuffer,
+#else
+                 std::vector <std::vector<std::vector<float>>>& threadSpeakerBuffer,
+#endif
                  juce::AudioBuffer<float> & stereoBuffer);
 
 /**
