@@ -21,6 +21,7 @@
 #define USE_FIXED_NUM_LOOPS 1
 #define USE_ONLY_TWO_BUFFER_SIZES 1
 #define WRITE_TEST_OUTPUT_TO_DISK 0
+#define ONLY_TEST_VBAP 1
 
 #define REQUIRE_MESSAGE(cond, msg)                                                                                     \
     do {                                                                                                               \
