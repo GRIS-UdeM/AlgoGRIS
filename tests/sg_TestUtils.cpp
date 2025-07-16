@@ -227,7 +227,7 @@ void AudioBufferComparator::writeCachedBuffersToDisk(juce::StringRef testName,
 #endif
 }
 
-#define PRINT_BUFFERS 1
+#define PRINT_BUFFERS 0
 
 void AudioBufferComparator::compareBuffers(const float * const curBuffer, const juce::AudioBuffer<float> & savedBuffer)
 {
@@ -253,9 +253,9 @@ void AudioBufferComparator::compareBuffers(const float * const curBuffer, const 
         }
 #endif
 
-        //REQUIRE_MESSAGE(std::abs(curSample - savedSample) < .001f,
-        //                "Buffers do not match at sample " + juce::String(i) + ": " + juce::String(curSample) + " vs "
-        //                    + juce::String(savedSample));
+        REQUIRE_MESSAGE(std::abs(curSample - savedSample) < .001f,
+                        "Buffers do not match at sample " + juce::String(i) + ": " + juce::String(curSample) + " vs "
+                            + juce::String(savedSample));
     }
 }
 
