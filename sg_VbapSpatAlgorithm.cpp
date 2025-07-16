@@ -121,10 +121,38 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
 
 #if USE_FORK_UNION
     auto const sourceIds{ config.sourcesAudioConfig.getKeys() };
+
+#if 0
     ashvardanian::fork_union::for_n(threadPool, sourceIds.size(), [&](std::size_t i) noexcept {
         jassert(threadPool.is_lock_free());
         processSource(config, sourceIds[i], sourcePeaks, sourcesBuffer, speakersAudioConfig, atomicSpeakerBuffer);
     });
+#else
+    //ashvardanian::fork_union::for_slices(threadPool, sourceIds.size(), [&](std::size_t first_index, std::size_t count) noexcept
+    //    {
+    //        jassert(threadPool.is_lock_free());
+    //        processSource(config, sourceIds[i], sourcePeaks, sourcesBuffer, speakersAudioConfig, atomicSpeakerBuffer);
+    //    });
+
+    ashvardanian::fork_union::for_slices(threadPool, sourceIds.size(), [&](ashvardanian::fork_union::prong_t prong, std::size_t count) noexcept
+    {
+        /*jassert(threadPool.is_lock_free());
+        processSource(config, sourceIds[i], sourcePeaks, sourcesBuffer, speakersAudioConfig, atomicSpeakerBuffer);*/
+    });
+
+    
+
+    /*
+    pool.for_n (1000, [](std::size_t task_index) noexcept {
+        std::printf ("Running task %zu of 3\n", task_index + 1);
+                });
+
+    pool.for_slices (1000, [](std::size_t first_index, std::size_t count) noexcept
+    {
+        std::printf ("Running slice [%zu, %zu)\n", first_index, first_index + count);
+    });
+    */
+#endif
 
     // Copy atomicSpeakerBuffer into speakersBuffer
     size_t i = 0;
