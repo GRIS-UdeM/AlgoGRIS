@@ -259,8 +259,7 @@ inline void VbapSpatAlgorithm::processSource (const gris::AudioConfig& config,
                 for (int sampleIndex {}; sampleIndex < numSamples; ++sampleIndex)
                     outputSamples[sampleIndex]._a += inputSamples[sampleIndex] * currentGain;
 #else
-                for (int sampleIndex {}; sampleIndex < numSamples; ++sampleIndex)
-                    outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
+                juce::FloatVectorOperations::addWithMultiply (outputSamples.data(), inputSamples, currentGain, numSamples);
 #endif
 #else
                 juce::FloatVectorOperations::addWithMultiply(outputSamples, inputSamples, currentGain, numSamples);

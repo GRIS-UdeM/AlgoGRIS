@@ -41,7 +41,7 @@
 #include "../Containers/sg_OwnedMap.hpp"
 #include "../Containers/sg_StaticMap.hpp"
 
-#define USE_ATOMIC_WRAPPER 1
+#define USE_ATOMIC_WRAPPER 0
 
 namespace gris
 {
