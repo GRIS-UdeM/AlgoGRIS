@@ -111,9 +111,9 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
                                 SourceAudioBuffer & sourcesBuffer,
                                 SpeakerAudioBuffer & speakersBuffer,
 #if USE_ATOMIC_WRAPPER
-                                std::vector<std::vector<AtomicWrapper<float>>> & atomicSpeakerBuffer,
+                                AtomicSpeakerBuffer & atomicSpeakerBuffer,
 #else
-                                std::vector<std::vector<std::vector<float>>> & threadSpeakerBuffer,
+                                ThreadSpeakerBuffer & threadSpeakerBuffer,
 #endif
                                 [[maybe_unused]] juce::AudioBuffer<float> & stereoBuffer,
                                 SourcePeaks const & sourcePeaks,
@@ -190,7 +190,7 @@ inline void VbapSpatAlgorithm::processSource(const gris::AudioConfig & config,
                                              gris::SourceAudioBuffer & sourcesBuffer,
                                              const gris::SpeakersAudioConfig & speakersAudioConfig,
     #if USE_ATOMIC_WRAPPER
-                                             std::vector<std::vector<AtomicWrapper<float>>> & atomicSpeakerBuffer)
+                                             AtomicSpeakerBuffer & atomicSpeakerBuffer)
     #else
                                              std::vector<std::vector<float>> & speakerBuffer)
     #endif

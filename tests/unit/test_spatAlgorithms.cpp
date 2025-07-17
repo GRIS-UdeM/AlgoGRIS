@@ -113,9 +113,9 @@ static void testUsingProjectData(juce::StringRef testName,
                                  SourceAudioBuffer & sourceBuffer,
                                  SpeakerAudioBuffer & speakerBuffer,
 #if USE_ATOMIC_WRAPPER
-                                 std::vector<std::vector<AtomicWrapper<float>>> & atomicSpeakerBuffer,
+                                 AtomicSpeakerBuffer & atomicSpeakerBuffer,
 #else
-                                 std::vector<std::vector<std::vector<float>>> & threadSpeakerBuffer,
+                                 ThreadSpeakerBuffer & threadSpeakerBuffer,
 #endif
                                  juce::AudioBuffer<float> & stereoBuffer,
                                  SourcePeaks & sourcePeaks)
@@ -202,6 +202,14 @@ static void testUsingProjectData(juce::StringRef testName,
                           sourcePeaks,
                           nullptr);
         #endif
+    #else
+            algo->process(*config,
+                          sourceBuffer,
+                          speakerBuffer,
+                          atomicSpeakerBuffer,
+                          stereoBuffer,
+                          sourcePeaks,
+                          nullptr);
     #endif
 
             checkSpeakerBufferValidity(speakerBuffer);
@@ -226,9 +234,9 @@ static void benchmarkUsingProjectData(gris::SpatGrisData & data,
                                       SourceAudioBuffer & sourceBuffer,
                                       SpeakerAudioBuffer & speakerBuffer,
 #if USE_ATOMIC_WRAPPER
-                                      std::vector<std::vector<AtomicWrapper<float>>> & atomicSpeakerBuffer,
+                                      AtomicSpeakerBuffer & atomicSpeakerBuffer,
 #else
-                                      std::vector<std::vector<std::vector<float>>> & threadSpeakerBuffer,
+                                      ThreadSpeakerBuffer & threadSpeakerBuffer,
 #endif
                                       juce::AudioBuffer<float> & stereoBuffer,
                                       SourcePeaks & sourcePeaks)
@@ -322,10 +330,10 @@ TEST_CASE(vbapTestName, "[spat]")
     SourceAudioBuffer sourceBuffer;
     SpeakerAudioBuffer speakerBuffer;
 #if USE_ATOMIC_WRAPPER
-    std::vector<std::vector<AtomicWrapper<float>>> atomicSpeakerBuffer;
+    AtomicSpeakerBuffer atomicSpeakerBuffer;
 #else
     // so here we have N threads each containing M speakers,each containing O samples
-    std::vector<std::vector<std::vector<float>>> threadSpeakerBuffer;
+    ThreadSpeakerBuffer threadSpeakerBuffer;
 #endif
 
     juce::AudioBuffer<float> stereoBuffer;
@@ -369,7 +377,7 @@ TEST_CASE(stereoTestName, "[spat]")
 
     SourceAudioBuffer sourceBuffer;
     SpeakerAudioBuffer speakerBuffer;
-    std::vector<std::vector<AtomicWrapper<float>>> atomicSpeakerBuffer;
+    AtomicSpeakerBuffer atomicSpeakerBuffer;
     juce::AudioBuffer<float> stereoBuffer;
     SourcePeaks sourcePeaks;
 
@@ -399,7 +407,7 @@ TEST_CASE(mbapTestName, "[spat]")
 
     SourceAudioBuffer sourceBuffer;
     SpeakerAudioBuffer speakerBuffer;
-    std::vector<std::vector<AtomicWrapper<float>>> atomicSpeakerBuffer;
+    AtomicSpeakerBuffer atomicSpeakerBuffer;
     juce::AudioBuffer<float> stereoBuffer;
     SourcePeaks sourcePeaks;
 
@@ -427,7 +435,7 @@ TEST_CASE(hrtfTestName, "[spat]")
 
     SourceAudioBuffer sourceBuffer;
     SpeakerAudioBuffer speakerBuffer;
-    std::vector<std::vector<AtomicWrapper<float>>> atomicSpeakerBuffer;
+    AtomicSpeakerBuffer atomicSpeakerBuffer;
     juce::AudioBuffer<float> stereoBuffer;
     SourcePeaks sourcePeaks;
 

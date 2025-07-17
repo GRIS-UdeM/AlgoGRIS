@@ -66,8 +66,7 @@ AbstractSpatAlgorithm::AbstractSpatAlgorithm()
 
 #if USE_FORK_UNION
     #if USE_ATOMIC_WRAPPER
-void AbstractSpatAlgorithm::clearAtomicSpeakerBuffer(
-    std::vector<std::vector<AtomicWrapper<float>>> & atomicSpeakerBuffer) noexcept
+void AbstractSpatAlgorithm::clearAtomicSpeakerBuffer(AtomicSpeakerBuffer & atomicSpeakerBuffer) noexcept
 {
     ashvardanian::fork_union::for_n(threadPool, atomicSpeakerBuffer.size(), [&](std::size_t i) noexcept {
         auto & individualSpeakerBuffer{ atomicSpeakerBuffer[i] };
@@ -77,7 +76,7 @@ void AbstractSpatAlgorithm::clearAtomicSpeakerBuffer(
 }
     #else
 void AbstractSpatAlgorithm::silenceThreadSpeakerBuffer(
-    std::vector<std::vector<std::vector<float>>> & threadSpeakerBuffer) noexcept
+    ThreadSpeakerBuffer & threadSpeakerBuffer) noexcept
 {
     namespace fu = ashvardanian::fork_union;
 

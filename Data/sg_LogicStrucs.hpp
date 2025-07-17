@@ -85,6 +85,10 @@ struct AtomicWrapper {
     /* This isn't atomic so shouldn't be done in concurent contexts! */
     AtomicWrapper & operator=(const AtomicWrapper & other) { _a.store(other._a.load()); }
 };
+
+using AtomicSpeakerBuffer = std::vector<std::vector<AtomicWrapper<float>>>;
+#else
+using ThreadSpeakerBuffer = std::vector<std::vector<std::vector<float>>>;
 #endif
 
 //==============================================================================

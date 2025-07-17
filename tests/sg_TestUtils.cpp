@@ -9,9 +9,9 @@ void initBuffers(const int bufferSize,
                  SourceAudioBuffer & sourceBuffer,
                  SpeakerAudioBuffer & speakerBuffer,
 #if USE_ATOMIC_WRAPPER
-                 std::vector<std::vector<AtomicWrapper<float>>> & atomicSpeakerBuffer,
+                 AtomicSpeakerBuffer & atomicSpeakerBuffer,
 #else
-                 std::vector<std::vector<std::vector<float>>> & threadSpeakerBuffer,
+                 ThreadSpeakerBuffer & threadSpeakerBuffer,
 #endif
                  juce::AudioBuffer<float> & stereoBuffer)
 {
@@ -242,7 +242,7 @@ void AudioBufferComparator::writeCachedBuffersToDisk(juce::StringRef testName,
     cachedBuffers.clear();
 }
 
-#define PRINT_BUFFERS 0
+#define PRINT_BUFFERS 1
 
 void AudioBufferComparator::compareBuffers(const float * const curBuffer, const juce::AudioBuffer<float> & savedBuffer)
 {
