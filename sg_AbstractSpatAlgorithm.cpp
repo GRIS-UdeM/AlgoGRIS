@@ -54,12 +54,12 @@ bool isProbablyAudioThread()
 }
 
 //==============================================================================
-AbstractSpatAlgorithm::AbstractSpatAlgorithm ()
+AbstractSpatAlgorithm::AbstractSpatAlgorithm()
 {
 #if USE_FORK_UNION
-    //TODO VB DRY std::thread::hardware_concurrency () somewhere
-    if (!threadPool.try_spawn (std::thread::hardware_concurrency ())) {
-        std::fprintf (stderr, "Failed to fork the threads\n");
+    // TODO VB DRY std::thread::hardware_concurrency () somewhere
+    if (!threadPool.try_spawn(std::thread::hardware_concurrency())) {
+        std::fprintf(stderr, "Failed to fork the threads\n");
         jassertfalse;
     }
 #endif
@@ -77,14 +77,15 @@ void AbstractSpatAlgorithm::clearAtomicSpeakerBuffer(
     });
 }
     #else
-void AbstractSpatAlgorithm::silenceThreadSpeakerBuffer(std::vector<std::vector<std::vector<float>>> & threadSpeakerBuffer) noexcept
+void AbstractSpatAlgorithm::silenceThreadSpeakerBuffer(
+    std::vector<std::vector<std::vector<float>>> & threadSpeakerBuffer) noexcept
 {
     namespace fu = ashvardanian::fork_union;
 
-    //TODO VB: this is in one of the examples but somehow this function doesn't exist?
-    //threadPool.for_threads([&](std::size_t thread_index) noexcept {
-    //    std::printf("Hello from thread # %zu (of %zu)\n", thread_index + 1, pool.count_threads());
-    //});
+    // TODO VB: this is in one of the examples but somehow this function doesn't exist?
+    // threadPool.for_threads([&](std::size_t thread_index) noexcept {
+    //     std::printf("Hello from thread # %zu (of %zu)\n", thread_index + 1, pool.count_threads());
+    // });
 
     fu::for_n(threadPool, threadSpeakerBuffer.size(), [&](fu::prong_t prong) noexcept {
         jassert(threadPool.is_lock_free());

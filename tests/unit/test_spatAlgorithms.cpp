@@ -115,7 +115,7 @@ static void testUsingProjectData(juce::StringRef testName,
 #if USE_ATOMIC_WRAPPER
                                  std::vector<std::vector<AtomicWrapper<float>>> & atomicSpeakerBuffer,
 #else
-                                 std::vector <std::vector<std::vector<float>>>& threadSpeakerBuffer,
+                                 std::vector<std::vector<std::vector<float>>> & threadSpeakerBuffer,
 #endif
                                  juce::AudioBuffer<float> & stereoBuffer,
                                  SourcePeaks & sourcePeaks)
@@ -134,11 +134,23 @@ static void testUsingProjectData(juce::StringRef testName,
         data.appData.audioSettings.bufferSize = bufferSize;
 
         // init our buffers
-#if USE_ATOMIC_WRAPPER
-        initBuffers(bufferSize, numSources, numSpeakers, sourceBuffer, speakerBuffer, atomicSpeakerBuffer, stereoBuffer);
-#else
-        initBuffers (bufferSize, numSources, numSpeakers, sourceBuffer, speakerBuffer, threadSpeakerBuffer, stereoBuffer);
-#endif
+    #if USE_ATOMIC_WRAPPER
+        initBuffers(bufferSize,
+                    numSources,
+                    numSpeakers,
+                    sourceBuffer,
+                    speakerBuffer,
+                    atomicSpeakerBuffer,
+                    stereoBuffer);
+    #else
+        initBuffers(bufferSize,
+                    numSources,
+                    numSpeakers,
+                    sourceBuffer,
+                    speakerBuffer,
+                    threadSpeakerBuffer,
+                    stereoBuffer);
+    #endif
 
         // create our spatialization algorithm
         auto algo{ AbstractSpatAlgorithm::make(data.speakerSetup,
@@ -171,16 +183,26 @@ static void testUsingProjectData(juce::StringRef testName,
             speakerBuffer.silence();
             stereoBuffer.clear();
     #if USE_FORK_UNION
-#if USE_ATOMIC_WRAPPER
-            algo->clearAtomicSpeakerBuffer (atomicSpeakerBuffer);
-            algo->process (*config, sourceBuffer, speakerBuffer, atomicSpeakerBuffer, stereoBuffer, sourcePeaks, nullptr);
-#else
-            algo->silenceThreadSpeakerBuffer (threadSpeakerBuffer);
-            algo->process (*config, sourceBuffer, speakerBuffer, threadSpeakerBuffer, stereoBuffer, sourcePeaks, nullptr);
-#endif
+        #if USE_ATOMIC_WRAPPER
+            algo->clearAtomicSpeakerBuffer(atomicSpeakerBuffer);
+            algo->process(*config,
+                          sourceBuffer,
+                          speakerBuffer,
+                          atomicSpeakerBuffer,
+                          stereoBuffer,
+                          sourcePeaks,
+                          nullptr);
+        #else
+            algo->silenceThreadSpeakerBuffer(threadSpeakerBuffer);
+            algo->process(*config,
+                          sourceBuffer,
+                          speakerBuffer,
+                          threadSpeakerBuffer,
+                          stereoBuffer,
+                          sourcePeaks,
+                          nullptr);
+        #endif
     #endif
-
-            
 
             checkSpeakerBufferValidity(speakerBuffer);
 
@@ -204,9 +226,9 @@ static void benchmarkUsingProjectData(gris::SpatGrisData & data,
                                       SourceAudioBuffer & sourceBuffer,
                                       SpeakerAudioBuffer & speakerBuffer,
 #if USE_ATOMIC_WRAPPER
-                                      std::vector<std::vector<AtomicWrapper<float>>>& atomicSpeakerBuffer,
+                                      std::vector<std::vector<AtomicWrapper<float>>> & atomicSpeakerBuffer,
 #else
-                                      std::vector <std::vector<std::vector<float>>>& threadSpeakerBuffer,
+                                      std::vector<std::vector<std::vector<float>>> & threadSpeakerBuffer,
 #endif
                                       juce::AudioBuffer<float> & stereoBuffer,
                                       SourcePeaks & sourcePeaks)
@@ -219,11 +241,11 @@ static void benchmarkUsingProjectData(gris::SpatGrisData & data,
     data.appData.audioSettings.bufferSize = bufferSize;
 
     // init our buffers
-#if USE_ATOMIC_WRAPPER
+    #if USE_ATOMIC_WRAPPER
     initBuffers(bufferSize, numSources, numSpeakers, sourceBuffer, speakerBuffer, atomicSpeakerBuffer, stereoBuffer);
-#else
-    initBuffers (bufferSize, numSources, numSpeakers, sourceBuffer, speakerBuffer, threadSpeakerBuffer, stereoBuffer);
-#endif
+    #else
+    initBuffers(bufferSize, numSources, numSpeakers, sourceBuffer, speakerBuffer, threadSpeakerBuffer, stereoBuffer);
+    #endif
 
     // create our spatialization algorithm
     auto algo{ AbstractSpatAlgorithm::make(data.speakerSetup,
@@ -245,15 +267,15 @@ static void benchmarkUsingProjectData(gris::SpatGrisData & data,
         // catch2 will run this benchmark section in a loop, so we need to clear the output buffers before each run
         speakerBuffer.silence();
         stereoBuffer.clear();
-#if USE_FORK_UNION
-#if USE_ATOMIC_WRAPPER
-        algo->clearAtomicSpeakerBuffer (atomicSpeakerBuffer);
-        algo->process (*config, sourceBuffer, speakerBuffer, atomicSpeakerBuffer, stereoBuffer, sourcePeaks, nullptr);
-#else
-        algo->silenceThreadSpeakerBuffer (threadSpeakerBuffer);
-        algo->process (*config, sourceBuffer, speakerBuffer, threadSpeakerBuffer, stereoBuffer, sourcePeaks, nullptr);
-#endif
-#endif
+    #if USE_FORK_UNION
+        #if USE_ATOMIC_WRAPPER
+        algo->clearAtomicSpeakerBuffer(atomicSpeakerBuffer);
+        algo->process(*config, sourceBuffer, speakerBuffer, atomicSpeakerBuffer, stereoBuffer, sourcePeaks, nullptr);
+        #else
+        algo->silenceThreadSpeakerBuffer(threadSpeakerBuffer);
+        algo->process(*config, sourceBuffer, speakerBuffer, threadSpeakerBuffer, stereoBuffer, sourcePeaks, nullptr);
+        #endif
+    #endif
     };
 #endif
 }
@@ -302,7 +324,7 @@ TEST_CASE(vbapTestName, "[spat]")
 #if USE_ATOMIC_WRAPPER
     std::vector<std::vector<AtomicWrapper<float>>> atomicSpeakerBuffer;
 #else
-    //so here we have N threads each containing M speakers,each containing O samples
+    // so here we have N threads each containing M speakers,each containing O samples
     std::vector<std::vector<std::vector<float>>> threadSpeakerBuffer;
 #endif
 
@@ -352,9 +374,9 @@ TEST_CASE(stereoTestName, "[spat]")
     SourcePeaks sourcePeaks;
 
     std::cout << "Starting " << stereoTestName << " tests:" << std::endl;
-#if WRITE_TEST_OUTPUT_TO_DISK
+    #if WRITE_TEST_OUTPUT_TO_DISK
     renderProjectOutput(stereoTestName, stereoData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
-#endif
+    #endif
     testUsingProjectData(stereoTestName,
                          stereoData,
                          sourceBuffer,
@@ -364,12 +386,7 @@ TEST_CASE(stereoTestName, "[spat]")
                          sourcePeaks);
     std::cout << stereoTestName << " tests done." << std::endl;
 
-    benchmarkUsingProjectData(stereoData,
-                              sourceBuffer,
-                              speakerBuffer,
-                              atomicSpeakerBuffer,
-                              stereoBuffer,
-                              sourcePeaks);
+    benchmarkUsingProjectData(stereoData, sourceBuffer, speakerBuffer, atomicSpeakerBuffer, stereoBuffer, sourcePeaks);
 }
 
 TEST_CASE(mbapTestName, "[spat]")
@@ -387,9 +404,9 @@ TEST_CASE(mbapTestName, "[spat]")
     SourcePeaks sourcePeaks;
 
     std::cout << "Starting " << mbapTestName << " tests:" << std::endl;
-#if WRITE_TEST_OUTPUT_TO_DISK
+    #if WRITE_TEST_OUTPUT_TO_DISK
     renderProjectOutput(mbapTestName, mbapData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
-#endif
+    #endif
     testUsingProjectData(mbapTestName,
                          mbapData,
                          sourceBuffer,
@@ -399,12 +416,7 @@ TEST_CASE(mbapTestName, "[spat]")
                          sourcePeaks);
     std::cout << mbapTestName << " tests done." << std::endl;
 
-    benchmarkUsingProjectData(mbapData,
-                              sourceBuffer,
-                              speakerBuffer,
-                              atomicSpeakerBuffer,
-                              stereoBuffer,
-                              sourcePeaks);
+    benchmarkUsingProjectData(mbapData, sourceBuffer, speakerBuffer, atomicSpeakerBuffer, stereoBuffer, sourcePeaks);
 }
 
 TEST_CASE(hrtfTestName, "[spat]")
@@ -420,9 +432,9 @@ TEST_CASE(hrtfTestName, "[spat]")
     SourcePeaks sourcePeaks;
 
     std::cout << "Starting " << hrtfTestName << " tests:" << std::endl;
-#if WRITE_TEST_OUTPUT_TO_DISK
+    #if WRITE_TEST_OUTPUT_TO_DISK
     renderProjectOutput(hrtfTestName, hrtfData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
-#endif
+    #endif
     testUsingProjectData(hrtfTestName,
                          hrtfData,
                          sourceBuffer,
@@ -432,12 +444,7 @@ TEST_CASE(hrtfTestName, "[spat]")
                          sourcePeaks);
     std::cout << hrtfTestName << " tests done." << std::endl;
 
-    benchmarkUsingProjectData(hrtfData,
-                              sourceBuffer,
-                              speakerBuffer,
-                              atomicSpeakerBuffer,
-                              stereoBuffer,
-                              sourcePeaks);
+    benchmarkUsingProjectData(hrtfData, sourceBuffer, speakerBuffer, atomicSpeakerBuffer, stereoBuffer, sourcePeaks);
 }
 
 #endif

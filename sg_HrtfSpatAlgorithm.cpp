@@ -176,9 +176,9 @@ void HrtfSpatAlgorithm::process(AudioConfig const & config,
                                 SourceAudioBuffer & sourcesBuffer,
                                 SpeakerAudioBuffer & speakersBuffer,
 #if USE_ATOMIC_WRAPPER
-                                std::vector<std::vector<AtomicWrapper<float>>>& atomicSpeakerBuffer,
+                                std::vector<std::vector<AtomicWrapper<float>>> & atomicSpeakerBuffer,
 #else
-                                std::vector<std::vector<std::vector<float>>>& threadSpeakerBuffer,
+                                std::vector<std::vector<std::vector<float>>> & threadSpeakerBuffer,
 #endif
                                 juce::AudioBuffer<float> & stereoBuffer,
                                 SourcePeaks const & sourcePeaks,
@@ -196,10 +196,22 @@ void HrtfSpatAlgorithm::process(AudioConfig const & config,
 
 #if USE_ATOMIC_WRAPPER
     if (mInnerAlgorithm)
-        mInnerAlgorithm->process(config, sourcesBuffer, hrtfBuffer, atomicSpeakerBuffer, stereoBuffer, sourcePeaks, &mHrtfData.speakersAudioConfig);
+        mInnerAlgorithm->process(config,
+                                 sourcesBuffer,
+                                 hrtfBuffer,
+                                 atomicSpeakerBuffer,
+                                 stereoBuffer,
+                                 sourcePeaks,
+                                 &mHrtfData.speakersAudioConfig);
 #else
     if (mInnerAlgorithm)
-        mInnerAlgorithm->process (config, sourcesBuffer, hrtfBuffer, threadSpeakerBuffer, stereoBuffer, sourcePeaks, &mHrtfData.speakersAudioConfig);
+        mInnerAlgorithm->process(config,
+                                 sourcesBuffer,
+                                 hrtfBuffer,
+                                 threadSpeakerBuffer,
+                                 stereoBuffer,
+                                 sourcePeaks,
+                                 &mHrtfData.speakersAudioConfig);
 #endif
 
     convolutionBuffer.clear();

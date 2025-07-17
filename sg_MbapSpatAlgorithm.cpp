@@ -100,9 +100,9 @@ void MbapSpatAlgorithm::process(AudioConfig const & config,
                                 SourceAudioBuffer & sourceBuffer,
                                 SpeakerAudioBuffer & speakersBuffer,
 #if USE_ATOMIC_WRAPPER
-                                std::vector<std::vector<AtomicWrapper<float>>>& atomicSpeakerBuffer,
+                                std::vector<std::vector<AtomicWrapper<float>>> & atomicSpeakerBuffer,
 #else
-                                std::vector<std::vector<std::vector<float>>>& threadSpeakerBuffer,
+                                std::vector<std::vector<std::vector<float>>> & threadSpeakerBuffer,
 #endif
                                 [[maybe_unused]] juce::AudioBuffer<float> & stereoBuffer,
                                 SourcePeaks const & sourcePeaks,

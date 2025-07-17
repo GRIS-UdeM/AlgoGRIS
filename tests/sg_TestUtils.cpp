@@ -9,9 +9,9 @@ void initBuffers(const int bufferSize,
                  SourceAudioBuffer & sourceBuffer,
                  SpeakerAudioBuffer & speakerBuffer,
 #if USE_ATOMIC_WRAPPER
-                 std::vector<std::vector<AtomicWrapper<float>>>& atomicSpeakerBuffer,
+                 std::vector<std::vector<AtomicWrapper<float>>> & atomicSpeakerBuffer,
 #else
-                 std::vector <std::vector<std::vector<float>>>& threadSpeakerBuffer,
+                 std::vector<std::vector<std::vector<float>>> & threadSpeakerBuffer,
 #endif
                  juce::AudioBuffer<float> & stereoBuffer)
 {
@@ -36,17 +36,16 @@ void initBuffers(const int bufferSize,
     }
 #else
     // so we have a buffer for each hardware thread
-    auto const numThreads = std::thread::hardware_concurrency ();
-    threadSpeakerBuffer.resize (numThreads);
+    auto const numThreads = std::thread::hardware_concurrency();
+    threadSpeakerBuffer.resize(numThreads);
 
-    for (auto& curThreadSpeakerBuffer : threadSpeakerBuffer)
-    {
-        //then within each thread we need a buffer for each speaker
-        curThreadSpeakerBuffer.resize (numSpeakers);
+    for (auto & curThreadSpeakerBuffer : threadSpeakerBuffer) {
+        // then within each thread we need a buffer for each speaker
+        curThreadSpeakerBuffer.resize(numSpeakers);
 
         // and each speaker buffer contains bufferSize samples
-        for (auto& curSpeakerBuffer : curThreadSpeakerBuffer)
-            curSpeakerBuffer.assign (bufferSize, 0.f);
+        for (auto & curSpeakerBuffer : curThreadSpeakerBuffer)
+            curSpeakerBuffer.assign(bufferSize, 0.f);
     }
 #endif
 
