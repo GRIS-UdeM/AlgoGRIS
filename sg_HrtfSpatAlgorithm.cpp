@@ -218,7 +218,7 @@ void HrtfSpatAlgorithm::process(AudioConfig const & config,
 
 #if USE_FORK_UNION
     auto const speakerIds{ mHrtfData.speakersAudioConfig.getKeys() };
-    ashvardanian::fork_union::for_n_dynamic(threadPool, speakerIds.size(), [&](std::size_t i) noexcept {
+    ashvardanian::fork_union::for_n(threadPool, speakerIds.size(), [&](std::size_t i) noexcept {
         processSpeaker(i, speakerIds[i], sourcesBuffer, stereoBuffer);
     });
 #else

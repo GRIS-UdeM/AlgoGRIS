@@ -57,7 +57,6 @@ bool isProbablyAudioThread()
 AbstractSpatAlgorithm::AbstractSpatAlgorithm()
 {
 #if USE_FORK_UNION
-    // TODO VB DRY std::thread::hardware_concurrency () somewhere
     if (!threadPool.try_spawn(std::thread::hardware_concurrency())) {
         std::fprintf(stderr, "Failed to fork the threads\n");
         jassertfalse;

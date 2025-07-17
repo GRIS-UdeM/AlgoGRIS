@@ -216,9 +216,6 @@ void AudioBufferComparator::writeCachedBuffersToDisk(juce::StringRef testName,
                                                      int bufferSize,
                                                      double sampleRate /*= 48000.0*/)
 {
-    // VB PUT. BACK
-#if 0
-
     juce::WavAudioFormat wavFormat;
 
     for (const auto & [speakerId, buffer] : cachedBuffers) {
@@ -243,7 +240,6 @@ void AudioBufferComparator::writeCachedBuffersToDisk(juce::StringRef testName,
     }
 
     cachedBuffers.clear();
-#endif
 }
 
 #define PRINT_BUFFERS 0
