@@ -75,8 +75,7 @@ void AbstractSpatAlgorithm::clearAtomicSpeakerBuffer(AtomicSpeakerBuffer & atomi
     });
 }
     #else
-void AbstractSpatAlgorithm::silenceThreadSpeakerBuffer(
-    ThreadSpeakerBuffer & threadSpeakerBuffer) noexcept
+void AbstractSpatAlgorithm::silenceThreadSpeakerBuffer(ThreadSpeakerBuffer & threadSpeakerBuffer) noexcept
 {
     namespace fu = ashvardanian::fork_union;
 
