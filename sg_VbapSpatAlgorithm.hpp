@@ -64,9 +64,9 @@ public:
                  SourceAudioBuffer & sourcesBuffer,
                  SpeakerAudioBuffer & speakersBuffer,
 #if USE_ATOMIC_WRAPPER
-                 std::vector<std::vector<AtomicWrapper<float>>>& atomicSpeakerBuffer,
+                 std::vector<std::vector<AtomicWrapper<float>>> & atomicSpeakerBuffer,
 #else
-                 std::vector<std::vector<std::vector<float>>>& threadSpeakerBuffer,
+                 std::vector<std::vector<std::vector<float>>> & threadSpeakerBuffer,
 #endif
                  juce::AudioBuffer<float> & stereoBuffer,
                  SourcePeaks const & sourcePeaks,
@@ -84,18 +84,18 @@ private:
                        const gris::SourcePeaks & sourcePeaks,
                        gris::SourceAudioBuffer & sourcesBuffer,
                        const gris::SpeakersAudioConfig & speakersAudioConfig,
-#if USE_ATOMIC_WRAPPER
-                       std::vector<std::vector<AtomicWrapper<float>>>& atomicSpeakerBuffer);
+    #if USE_ATOMIC_WRAPPER
+                       std::vector<std::vector<AtomicWrapper<float>>> & atomicSpeakerBuffer);
+    #else
+                       std::vector<std::vector<float>> & speakerBuffer);
+    #endif
 #else
-                       std::vector<std::vector<float>>& speakerBuffer);
-#endif
-#else
-    void processSource (const gris::AudioConfig& config,
-                        const gris::source_index_t& sourceId,
-                        const gris::SourcePeaks& sourcePeaks,
-                        gris::SourceAudioBuffer& sourcesBuffer,
-                        const gris::SpeakersAudioConfig& speakersAudioConfig,
-                        SpeakerAudioBuffer& speakerBuffers);
+    void processSource(const gris::AudioConfig & config,
+                       const gris::source_index_t & sourceId,
+                       const gris::SourcePeaks & sourcePeaks,
+                       gris::SourceAudioBuffer & sourcesBuffer,
+                       const gris::SpeakersAudioConfig & speakersAudioConfig,
+                       SpeakerAudioBuffer & speakerBuffers);
 #endif
 
     JUCE_LEAK_DETECTOR(VbapSpatAlgorithm)

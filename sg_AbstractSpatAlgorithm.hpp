@@ -36,7 +36,7 @@
 #define USE_FORK_UNION 1
 
 #if USE_FORK_UNION
-#include <fork_union.hpp>
+    #include <fork_union.hpp>
 #endif
 
 namespace gris
@@ -81,7 +81,6 @@ public:
     virtual ~AbstractSpatAlgorithm() = default;
     SG_DELETE_COPY_AND_MOVE(AbstractSpatAlgorithm)
 
-
 #if USE_FORK_UNION
     #if USE_ATOMIC_WRAPPER
     void clearAtomicSpeakerBuffer(std::vector<std::vector<AtomicWrapper<float>>> & atomicSpeakerBuffer) noexcept;
@@ -118,7 +117,7 @@ public:
                          SourceAudioBuffer & sourcesBuffer,
                          SpeakerAudioBuffer & speakersBuffer,
 #if USE_ATOMIC_WRAPPER
-                         std::vector<std::vector<AtomicWrapper<float>>>& atomicSpeakerBuffer,
+                         std::vector<std::vector<AtomicWrapper<float>>> & atomicSpeakerBuffer,
 #else
                          std::vector<std::vector<std::vector<float>>> & threadSpeakerBuffer,
 #endif
@@ -148,6 +147,7 @@ public:
                                                                      SourcesData const & sources,
                                                                      double sampleRate,
                                                                      int bufferSize);
+
 protected:
 #if USE_FORK_UNION
     ashvardanian::fork_union::thread_pool_t threadPool;
