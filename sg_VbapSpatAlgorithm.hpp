@@ -86,12 +86,12 @@ private:
                        const gris::SourcePeaks & sourcePeaks,
                        gris::SourceAudioBuffer & sourcesBuffer,
                        const gris::SpeakersAudioConfig & speakersAudioConfig,
-#if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
+    #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
                        AtomicSpeakerBuffer & atomicSpeakerBuffer);
-#elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
+    #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
                        std::vector<std::vector<float>> & speakerBuffer);
-#elif FU_METHOD == FU_USE_ATOMIC_CAST
-        SpeakerAudioBuffer& speakersBuffer);
+    #elif FU_METHOD == FU_USE_ATOMIC_CAST
+                       SpeakerAudioBuffer & speakersBuffer);
     #endif
 #else
     void processSource(const gris::AudioConfig & config,

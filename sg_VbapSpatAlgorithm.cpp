@@ -138,16 +138,16 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
                       sourcePeaks,
                       sourcesBuffer,
                       speakersAudioConfig,
-        #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
+    #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
                       atomicSpeakerBuffer);
-        #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
+    #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
                       threadSpeakerBuffer[prong.thread_index]);
-        #else
+    #else
             speakersBuffer);
-        #endif
+    #endif
     });
 
-#if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
+    #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
     // Copy atomicSpeakerBuffer into speakersBuffer
     size_t i = 0;
     for (auto const & speaker : speakersAudioConfig) {
@@ -193,12 +193,12 @@ inline void VbapSpatAlgorithm::processSource(const gris::AudioConfig & config,
                                              const gris::SourcePeaks & sourcePeaks,
                                              gris::SourceAudioBuffer & sourcesBuffer,
                                              const gris::SpeakersAudioConfig & speakersAudioConfig,
-#if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
+    #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
                                              AtomicSpeakerBuffer & atomicSpeakerBuffer)
-#elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
+    #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
                                              std::vector<std::vector<float>> & speakerBuffer)
-#elif FU_METHOD == FU_USE_ATOMIC_CAST
-                                             SpeakerAudioBuffer& speakerBuffers)
+    #elif FU_METHOD == FU_USE_ATOMIC_CAST
+                                             SpeakerAudioBuffer & speakerBuffers)
     #endif
 #else
 inline void VbapSpatAlgorithm::processSource(const gris::AudioConfig & config,
@@ -247,8 +247,8 @@ inline void VbapSpatAlgorithm::processSource(const gris::AudioConfig & config,
         auto & outputSamples{ atomicSpeakerBuffer[i++] };
     #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
         auto & outputSamples{ speakerBuffer[i++] };
-    #elif  FU_METHOD == FU_USE_ATOMIC_CAST
-        auto* outputSamples { speakerBuffers[speaker.key].getWritePointer (0) };
+    #elif FU_METHOD == FU_USE_ATOMIC_CAST
+        auto * outputSamples{ speakerBuffers[speaker.key].getWritePointer(0) };
     #endif
 #else
         auto * outputSamples{ speakerBuffers[speaker.key].getWritePointer(0) };

@@ -197,9 +197,9 @@ void HrtfSpatAlgorithm::process(AudioConfig const & config,
     hrtfBuffer.silence();
 
     if (mInnerAlgorithm)
-        mInnerAlgorithm->process (config,
-                                  sourcesBuffer,
-                                  hrtfBuffer,
+        mInnerAlgorithm->process(config,
+                                 sourcesBuffer,
+                                 hrtfBuffer,
 #if USE_FORK_UNION
     #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
                                  atomicSpeakerBuffer,
@@ -207,23 +207,23 @@ void HrtfSpatAlgorithm::process(AudioConfig const & config,
                                  threadSpeakerBuffer,
     #endif
 #endif
-                                  stereoBuffer,
-                                  sourcePeaks,
-                                  &mHrtfData.speakersAudioConfig);
+                                 stereoBuffer,
+                                 sourcePeaks,
+                                 &mHrtfData.speakersAudioConfig);
 
     convolutionBuffer.clear();
 
-    #if USE_FORK_UNION
+#if USE_FORK_UNION
     auto const speakerIds{ mHrtfData.speakersAudioConfig.getKeys() };
     ashvardanian::fork_union::for_n(threadPool, speakerIds.size(), [&](std::size_t i) noexcept {
         processSpeaker(i, speakerIds[i], sourcesBuffer, stereoBuffer);
     });
-    #else
+#else
     int i = 0;
     for (auto const & speaker : mHrtfData.speakersAudioConfig) {
         processSpeaker(i++, speaker.key, sourcesBuffer, stereoBuffer);
     }
-    #endif
+#endif
 }
 
 //==============================================================================
