@@ -78,7 +78,7 @@ public:
     static std::unique_ptr<AbstractSpatAlgorithm> make(SpeakerSetup const & speakerSetup);
 
 private:
-#if USE_FORK_UNION
+#if 0 //USE_FORK_UNION
     void processSource(const gris::AudioConfig & config,
                        const gris::source_index_t & sourceId,
                        const gris::SourcePeaks & sourcePeaks,

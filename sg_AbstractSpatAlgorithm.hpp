@@ -33,7 +33,7 @@
 #include <cstdint>
 #include <memory>
 
-#define USE_FORK_UNION 1
+#define USE_FORK_UNION 0
 
 #if USE_FORK_UNION
     #include <fork_union.hpp>
@@ -116,11 +116,13 @@ public:
     virtual void process(AudioConfig const & config,
                          SourceAudioBuffer & sourcesBuffer,
                          SpeakerAudioBuffer & speakersBuffer,
+//#if USE_FORK_UNION
 #if USE_ATOMIC_WRAPPER
                          AtomicSpeakerBuffer & atomicSpeakerBuffer,
 #else
                          ThreadSpeakerBuffer & threadSpeakerBuffer,
 #endif
+//#endif
                          juce::AudioBuffer<float> & stereoBuffer,
                          SourcePeaks const & sourcePeaks,
                          SpeakersAudioConfig const * altSpeakerConfig)

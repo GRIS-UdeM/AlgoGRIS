@@ -42,7 +42,7 @@
 #include "../Containers/sg_StaticMap.hpp"
 
 // if this is 0, we'll use one set of speaker buffers per thread, avoiding the need for using atomic floats
-#define USE_ATOMIC_WRAPPER 0
+#define USE_ATOMIC_WRAPPER 1
 
 namespace gris
 {
