@@ -111,7 +111,7 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
                                 SourceAudioBuffer & sourcesBuffer,
                                 SpeakerAudioBuffer & speakersBuffer,
 #if USE_FORK_UNION
-    #if FU_METHOD == FU_USE_ATOMIC_WRAPPER
+    #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
                                 AtomicSpeakerBuffer & atomicSpeakerBuffer,
     #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
                                 ThreadSpeakerBuffer & threadSpeakerBuffer,
@@ -138,7 +138,7 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
                       sourcePeaks,
                       sourcesBuffer,
                       speakersAudioConfig,
-        #if FU_METHOD == FU_USE_ATOMIC_WRAPPER
+        #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
                       atomicSpeakerBuffer);
         #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
                       threadSpeakerBuffer[prong.thread_index]);
@@ -147,7 +147,7 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
         #endif
     });
 
-#if FU_METHOD == FU_USE_ATOMIC_WRAPPER
+#if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
     // Copy atomicSpeakerBuffer into speakersBuffer
     size_t i = 0;
     for (auto const & speaker : speakersAudioConfig) {
@@ -193,7 +193,7 @@ inline void VbapSpatAlgorithm::processSource(const gris::AudioConfig & config,
                                              const gris::SourcePeaks & sourcePeaks,
                                              gris::SourceAudioBuffer & sourcesBuffer,
                                              const gris::SpeakersAudioConfig & speakersAudioConfig,
-#if FU_METHOD == FU_USE_ATOMIC_WRAPPER
+#if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
                                              AtomicSpeakerBuffer & atomicSpeakerBuffer)
 #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
                                              std::vector<std::vector<float>> & speakerBuffer)
@@ -243,7 +243,7 @@ inline void VbapSpatAlgorithm::processSource(const gris::AudioConfig & config,
         auto const gainSlope{ gainDiff / narrow<float>(numSamples) };
 
 #if USE_FORK_UNION
-    #if FU_METHOD == FU_USE_ATOMIC_WRAPPER
+    #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
         auto & outputSamples{ atomicSpeakerBuffer[i++] };
     #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
         auto & outputSamples{ speakerBuffer[i++] };
@@ -259,7 +259,7 @@ inline void VbapSpatAlgorithm::processSource(const gris::AudioConfig & config,
             currentGain = targetGain;
             if (currentGain >= SMALL_GAIN) {
 #if USE_FORK_UNION
-    #if FU_METHOD == FU_USE_ATOMIC_WRAPPER
+    #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
                 for (int sampleIndex{}; sampleIndex < numSamples; ++sampleIndex)
                     outputSamples[sampleIndex]._a += inputSamples[sampleIndex] * currentGain;
     #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
@@ -284,7 +284,7 @@ inline void VbapSpatAlgorithm::processSource(const gris::AudioConfig & config,
             for (int sampleIndex{}; sampleIndex < numSamples; ++sampleIndex) {
                 currentGain += gainSlope;
 #if USE_FORK_UNION
-    #if FU_METHOD == FU_USE_ATOMIC_WRAPPER
+    #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
                 outputSamples[sampleIndex]._a += inputSamples[sampleIndex] * currentGain;
     #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
                 outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
@@ -305,7 +305,7 @@ inline void VbapSpatAlgorithm::processSource(const gris::AudioConfig & config,
                 for (int sampleIndex{}; sampleIndex < numSamples && currentGain >= SMALL_GAIN; ++sampleIndex) {
                     currentGain = targetGain + (currentGain - targetGain) * gainFactor;
 #if USE_FORK_UNION
-    #if FU_METHOD == FU_USE_ATOMIC_WRAPPER
+    #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
                     outputSamples[sampleIndex]._a += inputSamples[sampleIndex] * currentGain;
     #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
                     outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
@@ -326,7 +326,7 @@ inline void VbapSpatAlgorithm::processSource(const gris::AudioConfig & config,
             for (int sampleIndex{}; sampleIndex < numSamples; ++sampleIndex) {
                 currentGain = targetGain + (currentGain - targetGain) * gainFactor;
 #if USE_FORK_UNION
-    #if FU_METHOD == FU_USE_ATOMIC_WRAPPER
+    #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
                 outputSamples[sampleIndex]._a += inputSamples[sampleIndex] * currentGain;
     #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
                 outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;

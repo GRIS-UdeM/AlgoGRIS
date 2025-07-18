@@ -113,7 +113,7 @@ static void testUsingProjectData(juce::StringRef testName,
                                  SourceAudioBuffer & sourceBuffer,
                                  SpeakerAudioBuffer & speakerBuffer,
 #if USE_FORK_UNION
-    #if FU_METHOD == FU_USE_ATOMIC_WRAPPER
+    #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
                                  AtomicSpeakerBuffer & atomicSpeakerBuffer,
     #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
                                  ThreadSpeakerBuffer & threadSpeakerBuffer,
@@ -142,7 +142,7 @@ static void testUsingProjectData(juce::StringRef testName,
                     sourceBuffer,
                     speakerBuffer,
     #if USE_FORK_UNION
-        #if FU_METHOD == FU_USE_ATOMIC_WRAPPER
+        #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
                     atomicSpeakerBuffer,
         #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
                     threadSpeakerBuffer,
@@ -181,7 +181,7 @@ static void testUsingProjectData(juce::StringRef testName,
             speakerBuffer.silence();
             stereoBuffer.clear();
     #if USE_FORK_UNION
-        #if FU_METHOD == FU_USE_ATOMIC_WRAPPER
+        #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
             algo->clearAtomicSpeakerBuffer(atomicSpeakerBuffer);
         #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
             algo->silenceThreadSpeakerBuffer(threadSpeakerBuffer);
@@ -191,7 +191,7 @@ static void testUsingProjectData(juce::StringRef testName,
                           sourceBuffer,
                           speakerBuffer,
     #if USE_FORK_UNION
-        #if FU_METHOD == FU_USE_ATOMIC_WRAPPER
+        #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
                           atomicSpeakerBuffer,
         #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
                           threadSpeakerBuffer,
@@ -223,7 +223,7 @@ static void benchmarkUsingProjectData(gris::SpatGrisData & data,
                                       SourceAudioBuffer & sourceBuffer,
                                       SpeakerAudioBuffer & speakerBuffer,
 #if USE_FORK_UNION
-    #if FU_METHOD == FU_USE_ATOMIC_WRAPPER
+    #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
                                       AtomicSpeakerBuffer & atomicSpeakerBuffer,
     #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
                                       ThreadSpeakerBuffer & threadSpeakerBuffer,
@@ -246,7 +246,7 @@ static void benchmarkUsingProjectData(gris::SpatGrisData & data,
                 sourceBuffer,
                 speakerBuffer,
     #if USE_FORK_UNION
-        #if FU_METHOD == FU_USE_ATOMIC_WRAPPER
+        #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
                 atomicSpeakerBuffer,
         #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
                 threadSpeakerBuffer,
@@ -276,7 +276,7 @@ static void benchmarkUsingProjectData(gris::SpatGrisData & data,
         stereoBuffer.clear();
 
     #if USE_FORK_UNION
-        #if FU_METHOD == FU_USE_ATOMIC_WRAPPER
+        #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
         algo->clearAtomicSpeakerBuffer(atomicSpeakerBuffer);
         #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
         algo->silenceThreadSpeakerBuffer(threadSpeakerBuffer);
@@ -287,7 +287,7 @@ static void benchmarkUsingProjectData(gris::SpatGrisData & data,
                       sourceBuffer,
                       speakerBuffer,
     #if USE_FORK_UNION
-        #if FU_METHOD == FU_USE_ATOMIC_WRAPPER
+        #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
                       atomicSpeakerBuffer,
         #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
                       threadSpeakerBuffer,
@@ -342,7 +342,7 @@ TEST_CASE(vbapTestName, "[spat]")
     SourceAudioBuffer sourceBuffer;
     SpeakerAudioBuffer speakerBuffer;
 #if USE_FORK_UNION
-    #if FU_METHOD == FU_USE_ATOMIC_WRAPPER
+    #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
     AtomicSpeakerBuffer atomicSpeakerBuffer;
     #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
     // so here we have N threads each containing M speakers,each containing O samples
@@ -362,7 +362,7 @@ TEST_CASE(vbapTestName, "[spat]")
                          sourceBuffer,
                          speakerBuffer,
 #if USE_FORK_UNION
-    #if FU_METHOD == FU_USE_ATOMIC_WRAPPER
+    #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
                          atomicSpeakerBuffer,
     #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
                          threadSpeakerBuffer,
@@ -375,7 +375,7 @@ TEST_CASE(vbapTestName, "[spat]")
                               sourceBuffer,
                               speakerBuffer,
 #if USE_FORK_UNION
-    #if FU_METHOD == FU_USE_ATOMIC_WRAPPER
+    #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
                               atomicSpeakerBuffer,
     #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
                               threadSpeakerBuffer,

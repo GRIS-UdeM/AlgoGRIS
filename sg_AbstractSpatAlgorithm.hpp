@@ -80,7 +80,7 @@ public:
     SG_DELETE_COPY_AND_MOVE(AbstractSpatAlgorithm)
 
 #if USE_FORK_UNION
-    #if FU_METHOD == FU_USE_ATOMIC_WRAPPER
+    #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
     void clearAtomicSpeakerBuffer(AtomicSpeakerBuffer & atomicSpeakerBuffer) noexcept;
     #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
     void silenceThreadSpeakerBuffer(ThreadSpeakerBuffer & threadSpeakerBuffer) noexcept;
@@ -115,7 +115,7 @@ public:
                          SourceAudioBuffer & sourcesBuffer,
                          SpeakerAudioBuffer & speakersBuffer,
 #if USE_FORK_UNION
-    #if FU_METHOD == FU_USE_ATOMIC_WRAPPER
+    #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
                          AtomicSpeakerBuffer & atomicSpeakerBuffer,
     #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
                          ThreadSpeakerBuffer & threadSpeakerBuffer,

@@ -59,7 +59,7 @@ void HybridSpatAlgorithm::process(AudioConfig const & config,
                                   SourceAudioBuffer & sourcesBuffer,
                                   SpeakerAudioBuffer & speakersBuffer,
 #if USE_FORK_UNION
-    #if FU_METHOD == FU_USE_ATOMIC_WRAPPER
+    #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
                                   AtomicSpeakerBuffer & atomicSpeakerBuffer,
     #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
                                   ThreadSpeakerBuffer & threadSpeakerBuffer,
@@ -70,7 +70,7 @@ void HybridSpatAlgorithm::process(AudioConfig const & config,
                                   SpeakersAudioConfig const * altSpeakerConfig)
 {
 #if USE_FORK_UNION
-    #if FU_METHOD == FU_USE_ATOMIC_WRAPPER
+    #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
     mVbap->process(config,
                    sourcesBuffer,
                    speakersBuffer,

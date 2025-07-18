@@ -44,7 +44,7 @@
 //this is the main switch to enable/disable fork_union
 #define USE_FORK_UNION 1
 
-#define FU_USE_ATOMIC_WRAPPER 1
+#define FU_USE_ARRAY_OF_ATOMICS 1
 #define FU_USE_BUFFER_PER_THREAD 2
 #define FU_USE_ATOMIC_CAST 3
 
@@ -77,7 +77,7 @@ enum class AttenuationBypassSate : std::uint8_t { invalid, on, off };
 [[nodiscard]] AttenuationBypassSate stringToAttenuationBypassState(juce::String const & string);
 
 #if USE_FORK_UNION
-    #if FU_METHOD == FU_USE_ATOMIC_WRAPPER
+    #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
 /* Taken from https://stackoverflow.com/questions/13193484/how-to-declare-a-vector-of-atomic-in-c
  **/
 template<typename T>
