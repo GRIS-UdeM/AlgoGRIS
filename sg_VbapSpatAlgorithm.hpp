@@ -63,10 +63,12 @@ public:
     void process(AudioConfig const & config,
                  SourceAudioBuffer & sourcesBuffer,
                  SpeakerAudioBuffer & speakersBuffer,
-#if USE_ATOMIC_WRAPPER
+#if USE_FORK_UNION
+    #if FU_METHOD == FU_USE_ATOMIC_WRAPPER
                  AtomicSpeakerBuffer & atomicSpeakerBuffer,
-#else
+    #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
                  ThreadSpeakerBuffer & threadSpeakerBuffer,
+    #endif
 #endif
                  juce::AudioBuffer<float> & stereoBuffer,
                  SourcePeaks const & sourcePeaks,
@@ -78,16 +80,18 @@ public:
     static std::unique_ptr<AbstractSpatAlgorithm> make(SpeakerSetup const & speakerSetup);
 
 private:
-#if 0 //USE_FORK_UNION
+#if USE_FORK_UNION
     void processSource(const gris::AudioConfig & config,
                        const gris::source_index_t & sourceId,
                        const gris::SourcePeaks & sourcePeaks,
                        gris::SourceAudioBuffer & sourcesBuffer,
                        const gris::SpeakersAudioConfig & speakersAudioConfig,
-    #if USE_ATOMIC_WRAPPER
+#if FU_METHOD == FU_USE_ATOMIC_WRAPPER
                        AtomicSpeakerBuffer & atomicSpeakerBuffer);
-    #else
+#elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
                        std::vector<std::vector<float>> & speakerBuffer);
+#elif FU_METHOD == FU_USE_ATOMIC_CAST
+        SpeakerAudioBuffer& speakersBuffer);
     #endif
 #else
     void processSource(const gris::AudioConfig & config,

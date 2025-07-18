@@ -65,7 +65,7 @@ AbstractSpatAlgorithm::AbstractSpatAlgorithm()
 }
 
 #if USE_FORK_UNION
-    #if USE_ATOMIC_WRAPPER
+    #if FU_METHOD == FU_USE_ATOMIC_WRAPPER
 void AbstractSpatAlgorithm::clearAtomicSpeakerBuffer(AtomicSpeakerBuffer & atomicSpeakerBuffer) noexcept
 {
     ashvardanian::fork_union::for_n(threadPool, atomicSpeakerBuffer.size(), [&](std::size_t i) noexcept {
@@ -74,7 +74,7 @@ void AbstractSpatAlgorithm::clearAtomicSpeakerBuffer(AtomicSpeakerBuffer & atomi
             wrapper._a.store(0.f, std::memory_order_relaxed);
     });
 }
-    #else
+    #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
 void AbstractSpatAlgorithm::silenceThreadSpeakerBuffer(ThreadSpeakerBuffer & threadSpeakerBuffer) noexcept
 {
     namespace fu = ashvardanian::fork_union;

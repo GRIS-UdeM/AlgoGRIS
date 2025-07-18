@@ -99,10 +99,12 @@ void MbapSpatAlgorithm::updateSpatData(source_index_t const sourceIndex, SourceD
 void MbapSpatAlgorithm::process(AudioConfig const & config,
                                 SourceAudioBuffer & sourceBuffer,
                                 SpeakerAudioBuffer & speakersBuffer,
-#if USE_ATOMIC_WRAPPER
+#if USE_FORK_UNION
+    #if FU_METHOD == FU_USE_ATOMIC_WRAPPER
                                 AtomicSpeakerBuffer & atomicSpeakerBuffer,
-#else
+    #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
                                 ThreadSpeakerBuffer & threadSpeakerBuffer,
+    #endif
 #endif
                                 [[maybe_unused]] juce::AudioBuffer<float> & stereoBuffer,
                                 SourcePeaks const & sourcePeaks,

@@ -67,10 +67,12 @@ void initBuffers(const int bufferSize,
                  const size_t numSpeakers,
                  SourceAudioBuffer & sourceBuffer,
                  SpeakerAudioBuffer & speakerBuffer,
-#if USE_ATOMIC_WRAPPER
-                 AtomicSpeakerBuffer & atomicSpeakerBuffer,
-#else
-                 ThreadSpeakerBuffer & threadSpeakerBuffer,
+#if USE_FORK_UNION
+#if FU_METHOD == FU_USE_ATOMIC_WRAPPER
+                 AtomicSpeakerBuffer& atomicSpeakerBuffer,
+#elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
+                 ThreadSpeakerBuffer& threadSpeakerBuffer,
+#endif
 #endif
                  juce::AudioBuffer<float> & stereoBuffer);
 

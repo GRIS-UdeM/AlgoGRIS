@@ -8,10 +8,12 @@ void initBuffers(const int bufferSize,
                  const size_t numSpeakers,
                  SourceAudioBuffer & sourceBuffer,
                  SpeakerAudioBuffer & speakerBuffer,
-#if USE_ATOMIC_WRAPPER
+#if USE_FORK_UNION
+    #if FU_METHOD == FU_USE_ATOMIC_WRAPPER
                  AtomicSpeakerBuffer & atomicSpeakerBuffer,
-#else
+    #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
                  ThreadSpeakerBuffer & threadSpeakerBuffer,
+    #endif
 #endif
                  juce::AudioBuffer<float> & stereoBuffer)
 {
@@ -27,14 +29,15 @@ void initBuffers(const int bufferSize,
     speakerBuffer.init(speakerIndices);
     speakerBuffer.setNumSamples(bufferSize);
 
-#if USE_ATOMIC_WRAPPER
+#if USE_FORK_UNION
+    #if FU_METHOD == FU_USE_ATOMIC_WRAPPER
     atomicSpeakerBuffer.resize(numSpeakers);
     for (int i = 0; i < numSpeakers; ++i) {
         atomicSpeakerBuffer[i].clear();
         for (int j = 0; j < bufferSize; ++j)
             atomicSpeakerBuffer[i].emplace_back(0.0f);
     }
-#else
+    #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
     // so we have a buffer for each hardware thread
     auto const numThreads = std::thread::hardware_concurrency();
     threadSpeakerBuffer.resize(numThreads);
@@ -47,6 +50,7 @@ void initBuffers(const int bufferSize,
         for (auto & curSpeakerBuffer : curThreadSpeakerBuffer)
             curSpeakerBuffer.assign(bufferSize, 0.f);
     }
+    #endif
 #endif
 
     stereoBuffer.setSize(2, bufferSize);

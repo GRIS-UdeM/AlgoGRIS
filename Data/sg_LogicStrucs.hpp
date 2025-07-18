@@ -41,8 +41,15 @@
 #include "../Containers/sg_OwnedMap.hpp"
 #include "../Containers/sg_StaticMap.hpp"
 
-// if this is 0, we'll use one set of speaker buffers per thread, avoiding the need for using atomic floats
-#define USE_ATOMIC_WRAPPER 1
+//this is the main switch to enable/disable fork_union
+#define USE_FORK_UNION 1
+
+#define FU_USE_ATOMIC_WRAPPER 1
+#define FU_USE_BUFFER_PER_THREAD 2
+#define FU_USE_ATOMIC_CAST 3
+
+//and FU_METHOD is the "algorithm" use by fork_union, which is set to one of the above macros
+#define FU_METHOD FU_USE_ATOMIC_CAST
 
 namespace gris
 {
@@ -69,7 +76,8 @@ enum class AttenuationBypassSate : std::uint8_t { invalid, on, off };
 [[nodiscard]] juce::String attenuationBypassStateToString(AttenuationBypassSate state);
 [[nodiscard]] AttenuationBypassSate stringToAttenuationBypassState(juce::String const & string);
 
-#if USE_ATOMIC_WRAPPER
+#if USE_FORK_UNION
+    #if FU_METHOD == FU_USE_ATOMIC_WRAPPER
 /* Taken from https://stackoverflow.com/questions/13193484/how-to-declare-a-vector-of-atomic-in-c
  **/
 template<typename T>
@@ -87,8 +95,9 @@ struct AtomicWrapper {
 };
 
 using AtomicSpeakerBuffer = std::vector<std::vector<AtomicWrapper<float>>>;
-#else
+    #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
 using ThreadSpeakerBuffer = std::vector<std::vector<std::vector<float>>>;
+    #endif
 #endif
 
 //==============================================================================

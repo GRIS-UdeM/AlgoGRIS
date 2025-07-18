@@ -112,10 +112,12 @@ static void testUsingProjectData(juce::StringRef testName,
                                  gris::SpatGrisData & data,
                                  SourceAudioBuffer & sourceBuffer,
                                  SpeakerAudioBuffer & speakerBuffer,
-#if USE_ATOMIC_WRAPPER
+#if USE_FORK_UNION
+    #if FU_METHOD == FU_USE_ATOMIC_WRAPPER
                                  AtomicSpeakerBuffer & atomicSpeakerBuffer,
-#else
+    #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
                                  ThreadSpeakerBuffer & threadSpeakerBuffer,
+    #endif
 #endif
                                  juce::AudioBuffer<float> & stereoBuffer,
                                  SourcePeaks & sourcePeaks)
@@ -134,23 +136,19 @@ static void testUsingProjectData(juce::StringRef testName,
         data.appData.audioSettings.bufferSize = bufferSize;
 
         // init our buffers
-    #if USE_ATOMIC_WRAPPER
         initBuffers(bufferSize,
                     numSources,
                     numSpeakers,
                     sourceBuffer,
                     speakerBuffer,
+    #if USE_FORK_UNION
+        #if FU_METHOD == FU_USE_ATOMIC_WRAPPER
                     atomicSpeakerBuffer,
-                    stereoBuffer);
-    #else
-        initBuffers(bufferSize,
-                    numSources,
-                    numSpeakers,
-                    sourceBuffer,
-                    speakerBuffer,
+        #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
                     threadSpeakerBuffer,
-                    stereoBuffer);
+        #endif
     #endif
+                    stereoBuffer);
 
         // create our spatialization algorithm
         auto algo{ AbstractSpatAlgorithm::make(data.speakerSetup,
@@ -183,34 +181,25 @@ static void testUsingProjectData(juce::StringRef testName,
             speakerBuffer.silence();
             stereoBuffer.clear();
     #if USE_FORK_UNION
-        #if USE_ATOMIC_WRAPPER
+        #if FU_METHOD == FU_USE_ATOMIC_WRAPPER
             algo->clearAtomicSpeakerBuffer(atomicSpeakerBuffer);
-            algo->process(*config,
-                          sourceBuffer,
-                          speakerBuffer,
-                          atomicSpeakerBuffer,
-                          stereoBuffer,
-                          sourcePeaks,
-                          nullptr);
-        #else
+        #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
             algo->silenceThreadSpeakerBuffer(threadSpeakerBuffer);
-            algo->process(*config,
-                          sourceBuffer,
-                          speakerBuffer,
-                          threadSpeakerBuffer,
-                          stereoBuffer,
-                          sourcePeaks,
-                          nullptr);
         #endif
-    #else
+    #endif
             algo->process(*config,
                           sourceBuffer,
                           speakerBuffer,
+    #if USE_FORK_UNION
+        #if FU_METHOD == FU_USE_ATOMIC_WRAPPER
                           atomicSpeakerBuffer,
+        #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
+                          threadSpeakerBuffer,
+        #endif
+    #endif
                           stereoBuffer,
                           sourcePeaks,
                           nullptr);
-    #endif
 
             checkSpeakerBufferValidity(speakerBuffer);
 
@@ -233,10 +222,12 @@ static void testUsingProjectData(juce::StringRef testName,
 static void benchmarkUsingProjectData(gris::SpatGrisData & data,
                                       SourceAudioBuffer & sourceBuffer,
                                       SpeakerAudioBuffer & speakerBuffer,
-#if USE_ATOMIC_WRAPPER
+#if USE_FORK_UNION
+    #if FU_METHOD == FU_USE_ATOMIC_WRAPPER
                                       AtomicSpeakerBuffer & atomicSpeakerBuffer,
-#else
+    #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
                                       ThreadSpeakerBuffer & threadSpeakerBuffer,
+    #endif
 #endif
                                       juce::AudioBuffer<float> & stereoBuffer,
                                       SourcePeaks & sourcePeaks)
@@ -249,11 +240,19 @@ static void benchmarkUsingProjectData(gris::SpatGrisData & data,
     data.appData.audioSettings.bufferSize = bufferSize;
 
     // init our buffers
-    #if USE_ATOMIC_WRAPPER
-    initBuffers(bufferSize, numSources, numSpeakers, sourceBuffer, speakerBuffer, atomicSpeakerBuffer, stereoBuffer);
-    #else
-    initBuffers(bufferSize, numSources, numSpeakers, sourceBuffer, speakerBuffer, threadSpeakerBuffer, stereoBuffer);
+    initBuffers(bufferSize,
+                numSources,
+                numSpeakers,
+                sourceBuffer,
+                speakerBuffer,
+    #if USE_FORK_UNION
+        #if FU_METHOD == FU_USE_ATOMIC_WRAPPER
+                atomicSpeakerBuffer,
+        #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
+                threadSpeakerBuffer,
+        #endif
     #endif
+                stereoBuffer);
 
     // create our spatialization algorithm
     auto algo{ AbstractSpatAlgorithm::make(data.speakerSetup,
@@ -275,18 +274,31 @@ static void benchmarkUsingProjectData(gris::SpatGrisData & data,
         // catch2 will run this benchmark section in a loop, so we need to clear the output buffers before each run
         speakerBuffer.silence();
         stereoBuffer.clear();
+
     #if USE_FORK_UNION
-        #if USE_ATOMIC_WRAPPER
+        #if FU_METHOD == FU_USE_ATOMIC_WRAPPER
         algo->clearAtomicSpeakerBuffer(atomicSpeakerBuffer);
-        algo->process(*config, sourceBuffer, speakerBuffer, atomicSpeakerBuffer, stereoBuffer, sourcePeaks, nullptr);
-        #else
+        #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
         algo->silenceThreadSpeakerBuffer(threadSpeakerBuffer);
-        algo->process(*config, sourceBuffer, speakerBuffer, threadSpeakerBuffer, stereoBuffer, sourcePeaks, nullptr);
         #endif
     #endif
+
+        algo->process(*config,
+                      sourceBuffer,
+                      speakerBuffer,
+    #if USE_FORK_UNION
+        #if FU_METHOD == FU_USE_ATOMIC_WRAPPER
+                      atomicSpeakerBuffer,
+        #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
+                      threadSpeakerBuffer,
+        #endif
+    #endif
+                      stereoBuffer,
+                      sourcePeaks,
+                      nullptr);
     };
 #endif
-}
+};
 
 static SpatGrisData getSpatGrisDataFromFiles(const std::string & projectFilename,
                                              const std::string & speakerSetupFilename)
@@ -329,11 +341,13 @@ TEST_CASE(vbapTestName, "[spat]")
 
     SourceAudioBuffer sourceBuffer;
     SpeakerAudioBuffer speakerBuffer;
-#if USE_ATOMIC_WRAPPER
+#if USE_FORK_UNION
+    #if FU_METHOD == FU_USE_ATOMIC_WRAPPER
     AtomicSpeakerBuffer atomicSpeakerBuffer;
-#else
+    #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
     // so here we have N threads each containing M speakers,each containing O samples
     ThreadSpeakerBuffer threadSpeakerBuffer;
+    #endif
 #endif
 
     juce::AudioBuffer<float> stereoBuffer;
@@ -347,10 +361,12 @@ TEST_CASE(vbapTestName, "[spat]")
                          vbapData,
                          sourceBuffer,
                          speakerBuffer,
-#if USE_ATOMIC_WRAPPER
+#if USE_FORK_UNION
+    #if FU_METHOD == FU_USE_ATOMIC_WRAPPER
                          atomicSpeakerBuffer,
-#else
+    #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
                          threadSpeakerBuffer,
+    #endif
 #endif
                          stereoBuffer,
                          sourcePeaks);
@@ -358,10 +374,12 @@ TEST_CASE(vbapTestName, "[spat]")
     benchmarkUsingProjectData(vbapData,
                               sourceBuffer,
                               speakerBuffer,
-#if USE_ATOMIC_WRAPPER
+#if USE_FORK_UNION
+    #if FU_METHOD == FU_USE_ATOMIC_WRAPPER
                               atomicSpeakerBuffer,
-#else
+    #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
                               threadSpeakerBuffer,
+    #endif
 #endif
                               stereoBuffer,
                               sourcePeaks);

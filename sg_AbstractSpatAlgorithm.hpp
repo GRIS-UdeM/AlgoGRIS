@@ -33,8 +33,6 @@
 #include <cstdint>
 #include <memory>
 
-#define USE_FORK_UNION 0
-
 #if USE_FORK_UNION
     #include <fork_union.hpp>
 #endif
@@ -82,9 +80,9 @@ public:
     SG_DELETE_COPY_AND_MOVE(AbstractSpatAlgorithm)
 
 #if USE_FORK_UNION
-    #if USE_ATOMIC_WRAPPER
+    #if FU_METHOD == FU_USE_ATOMIC_WRAPPER
     void clearAtomicSpeakerBuffer(AtomicSpeakerBuffer & atomicSpeakerBuffer) noexcept;
-    #else
+    #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
     void silenceThreadSpeakerBuffer(ThreadSpeakerBuffer & threadSpeakerBuffer) noexcept;
     #endif
 #endif
@@ -116,13 +114,13 @@ public:
     virtual void process(AudioConfig const & config,
                          SourceAudioBuffer & sourcesBuffer,
                          SpeakerAudioBuffer & speakersBuffer,
-//#if USE_FORK_UNION
-#if USE_ATOMIC_WRAPPER
+#if USE_FORK_UNION
+    #if FU_METHOD == FU_USE_ATOMIC_WRAPPER
                          AtomicSpeakerBuffer & atomicSpeakerBuffer,
-#else
+    #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
                          ThreadSpeakerBuffer & threadSpeakerBuffer,
+    #endif
 #endif
-//#endif
                          juce::AudioBuffer<float> & stereoBuffer,
                          SourcePeaks const & sourcePeaks,
                          SpeakersAudioConfig const * altSpeakerConfig)

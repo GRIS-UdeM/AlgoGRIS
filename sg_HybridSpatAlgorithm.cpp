@@ -58,16 +58,19 @@ void HybridSpatAlgorithm::updateSpatData(source_index_t const sourceIndex, Sourc
 void HybridSpatAlgorithm::process(AudioConfig const & config,
                                   SourceAudioBuffer & sourcesBuffer,
                                   SpeakerAudioBuffer & speakersBuffer,
-#if USE_ATOMIC_WRAPPER
+#if USE_FORK_UNION
+    #if FU_METHOD == FU_USE_ATOMIC_WRAPPER
                                   AtomicSpeakerBuffer & atomicSpeakerBuffer,
-#else
+    #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
                                   ThreadSpeakerBuffer & threadSpeakerBuffer,
+    #endif
 #endif
                                   juce::AudioBuffer<float> & stereoBuffer,
                                   SourcePeaks const & sourcePeaks,
                                   SpeakersAudioConfig const * altSpeakerConfig)
 {
-#if USE_ATOMIC_WRAPPER
+#if USE_FORK_UNION
+    #if FU_METHOD == FU_USE_ATOMIC_WRAPPER
     mVbap->process(config,
                    sourcesBuffer,
                    speakersBuffer,
@@ -82,7 +85,7 @@ void HybridSpatAlgorithm::process(AudioConfig const & config,
                    stereoBuffer,
                    sourcePeaks,
                    altSpeakerConfig);
-#else
+    #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
     mVbap->process(config,
                    sourcesBuffer,
                    speakersBuffer,
@@ -97,6 +100,10 @@ void HybridSpatAlgorithm::process(AudioConfig const & config,
                    stereoBuffer,
                    sourcePeaks,
                    altSpeakerConfig);
+    #else
+    mVbap->process(config, sourcesBuffer, speakersBuffer, stereoBuffer, sourcePeaks, altSpeakerConfig);
+    mMbap->process(config, sourcesBuffer, speakersBuffer, stereoBuffer, sourcePeaks, altSpeakerConfig);
+    #endif
 #endif
 }
 

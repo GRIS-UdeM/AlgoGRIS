@@ -85,10 +85,12 @@ void StereoSpatAlgorithm::updateSpatData(source_index_t const sourceIndex, Sourc
 void StereoSpatAlgorithm::process(AudioConfig const & config,
                                   SourceAudioBuffer & sourcesBuffer,
                                   SpeakerAudioBuffer & speakersBuffer,
-#if USE_ATOMIC_WRAPPER
+#if USE_FORK_UNION
+    #if FU_METHOD == FU_USE_ATOMIC_WRAPPER
                                   AtomicSpeakerBuffer & atomicSpeakerBuffer,
-#else
+    #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
                                   ThreadSpeakerBuffer & threadSpeakerBuffer,
+    #endif
 #endif
                                   juce::AudioBuffer<float> & stereoBuffer,
                                   SourcePeaks const & sourcePeaks,
@@ -98,7 +100,8 @@ void StereoSpatAlgorithm::process(AudioConfig const & config,
     jassert(!altSpeakerConfig);
     jassert(stereoBuffer.getNumChannels() == 2);
 
-#if USE_ATOMIC_WRAPPER
+#if USE_FORK_UNION
+    #if FU_METHOD == FU_USE_ATOMIC_WRAPPER
     mInnerAlgorithm->process(config,
                              sourcesBuffer,
                              speakersBuffer,
@@ -106,7 +109,7 @@ void StereoSpatAlgorithm::process(AudioConfig const & config,
                              stereoBuffer,
                              sourcePeaks,
                              altSpeakerConfig);
-#else
+    #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
     mInnerAlgorithm->process(config,
                              sourcesBuffer,
                              speakersBuffer,
@@ -114,6 +117,9 @@ void StereoSpatAlgorithm::process(AudioConfig const & config,
                              stereoBuffer,
                              sourcePeaks,
                              altSpeakerConfig);
+    #endif
+#else
+    mInnerAlgorithm->process(config, sourcesBuffer, speakersBuffer, stereoBuffer, sourcePeaks, altSpeakerConfig);
 #endif
 
 #if USE_FORK_UNION

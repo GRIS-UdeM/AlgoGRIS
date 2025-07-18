@@ -175,10 +175,12 @@ void HrtfSpatAlgorithm::updateSpatData(source_index_t const sourceIndex, SourceD
 void HrtfSpatAlgorithm::process(AudioConfig const & config,
                                 SourceAudioBuffer & sourcesBuffer,
                                 SpeakerAudioBuffer & speakersBuffer,
-#if USE_ATOMIC_WRAPPER
+#if USE_FORK_UNION
+    #if FU_METHOD == FU_USE_ATOMIC_WRAPPER
                                 AtomicSpeakerBuffer & atomicSpeakerBuffer,
-#else
+    #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
                                 ThreadSpeakerBuffer & threadSpeakerBuffer,
+    #endif
 #endif
                                 juce::AudioBuffer<float> & stereoBuffer,
                                 SourcePeaks const & sourcePeaks,
@@ -194,39 +196,34 @@ void HrtfSpatAlgorithm::process(AudioConfig const & config,
     jassert(hrtfBuffer.size() == 16);
     hrtfBuffer.silence();
 
-#if USE_ATOMIC_WRAPPER
     if (mInnerAlgorithm)
-        mInnerAlgorithm->process(config,
-                                 sourcesBuffer,
-                                 hrtfBuffer,
+        mInnerAlgorithm->process (config,
+                                  sourcesBuffer,
+                                  hrtfBuffer,
+#if USE_FORK_UNION
+    #if FU_METHOD == FU_USE_ATOMIC_WRAPPER
                                  atomicSpeakerBuffer,
-                                 stereoBuffer,
-                                 sourcePeaks,
-                                 &mHrtfData.speakersAudioConfig);
-#else
-    if (mInnerAlgorithm)
-        mInnerAlgorithm->process(config,
-                                 sourcesBuffer,
-                                 hrtfBuffer,
+    #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
                                  threadSpeakerBuffer,
-                                 stereoBuffer,
-                                 sourcePeaks,
-                                 &mHrtfData.speakersAudioConfig);
+    #endif
 #endif
+                                  stereoBuffer,
+                                  sourcePeaks,
+                                  &mHrtfData.speakersAudioConfig);
 
     convolutionBuffer.clear();
 
-#if USE_FORK_UNION
+    #if USE_FORK_UNION
     auto const speakerIds{ mHrtfData.speakersAudioConfig.getKeys() };
     ashvardanian::fork_union::for_n(threadPool, speakerIds.size(), [&](std::size_t i) noexcept {
         processSpeaker(i, speakerIds[i], sourcesBuffer, stereoBuffer);
     });
-#else
+    #else
     int i = 0;
     for (auto const & speaker : mHrtfData.speakersAudioConfig) {
         processSpeaker(i++, speaker.key, sourcesBuffer, stereoBuffer);
     }
-#endif
+    #endif
 }
 
 //==============================================================================
