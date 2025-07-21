@@ -38,7 +38,7 @@ public:
     //==============================================================================
     HybridSpatAlgorithm() = default;
     ~HybridSpatAlgorithm() override = default;
-    // SG_DELETE_COPY_AND_MOVE(HybridSpatAlgorithm)
+    SG_DELETE_COPY_AND_MOVE(HybridSpatAlgorithm)
     //==============================================================================
     /** Note: do not use this function directly. Use HybridSpatAlgorithm::make() instead. */
     explicit HybridSpatAlgorithm(SpeakerSetup const & speakerSetup, std::vector<source_index_t> sourceIds);
