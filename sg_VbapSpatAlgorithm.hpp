@@ -90,12 +90,11 @@ private:
                        AtomicSpeakerBuffer & atomicSpeakerBuffer);
     #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
                        std::vector<std::vector<float>> & speakerBuffer);
-    #elif FU_METHOD == FU_USE_ATOMIC_CAST
-                       SpeakerAudioBuffer & speakersBuffer);
     #endif
 #endif
+                       SpeakerAudioBuffer & speakersBuffer);
 
-    JUCE_LEAK_DETECTOR(VbapSpatAlgorithm)
+                       JUCE_LEAK_DETECTOR(VbapSpatAlgorithm)
 };
 
 } // namespace gris

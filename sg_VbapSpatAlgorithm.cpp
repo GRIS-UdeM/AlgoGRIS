@@ -197,10 +197,9 @@ inline void VbapSpatAlgorithm::processSource(const gris::AudioConfig & config,
                                              AtomicSpeakerBuffer & atomicSpeakerBuffer)
     #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
                                              std::vector<std::vector<float>> & speakerBuffer)
-    #elif FU_METHOD == FU_USE_ATOMIC_CAST
-                                             SpeakerAudioBuffer & speakerBuffers)
     #endif
 #endif
+                                             SpeakerAudioBuffer & speakerBuffers)
 {
     auto const & source = config.sourcesAudioConfig[sourceId];
     if (source.isMuted || source.directOut || sourcePeaks[sourceId] < SMALL_GAIN) {
