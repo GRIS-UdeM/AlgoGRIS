@@ -335,6 +335,7 @@ static SpatGrisData getSpatGrisDataFromFiles(const std::string & projectFilename
 
 TEST_CASE(vbapTestName, "[spat]")
 {
+    // 1. init needed structures
     SpatGrisData vbapData = getSpatGrisDataFromFiles("default_preset.xml", "default_speaker_setup.xml");
     vbapData.project.spatMode = SpatMode::vbap;
     vbapData.appData.stereoMode = {};
@@ -349,10 +350,10 @@ TEST_CASE(vbapTestName, "[spat]")
     ThreadSpeakerBuffer threadSpeakerBuffer;
     #endif
 #endif
-
     juce::AudioBuffer<float> stereoBuffer;
     SourcePeaks sourcePeaks;
 
+    // 2. tests
     std::cout << "Starting " << vbapTestName << " tests:" << std::endl;
 #if WRITE_TEST_OUTPUT_TO_DISK
     renderProjectOutput(vbapTestName, vbapData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
@@ -371,6 +372,10 @@ TEST_CASE(vbapTestName, "[spat]")
                          stereoBuffer,
                          sourcePeaks);
     std::cout << vbapTestName << " tests done." << std::endl;
+
+
+    // 3. benchmarks, using more sources
+    vbapData = getSpatGrisDataFromFiles ("default_preset_256.xml", "default_speaker_setup.xml");
     benchmarkUsingProjectData(vbapData,
                               sourceBuffer,
                               speakerBuffer,
