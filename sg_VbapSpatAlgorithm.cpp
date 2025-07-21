@@ -187,12 +187,12 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
 #endif
 }
 
-#if USE_FORK_UNION
 inline void VbapSpatAlgorithm::processSource(const gris::AudioConfig & config,
                                              const gris::source_index_t & sourceId,
                                              const gris::SourcePeaks & sourcePeaks,
                                              gris::SourceAudioBuffer & sourcesBuffer,
                                              const gris::SpeakersAudioConfig & speakersAudioConfig,
+#if USE_FORK_UNION
     #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
                                              AtomicSpeakerBuffer & atomicSpeakerBuffer)
     #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
@@ -200,13 +200,6 @@ inline void VbapSpatAlgorithm::processSource(const gris::AudioConfig & config,
     #elif FU_METHOD == FU_USE_ATOMIC_CAST
                                              SpeakerAudioBuffer & speakerBuffers)
     #endif
-#else
-inline void VbapSpatAlgorithm::processSource(const gris::AudioConfig & config,
-                                             const gris::source_index_t & sourceId,
-                                             const gris::SourcePeaks & sourcePeaks,
-                                             gris::SourceAudioBuffer & sourcesBuffer,
-                                             const gris::SpeakersAudioConfig & speakersAudioConfig,
-                                             SpeakerAudioBuffer & speakerBuffers)
 #endif
 {
     auto const & source = config.sourcesAudioConfig[sourceId];

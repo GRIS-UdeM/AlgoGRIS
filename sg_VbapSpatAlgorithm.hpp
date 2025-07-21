@@ -80,12 +80,12 @@ public:
     static std::unique_ptr<AbstractSpatAlgorithm> make(SpeakerSetup const & speakerSetup);
 
 private:
-#if USE_FORK_UNION
     void processSource(const gris::AudioConfig & config,
                        const gris::source_index_t & sourceId,
                        const gris::SourcePeaks & sourcePeaks,
                        gris::SourceAudioBuffer & sourcesBuffer,
                        const gris::SpeakersAudioConfig & speakersAudioConfig,
+#if USE_FORK_UNION
     #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
                        AtomicSpeakerBuffer & atomicSpeakerBuffer);
     #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
@@ -93,13 +93,6 @@ private:
     #elif FU_METHOD == FU_USE_ATOMIC_CAST
                        SpeakerAudioBuffer & speakersBuffer);
     #endif
-#else
-    void processSource(const gris::AudioConfig & config,
-                       const gris::source_index_t & sourceId,
-                       const gris::SourcePeaks & sourcePeaks,
-                       gris::SourceAudioBuffer & sourcesBuffer,
-                       const gris::SpeakersAudioConfig & speakersAudioConfig,
-                       SpeakerAudioBuffer & speakerBuffers);
 #endif
 
     JUCE_LEAK_DETECTOR(VbapSpatAlgorithm)
