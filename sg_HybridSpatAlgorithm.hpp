@@ -41,7 +41,7 @@ public:
     // SG_DELETE_COPY_AND_MOVE(HybridSpatAlgorithm)
     //==============================================================================
     /** Note: do not use this function directly. Use HybridSpatAlgorithm::make() instead. */
-    explicit HybridSpatAlgorithm(SpeakerSetup const & speakerSetup, std::vector<source_index_t> && sourceIds);
+    explicit HybridSpatAlgorithm(SpeakerSetup const & speakerSetup, std::vector<source_index_t> sourceIds);
     //==============================================================================
     void updateSpatData(source_index_t sourceIndex, SourceData const & sourceData) noexcept override;
     void process(AudioConfig const & config,
@@ -63,7 +63,7 @@ public:
     //==============================================================================
     /** Instantiates an HybridSpatAlgorithm. Make sure to check getError() as this might fail. */
     static std::unique_ptr<AbstractSpatAlgorithm> make(SpeakerSetup const & speakerSetup,
-                                                       std::vector<source_index_t> && sourceIds);
+                                                       std::vector<source_index_t> sourceIds);
 
 private:
     //==============================================================================

@@ -64,7 +64,7 @@ VbapType getVbapType(SpeakersData const & speakers)
 }
 
 //==============================================================================
-VbapSpatAlgorithm::VbapSpatAlgorithm(SpeakersData const & speakers, std::vector<source_index_t> && theSourceIds)
+VbapSpatAlgorithm::VbapSpatAlgorithm(SpeakersData const & speakers, std::vector<source_index_t> theSourceIds)
     : sourceIds{ std::move(theSourceIds) }
 {
     JUCE_ASSERT_MESSAGE_THREAD;
@@ -357,7 +357,7 @@ bool VbapSpatAlgorithm::hasTriplets() const noexcept
 
 //==============================================================================
 std::unique_ptr<AbstractSpatAlgorithm> VbapSpatAlgorithm::make(SpeakerSetup const & speakerSetup,
-                                                               std::vector<source_index_t> && sourceIds)
+                                                               std::vector<source_index_t> sourceIds)
 {
     auto const getVbap
         = [&]() { return std::make_unique<VbapSpatAlgorithm>(speakerSetup.speakers, std::move(sourceIds)); };
