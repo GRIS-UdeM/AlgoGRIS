@@ -97,6 +97,8 @@ struct AtomicWrapper {
 using AtomicSpeakerBuffer = std::vector<std::vector<AtomicWrapper<float>>>;
     #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
 using ThreadSpeakerBuffer = std::vector<std::vector<std::vector<float>>>;
+    #elif FU_METHOD == FU_USE_ATOMIC_CAST
+static_assert(std::atomic_ref<float>::is_always_lock_free, "float cannot be converted to a lock-free atomic_ref!");
     #endif
 #endif
 
