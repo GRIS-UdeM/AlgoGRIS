@@ -140,12 +140,11 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
                       sourcesBuffer,
                       speakersAudioConfig,
     #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
-                      atomicSpeakerBuffer);
+                      atomicSpeakerBuffer,
     #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
-                      threadSpeakerBuffer[prong.thread_index]);
-    #else
-            speakersBuffer);
+                      threadSpeakerBuffer[prong.thread_index],
     #endif
+                      speakersBuffer);
     });
 
     #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
@@ -195,9 +194,9 @@ inline void VbapSpatAlgorithm::processSource(const gris::AudioConfig & config,
                                              const gris::SpeakersAudioConfig & speakersAudioConfig,
 #if USE_FORK_UNION
     #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
-                                             AtomicSpeakerBuffer & atomicSpeakerBuffer)
+                                             AtomicSpeakerBuffer & atomicSpeakerBuffer,
     #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
-                                             std::vector<std::vector<float>> & speakerBuffer)
+                                             std::vector<std::vector<float>> & speakerBuffer,
     #endif
 #endif
                                              SpeakerAudioBuffer & speakerBuffers)

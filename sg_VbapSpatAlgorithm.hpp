@@ -90,14 +90,14 @@ private:
                        const gris::SpeakersAudioConfig & speakersAudioConfig,
 #if USE_FORK_UNION
     #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
-                       AtomicSpeakerBuffer & atomicSpeakerBuffer);
+                       AtomicSpeakerBuffer & atomicSpeakerBuffer,
     #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
-                       std::vector<std::vector<float>> & speakerBuffer);
+                       std::vector<std::vector<float>> & speakerBuffer,
     #endif
 #endif
                        SpeakerAudioBuffer & speakersBuffer);
 
-                       JUCE_LEAK_DETECTOR(VbapSpatAlgorithm)
+    JUCE_LEAK_DETECTOR(VbapSpatAlgorithm)
 };
 
 } // namespace gris
