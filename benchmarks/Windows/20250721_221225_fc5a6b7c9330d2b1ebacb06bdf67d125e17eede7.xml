@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Catch2TestRun name="test_spatAlgorithms.exe" rng-seed="2729921251" xml-format-version="3" catch2-version="3.4.0">
+  <TestCase name="VBAP" tags="[spat]" filename="D:\a\AlgoGRIS\AlgoGRIS\tests\unit\test_spatAlgorithms.cpp" line="336">
+    <BenchmarkResults name="processing loop" samples="100" resamples="100000" iterations="1" clockResolution="30.8583" estimatedDuration="6.18638e+07">
+      <!-- All values in nano seconds -->
+      <mean value="610773" lowerBound="609667" upperBound="612562" ci="0.95"/>
+      <standardDeviation value="7050.63" lowerBound="4917.77" upperBound="12516.8" ci="0.95"/>
+      <outliers variance="0.0099" lowMild="0" lowSevere="0" highMild="3" highSevere="1"/>
+    </BenchmarkResults>
+    <OverallResult success="true" skips="0">
+      <StdOut>
+Starting VBAP tests:
+	Testing audio loop with buffer size: 512...
+	Testing audio loop with buffer size: 1024...
+VBAP tests done.
+      </StdOut>
+    </OverallResult>
+  </TestCase>
+  <OverallResults successes="4507722" failures="0" expectedFailures="0" skips="0"/>
+  <OverallResultsCases successes="1" failures="0" expectedFailures="0" skips="0"/>
+</Catch2TestRun>
