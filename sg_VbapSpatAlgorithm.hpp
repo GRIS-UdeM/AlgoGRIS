@@ -54,10 +54,12 @@ class VbapSpatAlgorithm final : public AbstractSpatAlgorithm
     VbapSourcesData mData{};
 
 public:
+    std::vector<source_index_t> sourceIds;
+
     //==============================================================================
-    explicit VbapSpatAlgorithm(SpeakersData const & speakers);
+    explicit VbapSpatAlgorithm(SpeakersData const & speakers, std::vector<source_index_t> && theSourceIds);
     ~VbapSpatAlgorithm() override = default;
-    SG_DELETE_COPY_AND_MOVE(VbapSpatAlgorithm)
+    // SG_DELETE_COPY_AND_MOVE(VbapSpatAlgorithm)
     //==============================================================================
     void updateSpatData(source_index_t sourceIndex, SourceData const & sourceData) noexcept override;
     void process(AudioConfig const & config,
@@ -77,7 +79,8 @@ public:
     [[nodiscard]] bool hasTriplets() const noexcept override;
     [[nodiscard]] tl::optional<Error> getError() const noexcept override { return tl::nullopt; }
     //==============================================================================
-    static std::unique_ptr<AbstractSpatAlgorithm> make(SpeakerSetup const & speakerSetup);
+    static std::unique_ptr<AbstractSpatAlgorithm> make(SpeakerSetup const & speakerSetup,
+                                                       std::vector<source_index_t> && theSourceIds);
 
 private:
     void processSource(const gris::AudioConfig & config,

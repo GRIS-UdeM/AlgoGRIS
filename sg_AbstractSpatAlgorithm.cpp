@@ -165,11 +165,11 @@ std::unique_ptr<AbstractSpatAlgorithm> AbstractSpatAlgorithm::make(SpeakerSetup 
 
     switch (projectSpatMode) {
     case SpatMode::vbap:
-        return VbapSpatAlgorithm::make(speakerSetup);
+        return VbapSpatAlgorithm::make(speakerSetup, sources.getKeys());
     case SpatMode::mbap:
         return MbapSpatAlgorithm::make(speakerSetup);
     case SpatMode::hybrid:
-        return HybridSpatAlgorithm::make(speakerSetup);
+        return HybridSpatAlgorithm::make(speakerSetup, sources.getKeys());
     case SpatMode::invalid:
         break;
     }

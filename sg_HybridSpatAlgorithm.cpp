@@ -23,8 +23,8 @@
 namespace gris
 {
 //==============================================================================
-HybridSpatAlgorithm::HybridSpatAlgorithm(SpeakerSetup const & speakerSetup)
-    : mVbap(std::make_unique<VbapSpatAlgorithm>(speakerSetup.speakers))
+HybridSpatAlgorithm::HybridSpatAlgorithm(SpeakerSetup const & speakerSetup, std::vector<source_index_t> && sourceIds)
+    : mVbap(std::make_unique<VbapSpatAlgorithm>(speakerSetup.speakers, std::move(sourceIds)))
     , mMbap(std::make_unique<MbapSpatAlgorithm>(speakerSetup))
 {
 }
@@ -127,12 +127,13 @@ tl::optional<AbstractSpatAlgorithm::Error> HybridSpatAlgorithm::getError() const
 }
 
 //==============================================================================
-std::unique_ptr<AbstractSpatAlgorithm> HybridSpatAlgorithm::make(SpeakerSetup const & speakerSetup)
+std::unique_ptr<AbstractSpatAlgorithm> HybridSpatAlgorithm::make(SpeakerSetup const & speakerSetup,
+                                                                 std::vector<source_index_t> && sourceIds)
 {
     if (speakerSetup.numOfSpatializedSpeakers() < 3) {
         return std::make_unique<DummySpatAlgorithm>(Error::notEnoughDomeSpeakers);
     }
-    return std::make_unique<HybridSpatAlgorithm>(speakerSetup);
+    return std::make_unique<HybridSpatAlgorithm>(speakerSetup, std::move(sourceIds));
 }
 
 } // namespace gris

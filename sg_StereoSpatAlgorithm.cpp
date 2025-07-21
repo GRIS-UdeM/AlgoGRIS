@@ -117,6 +117,8 @@ void StereoSpatAlgorithm::process(AudioConfig const & config,
                              stereoBuffer,
                              sourcePeaks,
                              altSpeakerConfig);
+    #else
+    mInnerAlgorithm->process(config, sourcesBuffer, speakersBuffer, stereoBuffer, sourcePeaks, altSpeakerConfig);
     #endif
 #else
     mInnerAlgorithm->process(config, sourcesBuffer, speakersBuffer, stereoBuffer, sourcePeaks, altSpeakerConfig);
@@ -125,7 +127,7 @@ void StereoSpatAlgorithm::process(AudioConfig const & config,
 #if USE_FORK_UNION
     auto const sourceIds{ config.sourcesAudioConfig.getKeys() };
     ashvardanian::fork_union::for_n(threadPool, sourceIds.size(), [&](std::size_t i) noexcept {
-        processSource(config, sourceIds[i], sourcePeaks, sourcesBuffer, stereoBuffer);
+        processSource(config, sourceIds[(int)i], sourcePeaks, sourcesBuffer, stereoBuffer);
     });
 #else
     for (auto const & source : config.sourcesAudioConfig)
@@ -222,13 +224,13 @@ StereoSpatAlgorithm::StereoSpatAlgorithm(SpeakerSetup const & speakerSetup,
 
     switch (projectSpatMode) {
     case SpatMode::vbap:
-        mInnerAlgorithm = VbapSpatAlgorithm::make(speakerSetup);
+        mInnerAlgorithm = VbapSpatAlgorithm::make(speakerSetup, sources.getKeys());
         break;
     case SpatMode::mbap:
         mInnerAlgorithm = MbapSpatAlgorithm::make(speakerSetup);
         break;
     case SpatMode::hybrid:
-        mInnerAlgorithm = HybridSpatAlgorithm::make(speakerSetup);
+        mInnerAlgorithm = HybridSpatAlgorithm::make(speakerSetup, sources.getKeys());
         break;
     case SpatMode::invalid:
         break;

@@ -117,7 +117,7 @@ void MbapSpatAlgorithm::process(AudioConfig const & config,
 #if USE_FORK_UNION
     auto const sourceIds{ config.sourcesAudioConfig.getKeys() };
     ashvardanian::fork_union::for_n(threadPool, sourceIds.size(), [&](std::size_t i) noexcept {
-        processSource(config, sourceIds[i], sourcePeaks, sourceBuffer, speakersAudioConfig, speakersBuffer);
+        processSource(config, sourceIds[(int)i], sourcePeaks, sourceBuffer, speakersAudioConfig, speakersBuffer);
     });
 #else
     for (auto const & source : config.sourcesAudioConfig)

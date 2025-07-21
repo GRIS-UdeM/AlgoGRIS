@@ -34,6 +34,10 @@
 #include <memory>
 
 #if USE_FORK_UNION
+    #if JUCE_WINDOWS
+        // this disables an annoying warning about structure alignment
+        #pragma warning(disable : 4324)
+    #endif
     #include <fork_union.hpp>
 #endif
 

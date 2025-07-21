@@ -64,7 +64,8 @@ VbapType getVbapType(SpeakersData const & speakers)
 }
 
 //==============================================================================
-VbapSpatAlgorithm::VbapSpatAlgorithm(SpeakersData const & speakers)
+VbapSpatAlgorithm::VbapSpatAlgorithm(SpeakersData const & speakers, std::vector<source_index_t> && theSourceIds)
+    : sourceIds{ std::move(theSourceIds) }
 {
     JUCE_ASSERT_MESSAGE_THREAD;
 
@@ -128,7 +129,7 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
 #if USE_FORK_UNION
     namespace fu = ashvardanian::fork_union;
 
-    auto const sourceIds{ config.sourcesAudioConfig.getKeys() };
+    jassert(sourceIds.size() > 0);
 
     fu::for_n(threadPool, sourceIds.size(), [&](fu::prong_t prong) noexcept {
         jassert(threadPool.is_lock_free());
@@ -221,7 +222,7 @@ inline void VbapSpatAlgorithm::processSource(const gris::AudioConfig & config,
     auto const & gainInterpolation{ config.spatGainsInterpolation };
     auto const gainFactor{ std::pow(gainInterpolation, 0.1f) * 0.0099f + 0.99f };
 
-    size_t i = 0;
+    [[maybe_unused]] size_t i = 0;
     for (auto const & speaker : speakersAudioConfig) {
         if (speaker.value.isMuted || speaker.value.isDirectOutOnly || speaker.value.gain < SMALL_GAIN) {
             // speaker silent
@@ -355,9 +356,11 @@ bool VbapSpatAlgorithm::hasTriplets() const noexcept
 }
 
 //==============================================================================
-std::unique_ptr<AbstractSpatAlgorithm> VbapSpatAlgorithm::make(SpeakerSetup const & speakerSetup)
+std::unique_ptr<AbstractSpatAlgorithm> VbapSpatAlgorithm::make(SpeakerSetup const & speakerSetup,
+                                                               std::vector<source_index_t> && sourceIds)
 {
-    auto const getVbap = [&]() { return std::make_unique<VbapSpatAlgorithm>(speakerSetup.speakers); };
+    auto const getVbap
+        = [&]() { return std::make_unique<VbapSpatAlgorithm>(speakerSetup.speakers, std::move(sourceIds)); };
 
     if (speakerSetup.numOfSpatializedSpeakers() < 3) {
         return std::make_unique<DummySpatAlgorithm>(Error::notEnoughDomeSpeakers);
