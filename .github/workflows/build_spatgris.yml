@@ -114,7 +114,7 @@ jobs:
           path: Builds/LinuxMakefile/build/SpatGRIS*
 
   Build-macOS:
-    runs-on: macos-13
+    runs-on: macos-15
     steps:
       - name: Check out repository code with submodules
         uses: actions/checkout@v4

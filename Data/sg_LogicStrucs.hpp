@@ -36,6 +36,7 @@
 #include "juce_core/juce_core.h"
 #include "juce_graphics/juce_graphics.h"
 #include "tl/optional.hpp"
+#include <atomic>
 #include <cstdint>
 #include <memory>
 #include "../Containers/sg_OwnedMap.hpp"
