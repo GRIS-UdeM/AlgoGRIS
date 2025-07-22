@@ -125,7 +125,7 @@ void StereoSpatAlgorithm::process(AudioConfig const & config,
 #endif
 
 #if USE_FORK_UNION
-    auto const sourceIds{ config.sourcesAudioConfig.getKeys() };
+    auto const sourceIds{ config.sourcesAudioConfig.getKeyVector() };
     ashvardanian::fork_union::for_n(threadPool, sourceIds.size(), [&](std::size_t i) noexcept {
         processSource(config, sourceIds[(int)i], sourcePeaks, sourcesBuffer, stereoBuffer);
     });

@@ -214,7 +214,7 @@ void HrtfSpatAlgorithm::process(AudioConfig const & config,
     convolutionBuffer.clear();
 
 #if USE_FORK_UNION
-    auto const speakerIds{ mHrtfData.speakersAudioConfig.getKeys() };
+    auto const speakerIds{ mHrtfData.speakersAudioConfig.getKeyVector() };
     ashvardanian::fork_union::for_n(threadPool, speakerIds.size(), [&](std::size_t i) noexcept {
         processSpeaker((int)i, speakerIds[(int)i], sourcesBuffer, stereoBuffer);
     });
