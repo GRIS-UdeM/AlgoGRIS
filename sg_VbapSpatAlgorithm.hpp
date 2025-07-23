@@ -86,7 +86,7 @@ private:
                        const gris::SpeakersAudioConfig & speakersAudioConfig,
 #if USE_FORK_UNION
     #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
-                       ForkUnionBuffer & atomicSpeakerBuffer,
+                       ForkUnionBuffer & forkUnionBuffer,
     #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
                        std::vector<std::vector<float>> & speakerBuffer,
     #endif

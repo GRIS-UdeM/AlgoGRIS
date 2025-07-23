@@ -43,14 +43,14 @@
 #include "../Containers/sg_StaticMap.hpp"
 
 // this is the main switch to enable/disable fork_union
-#define USE_FORK_UNION 1
+#define USE_FORK_UNION 0
 
 #define FU_USE_ARRAY_OF_ATOMICS 1
 #define FU_USE_BUFFER_PER_THREAD 2
 #define FU_USE_ATOMIC_CAST 3
 
 // and FU_METHOD is the "algorithm" use by fork_union, which is set to one of the above macros
-#define FU_METHOD FU_USE_ATOMIC_CAST
+#define FU_METHOD FU_USE_BUFFER_PER_THREAD
 
 namespace gris
 {
