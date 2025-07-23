@@ -43,7 +43,7 @@
 #include "../Containers/sg_StaticMap.hpp"
 
 // this is the main switch to enable/disable fork_union
-#define USE_FORK_UNION 0
+#define USE_FORK_UNION 1
 
 #define FU_USE_ARRAY_OF_ATOMICS 1
 #define FU_USE_BUFFER_PER_THREAD 2
