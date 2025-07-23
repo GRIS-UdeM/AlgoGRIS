@@ -85,12 +85,8 @@ void StereoSpatAlgorithm::updateSpatData(source_index_t const sourceIndex, Sourc
 void StereoSpatAlgorithm::process(AudioConfig const & config,
                                   SourceAudioBuffer & sourcesBuffer,
                                   SpeakerAudioBuffer & speakersBuffer,
-#if USE_FORK_UNION
-    #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
-                                  AtomicSpeakerBuffer & atomicSpeakerBuffer,
-    #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
-                                  ThreadSpeakerBuffer & threadSpeakerBuffer,
-    #endif
+#if USE_FORK_UNION && (FU_METHOD == FU_USE_ARRAY_OF_ATOMICS || FU_METHOD == FU_USE_BUFFER_PER_THREAD)
+                                  ForkUnionBuffer & forkUnionBuffer,
 #endif
                                   juce::AudioBuffer<float> & stereoBuffer,
                                   SourcePeaks const & sourcePeaks,
@@ -100,26 +96,9 @@ void StereoSpatAlgorithm::process(AudioConfig const & config,
     jassert(!altSpeakerConfig);
     jassert(stereoBuffer.getNumChannels() == 2);
 
-#if USE_FORK_UNION
-    #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
-    mInnerAlgorithm->process(config,
-                             sourcesBuffer,
-                             speakersBuffer,
-                             atomicSpeakerBuffer,
-                             stereoBuffer,
-                             sourcePeaks,
-                             altSpeakerConfig);
-    #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
-    mInnerAlgorithm->process(config,
-                             sourcesBuffer,
-                             speakersBuffer,
-                             threadSpeakerBuffer,
-                             stereoBuffer,
-                             sourcePeaks,
-                             altSpeakerConfig);
-    #else
-    mInnerAlgorithm->process(config, sourcesBuffer, speakersBuffer, stereoBuffer, sourcePeaks, altSpeakerConfig);
-    #endif
+#if USE_FORK_UNION && (FU_METHOD == FU_USE_ARRAY_OF_ATOMICS || FU_METHOD == FU_USE_BUFFER_PER_THREAD)
+    mInnerAlgorithm
+        ->process(config, sourcesBuffer, speakersBuffer, forkUnionBuffer, stereoBuffer, sourcePeaks, altSpeakerConfig);
 #else
     mInnerAlgorithm->process(config, sourcesBuffer, speakersBuffer, stereoBuffer, sourcePeaks, altSpeakerConfig);
 #endif

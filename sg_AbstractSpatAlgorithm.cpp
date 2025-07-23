@@ -66,29 +66,24 @@ AbstractSpatAlgorithm::AbstractSpatAlgorithm()
 
 #if USE_FORK_UNION
     #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
-void AbstractSpatAlgorithm::clearAtomicSpeakerBuffer(AtomicSpeakerBuffer & atomicSpeakerBuffer) noexcept
+void AbstractSpatAlgorithm::silenceForkUnionBuffer(ForkUnionBuffer & forkUnionBuffer) noexcept
 {
-    ashvardanian::fork_union::for_n(threadPool, atomicSpeakerBuffer.size(), [&](std::size_t i) noexcept {
-        auto & individualSpeakerBuffer{ atomicSpeakerBuffer[i] };
+    ashvardanian::fork_union::for_n(threadPool, forkUnionBuffer.size(), [&](std::size_t i) noexcept {
+        auto & individualSpeakerBuffer{ forkUnionBuffer[i] };
         for (auto & wrapper : individualSpeakerBuffer)
             wrapper._a.store(0.f, std::memory_order_relaxed);
     });
 }
     #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
-void AbstractSpatAlgorithm::silenceThreadSpeakerBuffer(ThreadSpeakerBuffer & threadSpeakerBuffer) noexcept
+void AbstractSpatAlgorithm::silenceForkUnionBuffer(ForkUnionBuffer & forkUnionBuffer) noexcept
 {
     namespace fu = ashvardanian::fork_union;
 
-    // TODO VB: this is in one of the examples but somehow this function doesn't exist?
-    // threadPool.for_threads([&](std::size_t thread_index) noexcept {
-    //     std::printf("Hello from thread # %zu (of %zu)\n", thread_index + 1, pool.count_threads());
-    // });
-
-    fu::for_n(threadPool, threadSpeakerBuffer.size(), [&](fu::prong_t prong) noexcept {
+    fu::for_n(threadPool, forkUnionBuffer.size(), [&](fu::prong_t prong) noexcept {
         jassert(threadPool.is_lock_free());
 
         // for each thread buffer
-        auto & individualThreadBuffer{ threadSpeakerBuffer[prong.task_index] };
+        auto & individualThreadBuffer{ forkUnionBuffer[prong.task_index] };
 
         // for each speaker buffer in the thread buffer
         for (auto & speakerBuffer : individualThreadBuffer)

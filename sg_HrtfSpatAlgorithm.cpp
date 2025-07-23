@@ -175,12 +175,8 @@ void HrtfSpatAlgorithm::updateSpatData(source_index_t const sourceIndex, SourceD
 void HrtfSpatAlgorithm::process(AudioConfig const & config,
                                 SourceAudioBuffer & sourcesBuffer,
                                 SpeakerAudioBuffer & speakersBuffer,
-#if USE_FORK_UNION
-    #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
-                                AtomicSpeakerBuffer & atomicSpeakerBuffer,
-    #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
-                                ThreadSpeakerBuffer & threadSpeakerBuffer,
-    #endif
+#if USE_FORK_UNION && (FU_METHOD == FU_USE_ARRAY_OF_ATOMICS || FU_METHOD == FU_USE_BUFFER_PER_THREAD)
+                                ForkUnionBuffer & forkUnionBuffer,
 #endif
                                 juce::AudioBuffer<float> & stereoBuffer,
                                 SourcePeaks const & sourcePeaks,
@@ -200,12 +196,8 @@ void HrtfSpatAlgorithm::process(AudioConfig const & config,
         mInnerAlgorithm->process(config,
                                  sourcesBuffer,
                                  hrtfBuffer,
-#if USE_FORK_UNION
-    #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
-                                 atomicSpeakerBuffer,
-    #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
-                                 threadSpeakerBuffer,
-    #endif
+#if USE_FORK_UNION && (FU_METHOD == FU_USE_ARRAY_OF_ATOMICS || FU_METHOD == FU_USE_BUFFER_PER_THREAD)
+                                 forkUnionBuffer,
 #endif
                                  stereoBuffer,
                                  sourcePeaks,

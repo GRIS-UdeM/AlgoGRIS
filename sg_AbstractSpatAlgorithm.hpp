@@ -83,12 +83,8 @@ public:
     virtual ~AbstractSpatAlgorithm() = default;
     SG_DELETE_COPY_AND_MOVE(AbstractSpatAlgorithm)
 
-#if USE_FORK_UNION
-    #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
-    void clearAtomicSpeakerBuffer(AtomicSpeakerBuffer & atomicSpeakerBuffer) noexcept;
-    #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
-    void silenceThreadSpeakerBuffer(ThreadSpeakerBuffer & threadSpeakerBuffer) noexcept;
-    #endif
+#if USE_FORK_UNION && (FU_METHOD == FU_USE_ARRAY_OF_ATOMICS || FU_METHOD == FU_USE_BUFFER_PER_THREAD)
+    void silenceForkUnionBuffer(ForkUnionBuffer & forkUnionBuffer) noexcept;
 #endif
 
     //==============================================================================
@@ -118,12 +114,8 @@ public:
     virtual void process(AudioConfig const & config,
                          SourceAudioBuffer & sourcesBuffer,
                          SpeakerAudioBuffer & speakersBuffer,
-#if USE_FORK_UNION
-    #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
-                         AtomicSpeakerBuffer & atomicSpeakerBuffer,
-    #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
-                         ThreadSpeakerBuffer & threadSpeakerBuffer,
-    #endif
+#if USE_FORK_UNION && (FU_METHOD == FU_USE_ARRAY_OF_ATOMICS || FU_METHOD == FU_USE_BUFFER_PER_THREAD)
+                         ForkUnionBuffer & forkUnionBuffer,
 #endif
                          juce::AudioBuffer<float> & stereoBuffer,
                          SourcePeaks const & sourcePeaks,

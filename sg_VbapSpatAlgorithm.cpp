@@ -107,16 +107,11 @@ void VbapSpatAlgorithm::updateSpatData(source_index_t const sourceIndex, SourceD
 }
 
 //==============================================================================
-// After processing sources, copy atomicSpeakerBuffer into speakersBuffer
 void VbapSpatAlgorithm::process(AudioConfig const & config,
                                 SourceAudioBuffer & sourcesBuffer,
                                 SpeakerAudioBuffer & speakersBuffer,
-#if USE_FORK_UNION
-    #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
-                                AtomicSpeakerBuffer & atomicSpeakerBuffer,
-    #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
-                                ThreadSpeakerBuffer & threadSpeakerBuffer,
-    #endif
+#if USE_FORK_UNION && (FU_METHOD == FU_USE_ARRAY_OF_ATOMICS || FU_METHOD == FU_USE_BUFFER_PER_THREAD)
+                                ForkUnionBuffer & forkUnionBuffer,
 #endif
                                 [[maybe_unused]] juce::AudioBuffer<float> & stereoBuffer,
                                 SourcePeaks const & sourcePeaks,
@@ -140,15 +135,15 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
                       sourcesBuffer,
                       speakersAudioConfig,
     #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
-                      atomicSpeakerBuffer,
+                      forkUnionBuffer,
     #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
-                      threadSpeakerBuffer[prong.thread_index],
+                      forkUnionBuffer[prong.thread_index],
     #endif
                       speakersBuffer);
     });
 
     #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
-    // Copy atomicSpeakerBuffer into speakersBuffer
+    // Copy ForkUnionBuffer into speakersBuffer
     size_t i = 0;
     for (auto const & speaker : speakersAudioConfig) {
         // skip silent speaker
@@ -157,14 +152,14 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
 
         auto const numSamples{ sourcesBuffer.getNumSamples() };
         auto * outputSamples{ speakersBuffer[speaker.key].getWritePointer(0) };
-        auto & inputSamples{ atomicSpeakerBuffer[i++] };
+        auto & inputSamples{ forkUnionBuffer[i++] };
 
         for (int sampleIdx = 0; sampleIdx < numSamples; ++sampleIdx)
             outputSamples[sampleIdx] = inputSamples[sampleIdx]._a;
     }
     #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
-    // Copy threadSpeakerBuffer into speakersBuffer
-    for (auto const & threadBuffers : threadSpeakerBuffer) {
+    // Copy forkUnionBuffer into speakersBuffer
+    for (auto const & threadBuffers : forkUnionBuffer) {
         size_t curSpeakerNumber = 0;
         for (auto const & speaker : speakersAudioConfig) {
             // skip silent speaker
@@ -194,7 +189,7 @@ inline void VbapSpatAlgorithm::processSource(const gris::AudioConfig & config,
                                              const gris::SpeakersAudioConfig & speakersAudioConfig,
 #if USE_FORK_UNION
     #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
-                                             AtomicSpeakerBuffer & atomicSpeakerBuffer,
+                                             ForkUnionBuffer & forkUnionBuffer,
     #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
                                              std::vector<std::vector<float>> & speakerBuffer,
     #endif
@@ -236,7 +231,7 @@ inline void VbapSpatAlgorithm::processSource(const gris::AudioConfig & config,
 
 #if USE_FORK_UNION
     #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
-        auto & outputSamples{ atomicSpeakerBuffer[i++] };
+        auto & outputSamples{ forkUnionBuffer[i++] };
     #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
         auto & outputSamples{ speakerBuffer[i++] };
     #elif FU_METHOD == FU_USE_ATOMIC_CAST
