@@ -18,8 +18,8 @@
 */
 
 #include "sg_LogicStrucs.hpp"
-#include "Data/StrongTypes/sg_SourceIndex.hpp"
 #include "Data/StrongTypes/sg_Radians.hpp"
+#include "Data/StrongTypes/sg_SourceIndex.hpp"
 #include "Data/sg_AudioStructs.hpp"
 #include "Data/sg_Narrow.hpp"
 #include "Data/sg_SpatMode.hpp"
@@ -454,19 +454,20 @@ tl::optional<SpeakerData> SpeakerData::fromVt(juce::ValueTree vt) noexcept
 
 /**
  * The speakerVt passed to this should be a speakerGroup.
- * This function is adapted from https://github.com/ossia/libossia/blob/353c348721bfd46a9f2367bc7f2339cbbd1e1e6d/src/ossia/network/dataspace/detail/dataspace_impl.cpp#L158
+ * This function is adapted from
+ * https://github.com/ossia/libossia/blob/353c348721bfd46a9f2367bc7f2339cbbd1e1e6d/src/ossia/network/dataspace/detail/dataspace_impl.cpp#L158
  */
 tl::optional<std::array<float, 4>> SpeakerData::getParentQuaternion(juce::ValueTree speakerGroup)
 {
     // The formula used here is for spaces with the y axis being up.
     // internally, spatGRIS is z axis up. We need to mixup the angles for our
     // quaternion to match this.
-    const float yawDeg{speakerGroup.getProperty(PITCH, 0.0)};
-    const float pitchDeg{speakerGroup.getProperty(YAW, 0.0)};
-    const float rollDeg{speakerGroup.getProperty(ROLL, 0.0)};
+    const float yawDeg{ speakerGroup.getProperty(PITCH, 0.0) };
+    const float pitchDeg{ speakerGroup.getProperty(YAW, 0.0) };
+    const float rollDeg{ speakerGroup.getProperty(ROLL, 0.0) };
 
     if (yawDeg == 0.0 && pitchDeg == 0.0 && rollDeg == 0.0) {
-      return tl::nullopt;
+        return tl::nullopt;
     }
 
     const auto yaw = yawDeg * radians_t::RADIAN_PER_DEGREE * -0.5;
@@ -488,30 +489,31 @@ tl::optional<std::array<float, 4>> SpeakerData::getParentQuaternion(juce::ValueT
         cosYaw * sinPitch * cosRoll - sinYaw * cosPitch * sinRoll, // X
         sinYaw * cosPitchCosRoll + cosYaw * sinPitchSinRoll,       // Z
         cosYaw * cosPitch * sinRoll + sinYaw * sinPitch * cosRoll, // Y
-        - (cosYaw * cosPitchCosRoll - sinYaw * sinPitchSinRoll)    // -W
+        -(cosYaw * cosPitchCosRoll - sinYaw * sinPitchSinRoll)     // -W
     };
 }
 
-constexpr std::array<float, 4> SpeakerData::quatMult(const std::array<float, 4>& a, const std::array<float, 4>& b)
+constexpr std::array<float, 4> SpeakerData::quatMult(const std::array<float, 4> & a, const std::array<float, 4> & b)
 {
     std::array<float, 4> result;
-    result[0] = a[0]*b[0] - a[1]*b[1] - a[2]*b[2] - a[3]*b[3];
-    result[1] = a[0]*b[1] + a[1]*b[0] - a[2]*b[3] + a[3]*b[2];
-    result[2] = a[0]*b[2] + a[1]*b[3] + a[2]*b[0] - a[3]*b[1];
-    result[3] = a[0]*b[3] - a[1]*b[2] + a[2]*b[1] + a[3]*b[0];
+    result[0] = a[0] * b[0] - a[1] * b[1] - a[2] * b[2] - a[3] * b[3];
+    result[1] = a[0] * b[1] + a[1] * b[0] - a[2] * b[3] + a[3] * b[2];
+    result[2] = a[0] * b[2] + a[1] * b[3] + a[2] * b[0] - a[3] * b[1];
+    result[3] = a[0] * b[3] - a[1] * b[2] + a[2] * b[1] + a[3] * b[0];
     return result;
 }
 
-constexpr std::array<float, 4> SpeakerData::quatInv(const std::array<float, 4>& a)
+constexpr std::array<float, 4> SpeakerData::quatInv(const std::array<float, 4> & a)
 {
-    return {a[0], -a[1], -a[2], -a[3]};
+    return { a[0], -a[1], -a[2], -a[3] };
 }
 
-constexpr std::array<float, 3> SpeakerData::quatRotation(const std::array<float, 3>& xyz, const std::array<float, 4>& rotQuat)
+constexpr std::array<float, 3> SpeakerData::quatRotation(const std::array<float, 3> & xyz,
+                                                         const std::array<float, 4> & rotQuat)
 {
-  std::array<float, 4> xyzQuat = {0, xyz[0], xyz[1], xyz[2]};
-  auto resultQuat = quatMult(quatMult(quatInv(rotQuat), xyzQuat), rotQuat);
-  return {resultQuat[1], resultQuat[2], resultQuat[3]};
+    std::array<float, 4> xyzQuat = { 0, xyz[0], xyz[1], xyz[2] };
+    auto resultQuat = quatMult(quatMult(quatInv(rotQuat), xyzQuat), rotQuat);
+    return { resultQuat[1], resultQuat[2], resultQuat[3] };
 }
 
 tl::optional<Position> SpeakerData::getAbsoluteSpeakerPosition(juce::ValueTree speakerVt)
@@ -532,11 +534,10 @@ tl::optional<Position> SpeakerData::getAbsoluteSpeakerPosition(juce::ValueTree s
     // if our parent does not have a rotation, we can just add the positions, else
     // we do quat rotation.
     if (!parentQuat) {
-      return getAbsoluteSpeakerPosition(speakerPosition, parentPosition);
+        return getAbsoluteSpeakerPosition(speakerPosition, parentPosition);
     } else {
-      return getAbsoluteSpeakerPosition(speakerPosition, parentPosition, *parentQuat);
+        return getAbsoluteSpeakerPosition(speakerPosition, parentPosition, *parentQuat);
     }
-
 }
 
 tl::optional<Position> SpeakerData::getAbsoluteSpeakerPosition(Position speakerPosition, Position parentPosition)
@@ -548,15 +549,15 @@ tl::optional<Position> SpeakerData::getAbsoluteSpeakerPosition(Position speakerP
                                       cartesianParent.z + speakerCartesian.z } };
 }
 
-tl::optional<Position> SpeakerData::getAbsoluteSpeakerPosition(Position speakerPosition, Position parentPosition, std::array<float, 4> parentQuat)
+tl::optional<Position> SpeakerData::getAbsoluteSpeakerPosition(Position speakerPosition,
+                                                               Position parentPosition,
+                                                               std::array<float, 4> parentQuat)
 {
     auto speakerCartesian = speakerPosition.getCartesian();
-    auto rotatedPosition = quatRotation(
-        {speakerCartesian.x, speakerCartesian.y, speakerCartesian.z},
-        parentQuat);
+    auto rotatedPosition = quatRotation({ speakerCartesian.x, speakerCartesian.y, speakerCartesian.z }, parentQuat);
     // once we are rotated, just go to the other function
-    return getAbsoluteSpeakerPosition (
-        Position{CartesianVector{rotatedPosition[0], rotatedPosition[1], rotatedPosition[2]}},
+    return getAbsoluteSpeakerPosition(
+        Position{ CartesianVector{ rotatedPosition[0], rotatedPosition[1], rotatedPosition[2] } },
         parentPosition);
 }
 

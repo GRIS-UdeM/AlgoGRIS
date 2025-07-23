@@ -256,15 +256,17 @@ struct SpeakerData {
     /**
      * Quaternion multiplication.
      */
-    [[nodiscard]] static constexpr std::array<float, 4> quatMult(const std::array<float, 4>& a, const std::array<float, 4>& b);
+    [[nodiscard]] static constexpr std::array<float, 4> quatMult(const std::array<float, 4> & a,
+                                                                 const std::array<float, 4> & b);
     /**
      * Quaternion inverse.
      */
-    [[nodiscard]] static constexpr std::array<float, 4> quatInv(const std::array<float, 4>& a);
+    [[nodiscard]] static constexpr std::array<float, 4> quatInv(const std::array<float, 4> & a);
     /**
      * Quaternion rotation of a xyz position. Returns a std::array of {x,y,z}.
      */
-    [[nodiscard]] static constexpr std::array<float, 3> quatRotation(const std::array<float, 3>& xyz, const std::array<float, 4>& rotQuat);
+    [[nodiscard]] static constexpr std::array<float, 3> quatRotation(const std::array<float, 3> & xyz,
+                                                                     const std::array<float, 4> & rotQuat);
     [[nodiscard]] static tl::optional<SpeakerData> fromXml(juce::XmlElement const & xml) noexcept;
     [[nodiscard]] static tl::optional<SpeakerData> fromVt(juce::ValueTree vt) noexcept;
 
@@ -290,10 +292,13 @@ struct SpeakerData {
     static tl::optional<Position> getAbsoluteSpeakerPosition(Position localSpeakerPosition, Position parentPosition);
 
     /**
-     * Computes the speaker's absolute position given a speaker's position relative to its parent, its parent's position and its parent's rotation quaternion.
-     * This rotates the local position and calls the overload which adds the groups position to the relative position of the speaker.
+     * Computes the speaker's absolute position given a speaker's position relative to its parent, its parent's position
+     * and its parent's rotation quaternion. This rotates the local position and calls the overload which adds the
+     * groups position to the relative position of the speaker.
      */
-    static tl::optional<Position> getAbsoluteSpeakerPosition(Position localSpeakerPosition, Position parentPosition, std::array<float, 4> parentQuat);
+    static tl::optional<Position> getAbsoluteSpeakerPosition(Position localSpeakerPosition,
+                                                             Position parentPosition,
+                                                             std::array<float, 4> parentQuat);
 
     [[nodiscard]] bool operator==(SpeakerData const & other) const noexcept;
     //==============================================================================
