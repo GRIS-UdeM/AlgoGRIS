@@ -105,11 +105,14 @@ jobs:
         run: |
           mkdir -p benchmarks/${RUNNER_OS}
 
-          if [[ "$RUNNER_OS" == "Windows" ]]; then
-            ./Release/test_spatAlgorithms.exe --reporter xml --out benchmarks/${RUNNER_OS}/${{ github.sha }}.xml
-          else
+          if [[ "$RUNNER_OS" == "benchmarks" ]]; then
             ./Release/test_spatAlgorithms --reporter xml --out benchmarks/${RUNNER_OS}/${{ github.sha }}.xml
-          fi
+
+          # if [[ "$RUNNER_OS" == "Windows" ]]; then
+          #   ./Release/test_spatAlgorithms.exe --reporter xml --out benchmarks/${RUNNER_OS}/${{ github.sha }}.xml
+          # else
+          #   ./Release/test_spatAlgorithms --reporter xml --out benchmarks/${RUNNER_OS}/${{ github.sha }}.xml
+          # fi
 
           echo "===== Benchmark XML Output ====="
           cat benchmarks/${RUNNER_OS}/${{ github.sha }}.xml
