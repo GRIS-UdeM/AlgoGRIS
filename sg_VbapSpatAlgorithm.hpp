@@ -54,10 +54,8 @@ class VbapSpatAlgorithm final : public AbstractSpatAlgorithm
     VbapSourcesData mData{};
 
 public:
-    std::vector<source_index_t> sourceIds;
-
     //==============================================================================
-    explicit VbapSpatAlgorithm(SpeakersData const & speakers, std::vector<source_index_t> theSourceIds);
+    explicit VbapSpatAlgorithm(SpeakersData const & speakers, const std::vector<source_index_t> & theSourceIds);
     ~VbapSpatAlgorithm() override = default;
     SG_DELETE_COPY_AND_MOVE(VbapSpatAlgorithm)
     //==============================================================================
@@ -92,6 +90,10 @@ private:
     #endif
 #endif
                        SpeakerAudioBuffer & speakersBuffer);
+
+#if USE_FORK_UNION
+    std::vector<source_index_t> sourceIds;
+#endif
 
     JUCE_LEAK_DETECTOR(VbapSpatAlgorithm)
 };

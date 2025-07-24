@@ -127,7 +127,7 @@ HrtfSpatAlgorithm::HrtfSpatAlgorithm(SpeakerSetup const & speakerSetup,
         mInnerAlgorithm = std::make_unique<VbapSpatAlgorithm>(binauralSpeakerData, sources.getKeys());
         break;
     case SpatMode::mbap:
-        mInnerAlgorithm = std::make_unique<MbapSpatAlgorithm>(*binauralSpeakerSetup);
+        mInnerAlgorithm = std::make_unique<MbapSpatAlgorithm>(*binauralSpeakerSetup, sources.getKeys());
         break;
     case SpatMode::hybrid:
         mInnerAlgorithm = std::make_unique<HybridSpatAlgorithm>(*binauralSpeakerSetup, sources.getKeys());

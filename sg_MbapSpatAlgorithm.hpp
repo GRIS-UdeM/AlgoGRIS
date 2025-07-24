@@ -63,7 +63,7 @@ public:
     ~MbapSpatAlgorithm() override = default;
     SG_DELETE_COPY_AND_MOVE(MbapSpatAlgorithm)
     //==============================================================================
-    explicit MbapSpatAlgorithm(SpeakerSetup const & speakerSetup);
+    explicit MbapSpatAlgorithm(SpeakerSetup const & speakerSetup, std::vector<source_index_t> && sourceIds);
     //==============================================================================
     void updateSpatData(source_index_t sourceIndex, SourceData const & sourceData) noexcept override;
     void process(AudioConfig const & config,
@@ -79,7 +79,8 @@ public:
     [[nodiscard]] bool hasTriplets() const noexcept override { return false; }
     [[nodiscard]] tl::optional<Error> getError() const noexcept override { return tl::nullopt; }
     //==============================================================================
-    static std::unique_ptr<AbstractSpatAlgorithm> make(SpeakerSetup const & speakerSetup);
+    static std::unique_ptr<AbstractSpatAlgorithm> make(SpeakerSetup const & speakerSetup,
+                                                       std::vector<source_index_t> && sourceIds);
 
 private:
     void processSource(const gris::AudioConfig & config,
@@ -88,6 +89,11 @@ private:
                        gris::SourceAudioBuffer & sourcesBuffer,
                        const gris::SpeakersAudioConfig & speakersAudioConfig,
                        gris::SpeakerAudioBuffer & speakersBuffer);
+
+#if USE_FORK_UNION
+    std::vector<source_index_t> sourceIds;
+#endif
+
     JUCE_LEAK_DETECTOR(MbapSpatAlgorithm)
 };
 

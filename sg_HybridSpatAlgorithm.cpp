@@ -24,8 +24,8 @@ namespace gris
 {
 //==============================================================================
 HybridSpatAlgorithm::HybridSpatAlgorithm(SpeakerSetup const & speakerSetup, std::vector<source_index_t> sourceIds)
-    : mVbap(std::make_unique<VbapSpatAlgorithm>(speakerSetup.speakers, std::move(sourceIds)))
-    , mMbap(std::make_unique<MbapSpatAlgorithm>(speakerSetup))
+    : mVbap(std::make_unique<VbapSpatAlgorithm>(speakerSetup.speakers, sourceIds))
+    , mMbap(std::make_unique<MbapSpatAlgorithm>(speakerSetup, std::move(sourceIds)))
 {
 }
 
