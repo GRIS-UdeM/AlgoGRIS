@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Catch2TestRun name="test_spatAlgorithms.exe" rng-seed="1298045044" xml-format-version="3" catch2-version="3.4.0">
+  <TestCase name="VBAP" tags="[spat]" filename="D:\a\AlgoGRIS\AlgoGRIS\tests\unit\test_spatAlgorithms.cpp" line="265">
+    <BenchmarkResults name="processing loop" samples="100" resamples="100000" iterations="1" clockResolution="28.019" estimatedDuration="1.45239e+07">
+      <!-- All values in nano seconds -->
+      <mean value="145680" lowerBound="144978" upperBound="146641" ci="0.95"/>
+      <standardDeviation value="4150.49" lowerBound="3334" upperBound="5477.26" ci="0.95"/>
+      <outliers variance="0.228912" lowMild="0" lowSevere="0" highMild="0" highSevere="23"/>
+    </BenchmarkResults>
+    <OverallResult success="true" skips="0">
+      <StdOut>
+Starting VBAP tests:
+	Testing audio loop with buffer size: 1...
+	Testing audio loop with buffer size: 512...
+	Testing audio loop with buffer size: 1024...
+	Testing audio loop with buffer size: 4096...
+VBAP tests done.
+      </StdOut>
+    </OverallResult>
+  </TestCase>
+  <TestCase name="STEREO" tags="[spat]" filename="D:\a\AlgoGRIS\AlgoGRIS\tests\unit\test_spatAlgorithms.cpp" line="285">
+    <BenchmarkResults name="processing loop" samples="100" resamples="100000" iterations="1" clockResolution="28.019" estimatedDuration="8.6558e+06">
+      <!-- All values in nano seconds -->
+      <mean value="86460" lowerBound="86033" upperBound="87113" ci="0.95"/>
+      <standardDeviation value="2657.52" lowerBound="1907.21" upperBound="3534.49" ci="0.95"/>
+      <outliers variance="0.257943" lowMild="0" lowSevere="0" highMild="0" highSevere="12"/>
+    </BenchmarkResults>
+    <OverallResult success="true" skips="0">
+      <StdOut>
+Starting STEREO tests:
+	Testing audio loop with buffer size: 1...
+	Testing audio loop with buffer size: 512...
+	Testing audio loop with buffer size: 1024...
+	Testing audio loop with buffer size: 4096...
+STEREO tests done.
+      </StdOut>
+    </OverallResult>
+  </TestCase>
+  <TestCase name="MBAP" tags="[spat]" filename="D:\a\AlgoGRIS\AlgoGRIS\tests\unit\test_spatAlgorithms.cpp" line="306">
+    <BenchmarkResults name="processing loop" samples="100" resamples="100000" iterations="1" clockResolution="28.019" estimatedDuration="3.18862e+07">
+      <!-- All values in nano seconds -->
+      <mean value="318958" lowerBound="318428" upperBound="319571" ci="0.95"/>
+      <standardDeviation value="2893.74" lowerBound="2557.94" upperBound="3447.63" ci="0.95"/>
+      <outliers variance="0.0099" lowMild="0" lowSevere="0" highMild="0" highSevere="0"/>
+    </BenchmarkResults>
+    <OverallResult success="true" skips="0">
+      <StdOut>
+Starting MBAP tests:
+	Testing audio loop with buffer size: 1...
+	Testing audio loop with buffer size: 512...
+	Testing audio loop with buffer size: 1024...
+	Testing audio loop with buffer size: 4096...
+MBAP tests done.
+      </StdOut>
+    </OverallResult>
+  </TestCase>
+  <TestCase name="HRTF" tags="[spat]" filename="D:\a\AlgoGRIS\AlgoGRIS\tests\unit\test_spatAlgorithms.cpp" line="329">
+    <BenchmarkResults name="processing loop" samples="100" resamples="100000" iterations="1" clockResolution="28.019" estimatedDuration="1.67067e+08">
+      <!-- All values in nano seconds -->
+      <mean value="1.67661e+06" lowerBound="1.67036e+06" upperBound="1.68783e+06" ci="0.95"/>
+      <standardDeviation value="41509.2" lowerBound="26592.3" upperBound="65737.6" ci="0.95"/>
+      <outliers variance="0.180798" lowMild="0" lowSevere="0" highMild="2" highSevere="7"/>
+    </BenchmarkResults>
+    <OverallResult success="true" skips="0">
+      <StdOut>
+Starting HRTF tests:
+	Testing audio loop with buffer size: 1...
+	Testing audio loop with buffer size: 512...
+	Testing audio loop with buffer size: 1024...
+	Testing audio loop with buffer size: 4096...
+HRTF tests done.
+      </StdOut>
+    </OverallResult>
+  </TestCase>
+  <OverallResults successes="35022336" failures="0" expectedFailures="0" skips="0"/>
+  <OverallResultsCases successes="4" failures="0" expectedFailures="0" skips="0"/>
+</Catch2TestRun>
