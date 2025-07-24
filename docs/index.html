@@ -79,8 +79,8 @@
             continue;
           }
           const data = await res.json();
-          const fullMessage = data.commit.message.split('\n')[0]; // first line only
-          messages[hash] = fullMessage.length > 20 ? fullMessage.slice(0, 20) + '…' : fullMessage;
+          const fullMessage = data.commit.message;
+          messages[hash] = fullMessage;
         } catch (e) {
           console.warn(`Error fetching commit ${hash}:`, e);
           messages[hash] = hash.slice(0, 7);
