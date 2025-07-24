@@ -37,7 +37,7 @@ jobs:
             extra-flags: -G"Ninja Multi-Config" -DCMAKE_C_FLAGS="-fsanitize=address -fsanitize=undefined"  -DCMAKE_CXX_FLAGS="-fsanitize=address -fsanitize=undefined"
 
           - name: macOS
-            os: macos-latest
+            os: macos-15
             extra-flags: -G"Ninja Multi-Config" -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64"  -DCMAKE_C_FLAGS=" -fsanitize=address -fsanitize=undefined" -DCMAKE_CXX_FLAGS="-fsanitize=address -fsanitize=undefined"
 
           - name: Windows
@@ -99,22 +99,20 @@ jobs:
         working-directory: build
         run: ctest --verbose --output-on-failure
 
-      - name: Benchmark
+      - name: Benchmark (ran on our local linux runner)
+        if: matrix.name == 'Linux'
         working-directory: build
         run: |
           mkdir -p benchmarks/${RUNNER_OS}
 
-          if [[ "$RUNNER_OS" == "Windows" ]]; then
-            ./Release/test_spatAlgorithms.exe --reporter xml --out benchmarks/${RUNNER_OS}/${{ github.sha }}.xml
-          else
-            ./Release/test_spatAlgorithms --reporter xml --out benchmarks/${RUNNER_OS}/${{ github.sha }}.xml
-          fi
+          ./Release/test_spatAlgorithms --reporter xml --out benchmarks/${RUNNER_OS}/${{ github.sha }}.xml
 
           echo "===== Benchmark XML Output ====="
           cat benchmarks/${RUNNER_OS}/${{ github.sha }}.xml
           echo "================================"
 
-      - name: Commit benchmark results to benchmarks branch
+      - name: Commit benchmark results to benchmarks branch (only for Linux for now)
+        if: matrix.name == 'Linux'
         run: |
           # Set up git account
           git config --global user.email "ci-bot@example.com"
