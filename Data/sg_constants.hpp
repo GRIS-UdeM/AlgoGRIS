@@ -70,7 +70,7 @@ struct SpatGrisVersion {
 
 extern const SpatGrisVersion SPAT_GRIS_VERSION;
 
-constexpr auto MAX_NUM_SOURCES = 256;
+constexpr auto MAX_NUM_SOURCES = 512;
 constexpr auto MAX_NUM_SPEAKERS = 256;
 
 constexpr auto NORMAL_RADIUS = 1.0f;
