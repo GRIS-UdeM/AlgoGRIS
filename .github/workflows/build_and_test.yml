@@ -100,26 +100,20 @@ jobs:
         working-directory: build
         run: ctest --verbose --output-on-failure
 
-      - name: Benchmark
+      - name: Benchmark (ran on our local linux runner)
+        if: matrix.name == 'Linux'
         working-directory: build
         run: |
           mkdir -p benchmarks/${RUNNER_OS}
 
-          if [[ "$RUNNER_OS" == "Linux" ]]; then
-            ./Release/test_spatAlgorithms --reporter xml --out benchmarks/${RUNNER_OS}/${{ github.sha }}.xml
+          ./Release/test_spatAlgorithms --reporter xml --out benchmarks/${RUNNER_OS}/${{ github.sha }}.xml
 
-            echo "===== Benchmark XML Output ====="
-            cat benchmarks/${RUNNER_OS}/${{ github.sha }}.xml
-            echo "================================"
-          fi
+          echo "===== Benchmark XML Output ====="
+          cat benchmarks/${RUNNER_OS}/${{ github.sha }}.xml
+          echo "================================"
 
-          # if [[ "$RUNNER_OS" == "Windows" ]]; then
-          #   ./Release/test_spatAlgorithms.exe --reporter xml --out benchmarks/${RUNNER_OS}/${{ github.sha }}.xml
-          # else
-          #   ./Release/test_spatAlgorithms --reporter xml --out benchmarks/${RUNNER_OS}/${{ github.sha }}.xml
-          # fi
-
-      - name: Commit benchmark results to benchmarks branch
+      - name: Commit benchmark results to benchmarks branch (only for Linux for now)
+        if: matrix.name == 'Linux'
         run: |
           # Set up git account
           git config --global user.email "ci-bot@example.com"
