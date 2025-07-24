@@ -105,8 +105,12 @@ jobs:
         run: |
           mkdir -p benchmarks/${RUNNER_OS}
 
-          if [[ "$RUNNER_OS" == "benchmarks" ]]; then
+          if [[ "$RUNNER_OS" == "Linux" ]]; then
             ./Release/test_spatAlgorithms --reporter xml --out benchmarks/${RUNNER_OS}/${{ github.sha }}.xml
+
+            echo "===== Benchmark XML Output ====="
+            cat benchmarks/${RUNNER_OS}/${{ github.sha }}.xml
+            echo "================================"
           fi
 
           # if [[ "$RUNNER_OS" == "Windows" ]]; then
@@ -114,10 +118,6 @@ jobs:
           # else
           #   ./Release/test_spatAlgorithms --reporter xml --out benchmarks/${RUNNER_OS}/${{ github.sha }}.xml
           # fi
-
-          echo "===== Benchmark XML Output ====="
-          cat benchmarks/${RUNNER_OS}/${{ github.sha }}.xml
-          echo "================================"
 
       - name: Commit benchmark results to benchmarks branch
         run: |
