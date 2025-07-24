@@ -10,7 +10,7 @@ namespace gris
 /**
  * Compute a SpeakerGroup's rotation quaternion from its yaw pitch and roll euler angles.
  */
-[[nodiscard]] constexpr std::array<float, 4>
+[[nodiscard]] std::array<float, 4>
     getQuaternionFromEulerAngles(const float yawParam, const float pitchParam, const float rollParam)
 {
     // The formula used here is for spaces with the y axis being up.
