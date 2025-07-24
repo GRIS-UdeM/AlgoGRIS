@@ -248,25 +248,6 @@ struct SpeakerData {
     [[nodiscard]] ViewportSpeakerConfig toViewportConfig() const noexcept;
     [[nodiscard]] std::unique_ptr<juce::XmlElement> toXml(output_patch_t outputPatch) const noexcept;
     [[nodiscard]] juce::ValueTree toVt(output_patch_t outputPatch) const noexcept;
-
-    /**
-     * Compute a SpeakerGroup's rotation quaternion from its yaw pitch and roll euler angles.
-     */
-    [[nodiscard]] static tl::optional<std::array<float, 4>> getParentQuaternion(juce::ValueTree speakerGroup);
-    /**
-     * Quaternion multiplication.
-     */
-    [[nodiscard]] static constexpr std::array<float, 4> quatMult(const std::array<float, 4> & a,
-                                                                 const std::array<float, 4> & b);
-    /**
-     * Quaternion inverse.
-     */
-    [[nodiscard]] static constexpr std::array<float, 4> quatInv(const std::array<float, 4> & a);
-    /**
-     * Quaternion rotation of a xyz position. Returns a std::array of {x,y,z}.
-     */
-    [[nodiscard]] static constexpr std::array<float, 3> quatRotation(const std::array<float, 3> & xyz,
-                                                                     const std::array<float, 4> & rotQuat);
     [[nodiscard]] static tl::optional<SpeakerData> fromXml(juce::XmlElement const & xml) noexcept;
     [[nodiscard]] static tl::optional<SpeakerData> fromVt(juce::ValueTree vt) noexcept;
 
