@@ -32,8 +32,8 @@
 #include <cstdint>
 #include <memory>
 #include <utility>
-#include "../StructGRIS/ValueTreeUtilities.hpp"
 #include "../StructGRIS/Quaternion.hpp"
+#include "../StructGRIS/ValueTreeUtilities.hpp"
 
 namespace gris
 {
