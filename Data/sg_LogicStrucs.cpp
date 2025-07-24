@@ -470,18 +470,18 @@ tl::optional<std::array<float, 4>> SpeakerData::getParentQuaternion(juce::ValueT
         return tl::nullopt;
     }
 
-    const auto yaw = yawDeg * radians_t::RADIAN_PER_DEGREE * -0.5;
-    const auto pitch = pitchDeg * radians_t::RADIAN_PER_DEGREE * 0.5;
-    const auto roll = rollDeg * radians_t::RADIAN_PER_DEGREE * 0.5;
+    const float yaw = yawDeg * radians_t::RADIAN_PER_DEGREE * -0.5;
+    const float pitch = pitchDeg * radians_t::RADIAN_PER_DEGREE * 0.5;
+    const float roll = rollDeg * radians_t::RADIAN_PER_DEGREE * 0.5;
 
-    const auto sinYaw = std::sin(yaw);
-    const auto cosYaw = std::cos(yaw);
-    const auto sinPitch = std::sin(pitch);
-    const auto cosPitch = std::cos(pitch);
-    const auto sinRoll = std::sin(roll);
-    const auto cosRoll = std::cos(roll);
-    const auto cosPitchCosRoll = cosPitch * cosRoll;
-    const auto sinPitchSinRoll = sinPitch * sinRoll;
+    const float sinYaw = std::sin(yaw);
+    const float cosYaw = std::cos(yaw);
+    const float sinPitch = std::sin(pitch);
+    const float cosPitch = std::cos(pitch);
+    const float sinRoll = std::sin(roll);
+    const float cosRoll = std::cos(roll);
+    const float cosPitchCosRoll = cosPitch * cosRoll;
+    const float sinPitchSinRoll = sinPitch * sinRoll;
 
     // Also wee needed to swap out Z and Y and negate W to make the
     // quaternion work with the left handed coordinate system spatGRIS uses.
