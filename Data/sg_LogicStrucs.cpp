@@ -483,7 +483,7 @@ tl::optional<std::array<float, 4>> SpeakerData::getParentQuaternion(juce::ValueT
     const float cosPitchCosRoll = cosPitch * cosRoll;
     const float sinPitchSinRoll = sinPitch * sinRoll;
 
-    // Also wee needed to swap out Z and Y and negate W to make the
+    // Also we needed to swap out Z and Y and negate W to make the
     // quaternion work with the left handed coordinate system spatGRIS uses.
     return std::array<float, 4>{
         cosYaw * sinPitch * cosRoll - sinYaw * cosPitch * sinRoll, // X
@@ -530,7 +530,7 @@ tl::optional<Position> SpeakerData::getAbsoluteSpeakerPosition(juce::ValueTree s
     auto const speakerPosition{ juce::VariantConverter<Position>::fromVar(speakerVt[CARTESIAN_POSITION]) };
     auto const parentPosition{ juce::VariantConverter<Position>::fromVar(speakerGroup[CARTESIAN_POSITION]) };
 
-    auto parentQuat = getParentQuaternion(speakerGroup);
+    auto const parentQuat = getParentQuaternion(speakerGroup);
     // if our parent does not have a rotation, we can just add the positions, else
     // we do quat rotation.
     if (!parentQuat) {
@@ -542,8 +542,8 @@ tl::optional<Position> SpeakerData::getAbsoluteSpeakerPosition(juce::ValueTree s
 
 tl::optional<Position> SpeakerData::getAbsoluteSpeakerPosition(Position speakerPosition, Position parentPosition)
 {
-    auto cartesianParent = parentPosition.getCartesian();
-    auto speakerCartesian = speakerPosition.getCartesian();
+    auto const cartesianParent = parentPosition.getCartesian();
+    auto const speakerCartesian = speakerPosition.getCartesian();
     return Position{ CartesianVector{ cartesianParent.x + speakerCartesian.x,
                                       cartesianParent.y + speakerCartesian.y,
                                       cartesianParent.z + speakerCartesian.z } };
@@ -553,8 +553,8 @@ tl::optional<Position> SpeakerData::getAbsoluteSpeakerPosition(Position speakerP
                                                                Position parentPosition,
                                                                std::array<float, 4> parentQuat)
 {
-    auto speakerCartesian = speakerPosition.getCartesian();
-    auto rotatedPosition = quatRotation({ speakerCartesian.x, speakerCartesian.y, speakerCartesian.z }, parentQuat);
+    auto const speakerCartesian = speakerPosition.getCartesian();
+    auto const rotatedPosition = quatRotation({ speakerCartesian.x, speakerCartesian.y, speakerCartesian.z }, parentQuat);
     // once we are rotated, just go to the other function
     return getAbsoluteSpeakerPosition(
         Position{ CartesianVector{ rotatedPosition[0], rotatedPosition[1], rotatedPosition[2] } },
