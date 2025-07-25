@@ -64,7 +64,10 @@ VbapType getVbapType(SpeakersData const & speakers)
 }
 
 //==============================================================================
-VbapSpatAlgorithm::VbapSpatAlgorithm(SpeakersData const & speakers)
+VbapSpatAlgorithm::VbapSpatAlgorithm(SpeakersData const & speakers, const std::vector<source_index_t> & theSourceIds)
+#if USE_FORK_UNION
+    : sourceIds{ theSourceIds }
+#endif
 {
     JUCE_ASSERT_MESSAGE_THREAD;
 
@@ -109,6 +112,9 @@ void VbapSpatAlgorithm::updateSpatData(source_index_t const sourceIndex, SourceD
 void VbapSpatAlgorithm::process(AudioConfig const & config,
                                 SourceAudioBuffer & sourcesBuffer,
                                 SpeakerAudioBuffer & speakersBuffer,
+#if USE_FORK_UNION && (FU_METHOD == FU_USE_ARRAY_OF_ATOMICS || FU_METHOD == FU_USE_BUFFER_PER_THREAD)
+                                ForkUnionBuffer & forkUnionBuffer,
+#endif
                                 [[maybe_unused]] juce::AudioBuffer<float> & stereoBuffer,
                                 SourcePeaks const & sourcePeaks,
                                 SpeakersAudioConfig const * altSpeakerConfig)
@@ -117,8 +123,65 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
 
     auto const & speakersAudioConfig{ altSpeakerConfig ? *altSpeakerConfig : config.speakersAudioConfig };
 
+#if USE_FORK_UNION
+    namespace fu = ashvardanian::fork_union;
+
+    jassert(sourceIds.size() > 0);
+
+    fu::for_n(threadPool, sourceIds.size(), [&](fu::prong_t prong) noexcept {
+        jassert(threadPool.is_lock_free());
+
+        processSource(config,
+                      sourceIds[prong.task_index],
+                      sourcePeaks,
+                      sourcesBuffer,
+                      speakersAudioConfig,
+    #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
+                      forkUnionBuffer,
+    #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
+                      forkUnionBuffer[prong.thread_index],
+    #endif
+                      speakersBuffer);
+    });
+
+    #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
+    // Copy ForkUnionBuffer into speakersBuffer
+    size_t i = 0;
+    for (auto const & speaker : speakersAudioConfig) {
+        // skip silent speaker
+        if (speaker.value.isMuted || speaker.value.isDirectOutOnly || speaker.value.gain < SMALL_GAIN)
+            continue;
+
+        auto const numSamples{ sourcesBuffer.getNumSamples() };
+        auto * outputSamples{ speakersBuffer[speaker.key].getWritePointer(0) };
+        auto & inputSamples{ forkUnionBuffer[i++] };
+
+        for (int sampleIdx = 0; sampleIdx < numSamples; ++sampleIdx)
+            outputSamples[sampleIdx] = inputSamples[sampleIdx]._a;
+    }
+    #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
+    // Copy forkUnionBuffer into speakersBuffer
+    for (auto const & threadBuffers : forkUnionBuffer) {
+        size_t curSpeakerNumber = 0;
+        for (auto const & speaker : speakersAudioConfig) {
+            // skip silent speaker
+            if (speaker.value.isMuted || speaker.value.isDirectOutOnly || speaker.value.gain < SMALL_GAIN)
+                continue;
+
+            auto const numSamples{ sourcesBuffer.getNumSamples() };
+            auto * mainOutputSamples{ speakersBuffer[speaker.key].getWritePointer(0) };
+            auto & threadOutputSamples{ threadBuffers[curSpeakerNumber++] };
+
+            for (int sampleIdx = 0; sampleIdx < numSamples; ++sampleIdx)
+                mainOutputSamples[sampleIdx] += threadOutputSamples[sampleIdx];
+        }
+    }
+    #endif
+
+#else
     for (auto const & source : config.sourcesAudioConfig)
         processSource(config, source.key, sourcePeaks, sourcesBuffer, speakersAudioConfig, speakersBuffer);
+#endif
 }
 
 inline void VbapSpatAlgorithm::processSource(const gris::AudioConfig & config,
@@ -126,7 +189,14 @@ inline void VbapSpatAlgorithm::processSource(const gris::AudioConfig & config,
                                              const gris::SourcePeaks & sourcePeaks,
                                              gris::SourceAudioBuffer & sourcesBuffer,
                                              const gris::SpeakersAudioConfig & speakersAudioConfig,
-                                             gris::SpeakerAudioBuffer & speakersBuffer)
+#if USE_FORK_UNION
+    #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
+                                             ForkUnionBuffer & forkUnionBuffer,
+    #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
+                                             std::vector<std::vector<float>> & speakerBuffer,
+    #endif
+#endif
+                                             SpeakerAudioBuffer & speakerBuffers)
 {
     auto const & source = config.sourcesAudioConfig[sourceId];
     if (source.isMuted || source.directOut || sourcePeaks[sourceId] < SMALL_GAIN) {
@@ -148,6 +218,7 @@ inline void VbapSpatAlgorithm::processSource(const gris::AudioConfig & config,
     auto const & gainInterpolation{ config.spatGainsInterpolation };
     auto const gainFactor{ std::pow(gainInterpolation, 0.1f) * 0.0099f + 0.99f };
 
+    [[maybe_unused]] size_t i = 0;
     for (auto const & speaker : speakersAudioConfig) {
         if (speaker.value.isMuted || speaker.value.isDirectOutOnly || speaker.value.gain < SMALL_GAIN) {
             // speaker silent
@@ -160,13 +231,38 @@ inline void VbapSpatAlgorithm::processSource(const gris::AudioConfig & config,
         auto const gainDiff{ targetGain - currentGain };
         auto const gainSlope{ gainDiff / narrow<float>(numSamples) };
 
-        auto * outputSamples{ speakersBuffer[speaker.key].getWritePointer(0) };
+#if USE_FORK_UNION
+    #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
+        auto & outputSamples{ forkUnionBuffer[i++] };
+    #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
+        auto & outputSamples{ speakerBuffer[i++] };
+    #elif FU_METHOD == FU_USE_ATOMIC_CAST
+        auto * outputSamples{ speakerBuffers[speaker.key].getWritePointer(0) };
+    #endif
+#else
+        auto * outputSamples{ speakerBuffers[speaker.key].getWritePointer(0) };
+#endif
 
         if (juce::approximatelyEqual(gainSlope, 0.f) || std::abs(gainDiff) < SMALL_GAIN) {
             // no interpolation
             currentGain = targetGain;
             if (currentGain >= SMALL_GAIN) {
+#if USE_FORK_UNION
+    #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
+                for (int sampleIndex{}; sampleIndex < numSamples; ++sampleIndex)
+                    outputSamples[sampleIndex]._a += inputSamples[sampleIndex] * currentGain;
+    #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
+                juce::FloatVectorOperations::addWithMultiply(outputSamples.data(),
+                                                             inputSamples,
+                                                             currentGain,
+                                                             numSamples);
+    #elif FU_METHOD == FU_USE_ATOMIC_CAST
+                for (int sampleIndex{}; sampleIndex < numSamples; ++sampleIndex)
+                    std::atomic_ref<float>(outputSamples[sampleIndex]) += inputSamples[sampleIndex] * currentGain;
+    #endif
+#else
                 juce::FloatVectorOperations::addWithMultiply(outputSamples, inputSamples, currentGain, numSamples);
+#endif
             }
             continue;
         }
@@ -176,8 +272,20 @@ inline void VbapSpatAlgorithm::processSource(const gris::AudioConfig & config,
             // linear interpolation over buffer size
             for (int sampleIndex{}; sampleIndex < numSamples; ++sampleIndex) {
                 currentGain += gainSlope;
+#if USE_FORK_UNION
+    #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
+                outputSamples[sampleIndex]._a += inputSamples[sampleIndex] * currentGain;
+    #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
                 outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
-                jassert(outputSamples[sampleIndex] >= -1.f && outputSamples[sampleIndex] <= 1.f);
+    #elif FU_METHOD == FU_USE_ATOMIC_CAST
+                std::atomic_ref<float>(outputSamples[sampleIndex]) += inputSamples[sampleIndex] * currentGain;
+    #else
+        #error "Invalid FORK_UNION_METHOD selected"
+    #endif
+#else
+                outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
+#endif
+                // jassert(outputSamples[sampleIndex] >= -1.f && outputSamples[sampleIndex] <= 1.f);
             }
         } else {
             // log interpolation with 1st order filter
@@ -185,8 +293,20 @@ inline void VbapSpatAlgorithm::processSource(const gris::AudioConfig & config,
                 // targeting silence
                 for (int sampleIndex{}; sampleIndex < numSamples && currentGain >= SMALL_GAIN; ++sampleIndex) {
                     currentGain = targetGain + (currentGain - targetGain) * gainFactor;
+#if USE_FORK_UNION
+    #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
+                    outputSamples[sampleIndex]._a += inputSamples[sampleIndex] * currentGain;
+    #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
                     outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
-                    jassert(outputSamples[sampleIndex] >= -1.f && outputSamples[sampleIndex] <= 1.f);
+    #elif FU_METHOD == FU_USE_ATOMIC_CAST
+                    std::atomic_ref<float>(outputSamples[sampleIndex]) += inputSamples[sampleIndex] * currentGain;
+    #else
+        #error "Invalid FORK_UNION_METHOD selected"
+    #endif
+#else
+                    outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
+#endif
+                    // jassert(outputSamples[sampleIndex] >= -1.f && outputSamples[sampleIndex] <= 1.f);
                 }
                 continue;
             }
@@ -194,8 +314,20 @@ inline void VbapSpatAlgorithm::processSource(const gris::AudioConfig & config,
             // not targeting silence
             for (int sampleIndex{}; sampleIndex < numSamples; ++sampleIndex) {
                 currentGain = targetGain + (currentGain - targetGain) * gainFactor;
+#if USE_FORK_UNION
+    #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
+                outputSamples[sampleIndex]._a += inputSamples[sampleIndex] * currentGain;
+    #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
                 outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
-                jassert(outputSamples[sampleIndex] >= -1.f && outputSamples[sampleIndex] <= 1.f);
+    #elif FU_METHOD == FU_USE_ATOMIC_CAST
+                std::atomic_ref<float>(outputSamples[sampleIndex]) += inputSamples[sampleIndex] * currentGain;
+    #else
+        #error "Invalid FORK_UNION_METHOD selected"
+    #endif
+#else
+                outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
+#endif
+                // jassert(outputSamples[sampleIndex] >= -1.f && outputSamples[sampleIndex] <= 1.f);
             }
         }
     }
@@ -220,9 +352,11 @@ bool VbapSpatAlgorithm::hasTriplets() const noexcept
 }
 
 //==============================================================================
-std::unique_ptr<AbstractSpatAlgorithm> VbapSpatAlgorithm::make(SpeakerSetup const & speakerSetup)
+std::unique_ptr<AbstractSpatAlgorithm> VbapSpatAlgorithm::make(SpeakerSetup const & speakerSetup,
+                                                               std::vector<source_index_t> sourceIds)
 {
-    auto const getVbap = [&]() { return std::make_unique<VbapSpatAlgorithm>(speakerSetup.speakers); };
+    auto const getVbap
+        = [&]() { return std::make_unique<VbapSpatAlgorithm>(speakerSetup.speakers, std::move(sourceIds)); };
 
     if (speakerSetup.numOfSpatializedSpeakers() < 3) {
         return std::make_unique<DummySpatAlgorithm>(Error::notEnoughDomeSpeakers);

@@ -50,6 +50,8 @@ public:
         ValueType const * value{};
     };
 
+    std::vector<KeyType> getKeys() const noexcept;
+
 private:
     //==============================================================================
     std::array<Node, CAPACITY> mData{};
@@ -200,6 +202,18 @@ OwnedMap<KeyType, ValueType, CAPACITY> & OwnedMap<KeyType, ValueType, CAPACITY>:
     mUsed = other.mUsed;
     other.mUsed.reset();
     return *this;
+}
+
+template<typename KeyType, typename ValueType, size_t Capacity>
+std::vector<KeyType> OwnedMap<KeyType, ValueType, Capacity>::getKeys() const noexcept
+{
+    JUCE_ASSERT_MESSAGE_THREAD;
+    std::vector<KeyType> result{};
+    result.reserve(size());
+    for (auto const & node : *this) {
+        result.push_back(node.key);
+    }
+    return result;
 }
 
 //==============================================================================

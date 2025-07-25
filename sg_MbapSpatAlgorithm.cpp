@@ -41,7 +41,11 @@
 namespace gris
 {
 //==============================================================================
-MbapSpatAlgorithm::MbapSpatAlgorithm(SpeakerSetup const & speakerSetup) : mField(mbapInit(speakerSetup.speakers))
+MbapSpatAlgorithm::MbapSpatAlgorithm(SpeakerSetup const & speakerSetup, std::vector<source_index_t> && theSourceIds)
+    : mField(mbapInit(speakerSetup.speakers))
+#if USE_FORK_UNION
+    , sourceIds{ std::move(theSourceIds) }
+#endif
 {
     JUCE_ASSERT_MESSAGE_THREAD;
 
@@ -99,6 +103,9 @@ void MbapSpatAlgorithm::updateSpatData(source_index_t const sourceIndex, SourceD
 void MbapSpatAlgorithm::process(AudioConfig const & config,
                                 SourceAudioBuffer & sourceBuffer,
                                 SpeakerAudioBuffer & speakersBuffer,
+#if USE_FORK_UNION && (FU_METHOD == FU_USE_ARRAY_OF_ATOMICS || FU_METHOD == FU_USE_BUFFER_PER_THREAD)
+                                ForkUnionBuffer & forkUnionBuffer,
+#endif
                                 [[maybe_unused]] juce::AudioBuffer<float> & stereoBuffer,
                                 SourcePeaks const & sourcePeaks,
                                 SpeakersAudioConfig const * altSpeakerConfig)
@@ -107,8 +114,16 @@ void MbapSpatAlgorithm::process(AudioConfig const & config,
 
     auto const & speakersAudioConfig{ altSpeakerConfig ? *altSpeakerConfig : config.speakersAudioConfig };
 
+#if USE_FORK_UNION
+    jassert(sourceIds.size() > 0);
+
+    ashvardanian::fork_union::for_n(threadPool, sourceIds.size(), [&](std::size_t i) noexcept {
+        processSource(config, sourceIds[(int)i], sourcePeaks, sourceBuffer, speakersAudioConfig, speakersBuffer);
+    });
+#else
     for (auto const & source : config.sourcesAudioConfig)
         processSource(config, source.key, sourcePeaks, sourceBuffer, speakersAudioConfig, speakersBuffer);
+#endif
 }
 
 inline void MbapSpatAlgorithm::processSource(const gris::AudioConfig & config,
@@ -204,7 +219,8 @@ juce::Array<Triplet> MbapSpatAlgorithm::getTriplets() const noexcept
 }
 
 //==============================================================================
-std::unique_ptr<AbstractSpatAlgorithm> MbapSpatAlgorithm::make(SpeakerSetup const & speakerSetup)
+std::unique_ptr<AbstractSpatAlgorithm> MbapSpatAlgorithm::make(SpeakerSetup const & speakerSetup,
+                                                               std::vector<source_index_t> && theSourceIds)
 {
     JUCE_ASSERT_MESSAGE_THREAD;
 
@@ -212,7 +228,7 @@ std::unique_ptr<AbstractSpatAlgorithm> MbapSpatAlgorithm::make(SpeakerSetup cons
         return std::make_unique<DummySpatAlgorithm>(Error::notEnoughCubeSpeakers);
     }
 
-    return std::make_unique<MbapSpatAlgorithm>(speakerSetup);
+    return std::make_unique<MbapSpatAlgorithm>(speakerSetup, std::move(theSourceIds));
 }
 
 } // namespace gris

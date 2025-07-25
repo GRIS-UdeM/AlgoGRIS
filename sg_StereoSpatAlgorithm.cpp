@@ -85,6 +85,9 @@ void StereoSpatAlgorithm::updateSpatData(source_index_t const sourceIndex, Sourc
 void StereoSpatAlgorithm::process(AudioConfig const & config,
                                   SourceAudioBuffer & sourcesBuffer,
                                   SpeakerAudioBuffer & speakersBuffer,
+#if USE_FORK_UNION && (FU_METHOD == FU_USE_ARRAY_OF_ATOMICS || FU_METHOD == FU_USE_BUFFER_PER_THREAD)
+                                  ForkUnionBuffer & forkUnionBuffer,
+#endif
                                   juce::AudioBuffer<float> & stereoBuffer,
                                   SourcePeaks const & sourcePeaks,
                                   [[maybe_unused]] SpeakersAudioConfig const * altSpeakerConfig)
@@ -93,11 +96,22 @@ void StereoSpatAlgorithm::process(AudioConfig const & config,
     jassert(!altSpeakerConfig);
     jassert(stereoBuffer.getNumChannels() == 2);
 
+#if USE_FORK_UNION && (FU_METHOD == FU_USE_ARRAY_OF_ATOMICS || FU_METHOD == FU_USE_BUFFER_PER_THREAD)
+    mInnerAlgorithm
+        ->process(config, sourcesBuffer, speakersBuffer, forkUnionBuffer, stereoBuffer, sourcePeaks, altSpeakerConfig);
+#else
     mInnerAlgorithm->process(config, sourcesBuffer, speakersBuffer, stereoBuffer, sourcePeaks, altSpeakerConfig);
+#endif
 
+#if USE_FORK_UNION
+    auto const sourceIds{ config.sourcesAudioConfig.getKeyVector() };
+    ashvardanian::fork_union::for_n(threadPool, sourceIds.size(), [&](std::size_t i) noexcept {
+        processSource(config, sourceIds[(int)i], sourcePeaks, sourcesBuffer, stereoBuffer);
+    });
+#else
     for (auto const & source : config.sourcesAudioConfig)
         processSource(config, source.key, sourcePeaks, sourcesBuffer, stereoBuffer);
-
+#endif
     // Apply gain compensation.
     auto const compensation{ std::pow(10.0f, (narrow<float>(config.sourcesAudioConfig.size()) - 1.0f) * -0.005f) };
     stereoBuffer.applyGain(0, sourcesBuffer.getNumSamples(), compensation);
@@ -189,13 +203,13 @@ StereoSpatAlgorithm::StereoSpatAlgorithm(SpeakerSetup const & speakerSetup,
 
     switch (projectSpatMode) {
     case SpatMode::vbap:
-        mInnerAlgorithm = VbapSpatAlgorithm::make(speakerSetup);
+        mInnerAlgorithm = VbapSpatAlgorithm::make(speakerSetup, sources.getKeys());
         break;
     case SpatMode::mbap:
-        mInnerAlgorithm = MbapSpatAlgorithm::make(speakerSetup);
+        mInnerAlgorithm = MbapSpatAlgorithm::make(speakerSetup, sources.getKeys());
         break;
     case SpatMode::hybrid:
-        mInnerAlgorithm = HybridSpatAlgorithm::make(speakerSetup);
+        mInnerAlgorithm = HybridSpatAlgorithm::make(speakerSetup, sources.getKeys());
         break;
     case SpatMode::invalid:
         break;

@@ -124,13 +124,13 @@ HrtfSpatAlgorithm::HrtfSpatAlgorithm(SpeakerSetup const & speakerSetup,
 
     switch (projectSpatMode) {
     case SpatMode::vbap:
-        mInnerAlgorithm = std::make_unique<VbapSpatAlgorithm>(binauralSpeakerData);
+        mInnerAlgorithm = std::make_unique<VbapSpatAlgorithm>(binauralSpeakerData, sources.getKeys());
         break;
     case SpatMode::mbap:
-        mInnerAlgorithm = std::make_unique<MbapSpatAlgorithm>(*binauralSpeakerSetup);
+        mInnerAlgorithm = std::make_unique<MbapSpatAlgorithm>(*binauralSpeakerSetup, sources.getKeys());
         break;
     case SpatMode::hybrid:
-        mInnerAlgorithm = std::make_unique<HybridSpatAlgorithm>(*binauralSpeakerSetup);
+        mInnerAlgorithm = std::make_unique<HybridSpatAlgorithm>(*binauralSpeakerSetup, sources.getKeys());
         break;
     case SpatMode::invalid:
         break;
@@ -175,6 +175,9 @@ void HrtfSpatAlgorithm::updateSpatData(source_index_t const sourceIndex, SourceD
 void HrtfSpatAlgorithm::process(AudioConfig const & config,
                                 SourceAudioBuffer & sourcesBuffer,
                                 SpeakerAudioBuffer & speakersBuffer,
+#if USE_FORK_UNION && (FU_METHOD == FU_USE_ARRAY_OF_ATOMICS || FU_METHOD == FU_USE_BUFFER_PER_THREAD)
+                                ForkUnionBuffer & forkUnionBuffer,
+#endif
                                 juce::AudioBuffer<float> & stereoBuffer,
                                 SourcePeaks const & sourcePeaks,
                                 [[maybe_unused]] SpeakersAudioConfig const * altSpeakerConfig)
@@ -190,15 +193,29 @@ void HrtfSpatAlgorithm::process(AudioConfig const & config,
     hrtfBuffer.silence();
 
     if (mInnerAlgorithm)
-        mInnerAlgorithm
-            ->process(config, sourcesBuffer, hrtfBuffer, stereoBuffer, sourcePeaks, &mHrtfData.speakersAudioConfig);
+        mInnerAlgorithm->process(config,
+                                 sourcesBuffer,
+                                 hrtfBuffer,
+#if USE_FORK_UNION && (FU_METHOD == FU_USE_ARRAY_OF_ATOMICS || FU_METHOD == FU_USE_BUFFER_PER_THREAD)
+                                 forkUnionBuffer,
+#endif
+                                 stereoBuffer,
+                                 sourcePeaks,
+                                 &mHrtfData.speakersAudioConfig);
 
     convolutionBuffer.clear();
 
+#if USE_FORK_UNION
+    auto const speakerIds{ mHrtfData.speakersAudioConfig.getKeyVector() };
+    ashvardanian::fork_union::for_n(threadPool, speakerIds.size(), [&](std::size_t i) noexcept {
+        processSpeaker((int)i, speakerIds[(int)i], sourcesBuffer, stereoBuffer);
+    });
+#else
     int i = 0;
     for (auto const & speaker : mHrtfData.speakersAudioConfig) {
         processSpeaker(i++, speaker.key, sourcesBuffer, stereoBuffer);
     }
+#endif
 }
 
 //==============================================================================

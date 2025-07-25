@@ -27,6 +27,7 @@
 #include "Containers/sg_AtomicUpdater.hpp"
 #include "Containers/sg_StrongArray.hpp"
 #include "Data/StrongTypes/sg_OutputPatch.hpp"
+#include "Data/sg_LogicStrucs.hpp"
 #include "Data/sg_SpatMode.hpp"
 #include "Data/sg_constants.hpp"
 #include "sg_AudioStructs.hpp"
@@ -35,10 +36,21 @@
 #include "juce_core/juce_core.h"
 #include "juce_graphics/juce_graphics.h"
 #include "tl/optional.hpp"
+#include <atomic>
 #include <cstdint>
 #include <memory>
 #include "../Containers/sg_OwnedMap.hpp"
 #include "../Containers/sg_StaticMap.hpp"
+
+// this is the main switch to enable/disable fork_union
+#define USE_FORK_UNION 1
+
+#define FU_USE_ARRAY_OF_ATOMICS 1
+#define FU_USE_BUFFER_PER_THREAD 2
+#define FU_USE_ATOMIC_CAST 3
+
+// and FU_METHOD is the "algorithm" use by fork_union, which is set to one of the above macros
+#define FU_METHOD FU_USE_ATOMIC_CAST
 
 namespace gris
 {
@@ -64,6 +76,32 @@ enum class SliceState : std::uint8_t { normal, muted, solo };
 enum class AttenuationBypassSate : std::uint8_t { invalid, on, off };
 [[nodiscard]] juce::String attenuationBypassStateToString(AttenuationBypassSate state);
 [[nodiscard]] AttenuationBypassSate stringToAttenuationBypassState(juce::String const & string);
+
+#if USE_FORK_UNION
+    #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
+/* Taken from https://stackoverflow.com/questions/13193484/how-to-declare-a-vector-of-atomic-in-c
+ **/
+template<typename T>
+struct AtomicWrapper {
+    std::atomic<T> _a;
+
+    AtomicWrapper() : _a() {}
+
+    AtomicWrapper(const std::atomic<T> & a) : _a(a.load()) {}
+
+    AtomicWrapper(const AtomicWrapper & other) : _a(other._a.load()) {}
+
+    /* This isn't atomic so shouldn't be done in concurent contexts! */
+    AtomicWrapper & operator=(const AtomicWrapper & other) { _a.store(other._a.load()); }
+};
+
+using ForkUnionBuffer = std::vector<std::vector<AtomicWrapper<float>>>;
+    #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
+using ForkUnionBuffer = std::vector<std::vector<std::vector<float>>>;
+    #elif FU_METHOD == FU_USE_ATOMIC_CAST
+static_assert(std::atomic_ref<float>::is_always_lock_free, "float cannot be converted to a lock-free atomic_ref!");
+    #endif
+#endif
 
 //==============================================================================
 /** For the following data structures, we use the following semantics:

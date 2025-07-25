@@ -54,6 +54,46 @@ bool isProbablyAudioThread()
 }
 
 //==============================================================================
+AbstractSpatAlgorithm::AbstractSpatAlgorithm()
+{
+#if USE_FORK_UNION
+    if (!threadPool.try_spawn(std::thread::hardware_concurrency())) {
+        std::fprintf(stderr, "Failed to fork the threads\n");
+        jassertfalse;
+    }
+#endif
+}
+
+#if USE_FORK_UNION
+    #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
+void AbstractSpatAlgorithm::silenceForkUnionBuffer(ForkUnionBuffer & forkUnionBuffer) noexcept
+{
+    ashvardanian::fork_union::for_n(threadPool, forkUnionBuffer.size(), [&](std::size_t i) noexcept {
+        auto & individualSpeakerBuffer{ forkUnionBuffer[i] };
+        for (auto & wrapper : individualSpeakerBuffer)
+            wrapper._a.store(0.f, std::memory_order_relaxed);
+    });
+}
+    #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
+void AbstractSpatAlgorithm::silenceForkUnionBuffer(ForkUnionBuffer & forkUnionBuffer) noexcept
+{
+    namespace fu = ashvardanian::fork_union;
+
+    fu::for_n(threadPool, forkUnionBuffer.size(), [&](fu::prong_t prong) noexcept {
+        jassert(threadPool.is_lock_free());
+
+        // for each thread buffer
+        auto & individualThreadBuffer{ forkUnionBuffer[prong.task_index] };
+
+        // for each speaker buffer in the thread buffer
+        for (auto & speakerBuffer : individualThreadBuffer)
+            std::fill(speakerBuffer.begin(), speakerBuffer.end(), 0.f); // silence all speaker samples
+    });
+}
+    #endif
+#endif
+
+//==============================================================================
 void AbstractSpatAlgorithm::fixDirectOutsIntoPlace(SourcesData const & sources,
                                                    SpeakerSetup const & speakerSetup,
                                                    SpatMode const & projectSpatMode) noexcept
@@ -120,11 +160,11 @@ std::unique_ptr<AbstractSpatAlgorithm> AbstractSpatAlgorithm::make(SpeakerSetup 
 
     switch (projectSpatMode) {
     case SpatMode::vbap:
-        return VbapSpatAlgorithm::make(speakerSetup);
+        return VbapSpatAlgorithm::make(speakerSetup, sources.getKeys());
     case SpatMode::mbap:
-        return MbapSpatAlgorithm::make(speakerSetup);
+        return MbapSpatAlgorithm::make(speakerSetup, sources.getKeys());
     case SpatMode::hybrid:
-        return HybridSpatAlgorithm::make(speakerSetup);
+        return HybridSpatAlgorithm::make(speakerSetup, sources.getKeys());
     case SpatMode::invalid:
         break;
     }

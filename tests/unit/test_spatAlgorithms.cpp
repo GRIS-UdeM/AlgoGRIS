@@ -21,6 +21,7 @@ static void distributeSourcesOnSphere(AbstractSpatAlgorithm * algo, SpatGrisData
         auto & source{ data.project.sources[sourceIndex] };
 
         source.position = PolarVector(radians_t{ curAzimuth }, radians_t{ curRing * elevSteps }, 1.f);
+        // DBG ("src " << i << ": " << source.position->getPolar ().toString ());
         curAzimuth += azimSteps;
 
         algo->updateSpatData(sourceIndex, source);
@@ -111,6 +112,9 @@ static void testUsingProjectData(juce::StringRef testName,
                                  gris::SpatGrisData & data,
                                  SourceAudioBuffer & sourceBuffer,
                                  SpeakerAudioBuffer & speakerBuffer,
+#if USE_FORK_UNION && (FU_METHOD == FU_USE_ARRAY_OF_ATOMICS || FU_METHOD == FU_USE_BUFFER_PER_THREAD)
+                                 ForkUnionBuffer & forkUnionBuffer,
+#endif
                                  juce::AudioBuffer<float> & stereoBuffer,
                                  SourcePeaks & sourcePeaks)
 {
@@ -128,7 +132,19 @@ static void testUsingProjectData(juce::StringRef testName,
         data.appData.audioSettings.bufferSize = bufferSize;
 
         // init our buffers
-        initBuffers(bufferSize, numSources, numSpeakers, sourceBuffer, speakerBuffer, stereoBuffer);
+        initBuffers(bufferSize,
+                    numSources,
+                    numSpeakers,
+                    sourceBuffer,
+                    speakerBuffer,
+    #if USE_FORK_UNION
+        #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
+                    forkUnionBuffer,
+        #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
+                    forkUnionBuffer,
+        #endif
+    #endif
+                    stereoBuffer);
 
         // create our spatialization algorithm
         auto algo{ AbstractSpatAlgorithm::make(data.speakerSetup,
@@ -160,7 +176,18 @@ static void testUsingProjectData(juce::StringRef testName,
             // process the audio
             speakerBuffer.silence();
             stereoBuffer.clear();
-            algo->process(*config, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks, nullptr);
+    #if USE_FORK_UNION && (FU_METHOD == FU_USE_ARRAY_OF_ATOMICS || FU_METHOD == FU_USE_BUFFER_PER_THREAD)
+            algo->silenceForkUnionBuffer(forkUnionBuffer);
+    #endif
+            algo->process(*config,
+                          sourceBuffer,
+                          speakerBuffer,
+    #if USE_FORK_UNION && (FU_METHOD == FU_USE_ARRAY_OF_ATOMICS || FU_METHOD == FU_USE_BUFFER_PER_THREAD)
+                          forkUnionBuffer,
+    #endif
+                          stereoBuffer,
+                          sourcePeaks,
+                          nullptr);
 
             checkSpeakerBufferValidity(speakerBuffer);
 
@@ -180,10 +207,12 @@ static void testUsingProjectData(juce::StringRef testName,
 #endif
 }
 
-static void benchmarkUsingProjectData(std::string testName,
-                                      gris::SpatGrisData & data,
+static void benchmarkUsingProjectData(gris::SpatGrisData & data,
                                       SourceAudioBuffer & sourceBuffer,
                                       SpeakerAudioBuffer & speakerBuffer,
+#if USE_FORK_UNION && (FU_METHOD == FU_USE_ARRAY_OF_ATOMICS || FU_METHOD == FU_USE_BUFFER_PER_THREAD)
+                                      ForkUnionBuffer & forkUnionBuffer,
+#endif
                                       juce::AudioBuffer<float> & stereoBuffer,
                                       SourcePeaks & sourcePeaks)
 {
@@ -195,7 +224,19 @@ static void benchmarkUsingProjectData(std::string testName,
     data.appData.audioSettings.bufferSize = bufferSize;
 
     // init our buffers
-    initBuffers(bufferSize, numSources, numSpeakers, sourceBuffer, speakerBuffer, stereoBuffer);
+    initBuffers(bufferSize,
+                numSources,
+                numSpeakers,
+                sourceBuffer,
+                speakerBuffer,
+    #if USE_FORK_UNION
+        #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
+                forkUnionBuffer,
+        #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
+                forkUnionBuffer,
+        #endif
+    #endif
+                stereoBuffer);
 
     // create our spatialization algorithm
     auto algo{ AbstractSpatAlgorithm::make(data.speakerSetup,
@@ -212,22 +253,32 @@ static void benchmarkUsingProjectData(std::string testName,
     checkSourceBufferValidity(sourceBuffer);
 
     // process the audio
-    speakerBuffer.silence();
-    stereoBuffer.clear();
-    #if ENABLE_CATCH2_BENCHMARKS
     BENCHMARK("processing loop")
-    #else
-    std::cout << testName << "\n";
-    for (int i = 0; i < 1000; ++i)
-    #endif
     {
         // catch2 will run this benchmark section in a loop, so we need to clear the output buffers before each run
         speakerBuffer.silence();
         stereoBuffer.clear();
-        algo->process(*config, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks, nullptr);
+
+    #if USE_FORK_UNION && (FU_METHOD == FU_USE_ARRAY_OF_ATOMICS || FU_METHOD == FU_USE_BUFFER_PER_THREAD)
+        algo->silenceForkUnionBuffer(forkUnionBuffer);
+    #endif
+
+        algo->process(*config,
+                      sourceBuffer,
+                      speakerBuffer,
+    #if USE_FORK_UNION
+        #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
+                      forkUnionBuffer,
+        #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
+                      forkUnionBuffer,
+        #endif
+    #endif
+                      stereoBuffer,
+                      sourcePeaks,
+                      nullptr);
     };
 #endif
-}
+};
 
 static SpatGrisData getSpatGrisDataFromFiles(const std::string & projectFilename,
                                              const std::string & speakerSetupFilename)
@@ -264,23 +315,48 @@ static SpatGrisData getSpatGrisDataFromFiles(const std::string & projectFilename
 
 TEST_CASE(vbapTestName, "[spat]")
 {
+    // 1. init needed structures
     SpatGrisData vbapData = getSpatGrisDataFromFiles("default_preset.xml", "default_speaker_setup.xml");
     vbapData.project.spatMode = SpatMode::vbap;
     vbapData.appData.stereoMode = {};
 
     SourceAudioBuffer sourceBuffer;
     SpeakerAudioBuffer speakerBuffer;
+#if USE_FORK_UNION && (FU_METHOD == FU_USE_ARRAY_OF_ATOMICS || FU_METHOD == FU_USE_BUFFER_PER_THREAD)
+    ForkUnionBuffer forkUnionBuffer;
+#endif
     juce::AudioBuffer<float> stereoBuffer;
     SourcePeaks sourcePeaks;
 
-    std::cout << "Starting " << vbapTestName << " tests:\n";
+    // 2. tests
+    std::cout << "Starting " << vbapTestName << " tests:" << std::endl;
 #if WRITE_TEST_OUTPUT_TO_DISK
     renderProjectOutput(vbapTestName, vbapData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
 #endif
-    testUsingProjectData(vbapTestName, vbapData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
-    std::cout << vbapTestName << " tests done.\n";
-    benchmarkUsingProjectData("vbap benchmark", vbapData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
+    testUsingProjectData(vbapTestName,
+                         vbapData,
+                         sourceBuffer,
+                         speakerBuffer,
+#if USE_FORK_UNION && (FU_METHOD == FU_USE_ARRAY_OF_ATOMICS || FU_METHOD == FU_USE_BUFFER_PER_THREAD)
+                         forkUnionBuffer,
+#endif
+                         stereoBuffer,
+                         sourcePeaks);
+    std::cout << vbapTestName << " tests done." << std::endl;
+
+    // 3. benchmarks, using more sources
+    vbapData = getSpatGrisDataFromFiles("default_preset_512.xml", "default_speaker_setup.xml");
+    benchmarkUsingProjectData(vbapData,
+                              sourceBuffer,
+                              speakerBuffer,
+#if USE_FORK_UNION && (FU_METHOD == FU_USE_ARRAY_OF_ATOMICS || FU_METHOD == FU_USE_BUFFER_PER_THREAD)
+                              forkUnionBuffer,
+#endif
+                              stereoBuffer,
+                              sourcePeaks);
 }
+
+#if !ONLY_TEST_VBAP
 
 TEST_CASE(stereoTestName, "[spat]")
 {
@@ -290,17 +366,24 @@ TEST_CASE(stereoTestName, "[spat]")
 
     SourceAudioBuffer sourceBuffer;
     SpeakerAudioBuffer speakerBuffer;
+    AtomicSpeakerBuffer forkUnionBuffer;
     juce::AudioBuffer<float> stereoBuffer;
     SourcePeaks sourcePeaks;
 
-    std::cout << "Starting " << stereoTestName << " tests:\n";
-#if WRITE_TEST_OUTPUT_TO_DISK
+    std::cout << "Starting " << stereoTestName << " tests:" << std::endl;
+    #if WRITE_TEST_OUTPUT_TO_DISK
     renderProjectOutput(stereoTestName, stereoData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
-#endif
-    testUsingProjectData(stereoTestName, stereoData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
-    std::cout << stereoTestName << " tests done.\n";
+    #endif
+    testUsingProjectData(stereoTestName,
+                         stereoData,
+                         sourceBuffer,
+                         speakerBuffer,
+                         forkUnionBuffer,
+                         stereoBuffer,
+                         sourcePeaks);
+    std::cout << stereoTestName << " tests done." << std::endl;
 
-    benchmarkUsingProjectData("stereo benchmark", stereoData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
+    benchmarkUsingProjectData(stereoData, sourceBuffer, speakerBuffer, forkUnionBuffer, stereoBuffer, sourcePeaks);
 }
 
 TEST_CASE(mbapTestName, "[spat]")
@@ -313,17 +396,24 @@ TEST_CASE(mbapTestName, "[spat]")
 
     SourceAudioBuffer sourceBuffer;
     SpeakerAudioBuffer speakerBuffer;
+    AtomicSpeakerBuffer forkUnionBuffer;
     juce::AudioBuffer<float> stereoBuffer;
     SourcePeaks sourcePeaks;
 
-    std::cout << "Starting " << mbapTestName << " tests:\n";
-#if WRITE_TEST_OUTPUT_TO_DISK
+    std::cout << "Starting " << mbapTestName << " tests:" << std::endl;
+    #if WRITE_TEST_OUTPUT_TO_DISK
     renderProjectOutput(mbapTestName, mbapData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
-#endif
-    testUsingProjectData(mbapTestName, mbapData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
-    std::cout << mbapTestName << " tests done.\n";
+    #endif
+    testUsingProjectData(mbapTestName,
+                         mbapData,
+                         sourceBuffer,
+                         speakerBuffer,
+                         forkUnionBuffer,
+                         stereoBuffer,
+                         sourcePeaks);
+    std::cout << mbapTestName << " tests done." << std::endl;
 
-    benchmarkUsingProjectData("mbap benchmark", mbapData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
+    benchmarkUsingProjectData(mbapData, sourceBuffer, speakerBuffer, forkUnionBuffer, stereoBuffer, sourcePeaks);
 }
 
 TEST_CASE(hrtfTestName, "[spat]")
@@ -334,15 +424,24 @@ TEST_CASE(hrtfTestName, "[spat]")
 
     SourceAudioBuffer sourceBuffer;
     SpeakerAudioBuffer speakerBuffer;
+    AtomicSpeakerBuffer forkUnionBuffer;
     juce::AudioBuffer<float> stereoBuffer;
     SourcePeaks sourcePeaks;
 
-    std::cout << "Starting " << hrtfTestName << " tests:\n";
-#if WRITE_TEST_OUTPUT_TO_DISK
+    std::cout << "Starting " << hrtfTestName << " tests:" << std::endl;
+    #if WRITE_TEST_OUTPUT_TO_DISK
     renderProjectOutput(hrtfTestName, hrtfData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
-#endif
-    testUsingProjectData(hrtfTestName, hrtfData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
-    std::cout << hrtfTestName << " tests done.\n";
+    #endif
+    testUsingProjectData(hrtfTestName,
+                         hrtfData,
+                         sourceBuffer,
+                         speakerBuffer,
+                         forkUnionBuffer,
+                         stereoBuffer,
+                         sourcePeaks);
+    std::cout << hrtfTestName << " tests done." << std::endl;
 
-    benchmarkUsingProjectData("hrtf benchmark", hrtfData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
+    benchmarkUsingProjectData(hrtfData, sourceBuffer, speakerBuffer, forkUnionBuffer, stereoBuffer, sourcePeaks);
 }
+
+#endif
