@@ -478,7 +478,7 @@ tl::optional<Position> SpeakerData::getAbsoluteSpeakerPosition(juce::ValueTree s
         parentQuat = getQuaternionFromEulerAngles(yaw, pitch, roll);
     }
 
-    return getAbsoluteSpeakerPosition(speakerPosition, parentPosition, *parentQuat);
+    return getAbsoluteSpeakerPosition(speakerPosition, parentPosition, parentQuat);
 }
 
 tl::optional<Position> SpeakerData::getAbsoluteSpeakerPosition(Position speakerPosition,
