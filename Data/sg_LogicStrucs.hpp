@@ -262,24 +262,22 @@ struct SpeakerData {
      */
     static tl::optional<Position> getAbsoluteSpeakerPosition(juce::ValueTree vt);
 
+    using Quaternion = std::array<float, 4>;
     /**
-     * @brief Computes the absolute position of a speaker given its local position and the position of its parent.
+     * @brief Computes the speaker's absolute position given a speaker's position relative to its parent, its parent's
+     * position and its parent's rotation quaternion. This rotates the local position and calls the overload which adds
+     * the groups position to the relative position of the speaker.
+
      *
      * @param localSpeakerPosition The position of the speaker relative to its parent.
      * @param parentPosition The absolute position of the parent.
+     * @param parentQuat The rotation quaternion of the parent group
      * @return tl::optional<Position> The absolute position of the speaker if calculation is possible, otherwise
      * tl::nullopt.
      */
-    static tl::optional<Position> getAbsoluteSpeakerPosition(Position localSpeakerPosition, Position parentPosition);
-
-    /**
-     * Computes the speaker's absolute position given a speaker's position relative to its parent, its parent's position
-     * and its parent's rotation quaternion. This rotates the local position and calls the overload which adds the
-     * groups position to the relative position of the speaker.
-     */
     static tl::optional<Position> getAbsoluteSpeakerPosition(Position localSpeakerPosition,
                                                              Position parentPosition,
-                                                             std::array<float, 4> parentQuat);
+                                                             tl::optional<Quaternion> parentQuat);
 
     [[nodiscard]] bool operator==(SpeakerData const & other) const noexcept;
     //==============================================================================
