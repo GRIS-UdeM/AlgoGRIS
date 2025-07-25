@@ -8,7 +8,7 @@ on:
     branches: ['*']
 
 env:
-  SPATGRIS_REF: feat/yaw-pitch-roll-for-speaker-groups
+  SPATGRIS_REF: dev-sat
 
 jobs:
   Build-Ubuntu-Latest:
