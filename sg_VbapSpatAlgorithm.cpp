@@ -65,7 +65,9 @@ VbapType getVbapType(SpeakersData const & speakers)
 
 //==============================================================================
 VbapSpatAlgorithm::VbapSpatAlgorithm(SpeakersData const & speakers, const std::vector<source_index_t> & theSourceIds)
+#if USE_FORK_UNION
     : sourceIds{ theSourceIds }
+#endif
 {
     JUCE_ASSERT_MESSAGE_THREAD;
 

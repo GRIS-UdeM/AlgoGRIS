@@ -43,7 +43,9 @@ namespace gris
 //==============================================================================
 MbapSpatAlgorithm::MbapSpatAlgorithm(SpeakerSetup const & speakerSetup, std::vector<source_index_t> && theSourceIds)
     : mField(mbapInit(speakerSetup.speakers))
+#if USE_FORK_UNION
     , sourceIds{ std::move(theSourceIds) }
+#endif
 {
     JUCE_ASSERT_MESSAGE_THREAD;
 
