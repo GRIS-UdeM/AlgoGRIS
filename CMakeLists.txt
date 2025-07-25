@@ -104,6 +104,9 @@ add_library(AlgoGRIS
 
   StructGRIS/ValueTreeUtilities.cpp
   StructGRIS/ValueTreeUtilities.hpp
+  StructGRIS/Quaternion.cpp
+  StructGRIS/Quaternion.hpp
+
 
   tl/optional.hpp
 )
