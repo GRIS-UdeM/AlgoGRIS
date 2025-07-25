@@ -32,14 +32,20 @@ jobs:
       fail-fast: false # show all errors for each platform (vs. cancel jobs on error)
       matrix:
         include:
-          - name: Linux
+          - name: Linux (Benchmarks)
             os: [ benchmarks ]
             extra-flags: -G"Ninja Multi-Config" -DCMAKE_C_FLAGS="-fsanitize=address -fsanitize=undefined"  -DCMAKE_CXX_FLAGS="-fsanitize=address -fsanitize=undefined"
-
+          - name: Linux (GCC)
+            os: ubuntu-latest
+            extra-flags: -DCMAKE_C_COMPILER=gcc-14 -DCMAKE_CXX_COMPILER=g++-14 -G"Ninja Multi-Config" -DCMAKE_C_FLAGS="-fsanitize=address -fsanitize=undefined"  -DCMAKE_CXX_FLAGS="-fsanitize=address -fsanitize=undefined"
+            packages: gcc-14
+          - name: Linux (Clang)
+            os: ubuntu-latest
+            extra-flags: -DCMAKE_C_COMPILER=clang-19 -DCMAKE_CXX_COMPILER=clang++-19 -G"Ninja Multi-Config" -DCMAKE_C_FLAGS="-fsanitize=address -fsanitize=undefined"  -DCMAKE_CXX_FLAGS="-fsanitize=address -fsanitize=undefined"
+            packages: clang-19 libclang-rt-19-dev
           - name: macOS
             os: macos-15
             extra-flags: -G"Ninja Multi-Config" -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64"  -DCMAKE_C_FLAGS=" -fsanitize=address -fsanitize=undefined" -DCMAKE_CXX_FLAGS="-fsanitize=address -fsanitize=undefined"
-
           - name: Windows
             os: windows-latest
 
@@ -47,17 +53,12 @@ jobs:
       # Setup MSVC toolchain and developer command prompt (Windows)
       - uses: ilammy/msvc-dev-cmd@v1
 
-      # Use clang on Linux so we don't introduce a 3rd compiler (Windows and macOS use MSVC and Clang)
-      - name: Set up Clang
-        if: runner.os == 'Linux'
-        uses: egor-tensin/setup-clang@v1
-
       - name: Install JUCE's Linux Deps
         if: runner.os == 'Linux'
         # Thanks to McMartin & co https://forum.juce.com/t/list-of-juce-dependencies-under-linux/15121/44
         run: |
           sudo apt-get update -yqq
-          sudo apt -yqq install libasound2-dev libx11-dev libxinerama-dev libxext-dev libfreetype6-dev libwebkit2gtk-4.1-dev libglu1-mesa-dev xvfb ninja-build libcurl4-openssl-dev libclang-rt-18-dev libclang-rt-19-dev
+          sudo apt install -yqq libasound2-dev libx11-dev libxinerama-dev libxext-dev libfreetype6-dev libwebkit2gtk-4.1-dev libglu1-mesa-dev xvfb ninja-build libcurl4-openssl-dev ${{ matrix.packages }}
 
       - name: Install Ninja (Windows)
         if: runner.os == 'Windows'
