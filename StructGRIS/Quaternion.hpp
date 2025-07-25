@@ -14,7 +14,7 @@ using Quaternion = std::array<float, 4>;
  * Compute a SpeakerGroup's rotation quaternion from its yaw pitch and roll euler angles.
  */
 [[nodiscard]] Quaternion
-getQuaternionFromEulerAngles(const float yawParam, const float pitchParam, const float rollParam);
+    getQuaternionFromEulerAngles(const float yawParam, const float pitchParam, const float rollParam);
 
 /**
  * Quaternion multiplication.
