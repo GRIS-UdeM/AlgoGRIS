@@ -345,7 +345,7 @@ TEST_CASE(vbapTestName, "[spat]")
     std::cout << vbapTestName << " tests done." << std::endl;
 
     // 3. benchmarks, using more sources
-    vbapData = getSpatGrisDataFromFiles("default_preset_512.xml", "default_speaker_setup.xml");
+    vbapData = getSpatGrisDataFromFiles("default_preset_256.xml", "default_speaker_setup.xml");
     benchmarkUsingProjectData(vbapData,
                               sourceBuffer,
                               speakerBuffer,
