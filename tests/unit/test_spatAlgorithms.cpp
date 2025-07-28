@@ -366,7 +366,9 @@ TEST_CASE(stereoTestName, "[spat]")
 
     SourceAudioBuffer sourceBuffer;
     SpeakerAudioBuffer speakerBuffer;
-    AtomicSpeakerBuffer forkUnionBuffer;
+    #if USE_FORK_UNION && (FU_METHOD == FU_USE_ARRAY_OF_ATOMICS || FU_METHOD == FU_USE_BUFFER_PER_THREAD)
+    ForkUnionBuffer forkUnionBuffer;
+    #endif
     juce::AudioBuffer<float> stereoBuffer;
     SourcePeaks sourcePeaks;
 
@@ -378,12 +380,21 @@ TEST_CASE(stereoTestName, "[spat]")
                          stereoData,
                          sourceBuffer,
                          speakerBuffer,
+    #if USE_FORK_UNION && (FU_METHOD == FU_USE_ARRAY_OF_ATOMICS || FU_METHOD == FU_USE_BUFFER_PER_THREAD)
                          forkUnionBuffer,
+    #endif
                          stereoBuffer,
                          sourcePeaks);
     std::cout << stereoTestName << " tests done." << std::endl;
 
-    benchmarkUsingProjectData(stereoData, sourceBuffer, speakerBuffer, forkUnionBuffer, stereoBuffer, sourcePeaks);
+    benchmarkUsingProjectData(stereoData,
+                              sourceBuffer,
+                              speakerBuffer,
+    #if USE_FORK_UNION && (FU_METHOD == FU_USE_ARRAY_OF_ATOMICS || FU_METHOD == FU_USE_BUFFER_PER_THREAD)
+                              forkUnionBuffer,
+    #endif
+                              stereoBuffer,
+                              sourcePeaks);
 }
 
 TEST_CASE(mbapTestName, "[spat]")
@@ -396,7 +407,9 @@ TEST_CASE(mbapTestName, "[spat]")
 
     SourceAudioBuffer sourceBuffer;
     SpeakerAudioBuffer speakerBuffer;
-    AtomicSpeakerBuffer forkUnionBuffer;
+    #if USE_FORK_UNION && (FU_METHOD == FU_USE_ARRAY_OF_ATOMICS || FU_METHOD == FU_USE_BUFFER_PER_THREAD)
+    ForkUnionBuffer forkUnionBuffer;
+    #endif
     juce::AudioBuffer<float> stereoBuffer;
     SourcePeaks sourcePeaks;
 
@@ -408,12 +421,21 @@ TEST_CASE(mbapTestName, "[spat]")
                          mbapData,
                          sourceBuffer,
                          speakerBuffer,
+    #if USE_FORK_UNION && (FU_METHOD == FU_USE_ARRAY_OF_ATOMICS || FU_METHOD == FU_USE_BUFFER_PER_THREAD)
                          forkUnionBuffer,
+    #endif
                          stereoBuffer,
                          sourcePeaks);
     std::cout << mbapTestName << " tests done." << std::endl;
 
-    benchmarkUsingProjectData(mbapData, sourceBuffer, speakerBuffer, forkUnionBuffer, stereoBuffer, sourcePeaks);
+    benchmarkUsingProjectData(mbapData,
+                              sourceBuffer,
+                              speakerBuffer,
+    #if USE_FORK_UNION && (FU_METHOD == FU_USE_ARRAY_OF_ATOMICS || FU_METHOD == FU_USE_BUFFER_PER_THREAD)
+                              forkUnionBuffer,
+    #endif
+                              stereoBuffer,
+                              sourcePeaks);
 }
 
 TEST_CASE(hrtfTestName, "[spat]")
@@ -424,7 +446,9 @@ TEST_CASE(hrtfTestName, "[spat]")
 
     SourceAudioBuffer sourceBuffer;
     SpeakerAudioBuffer speakerBuffer;
-    AtomicSpeakerBuffer forkUnionBuffer;
+    #if USE_FORK_UNION && (FU_METHOD == FU_USE_ARRAY_OF_ATOMICS || FU_METHOD == FU_USE_BUFFER_PER_THREAD)
+    ForkUnionBuffer forkUnionBuffer;
+    #endif
     juce::AudioBuffer<float> stereoBuffer;
     SourcePeaks sourcePeaks;
 
@@ -436,12 +460,21 @@ TEST_CASE(hrtfTestName, "[spat]")
                          hrtfData,
                          sourceBuffer,
                          speakerBuffer,
+    #if USE_FORK_UNION && (FU_METHOD == FU_USE_ARRAY_OF_ATOMICS || FU_METHOD == FU_USE_BUFFER_PER_THREAD)
                          forkUnionBuffer,
+    #endif
                          stereoBuffer,
                          sourcePeaks);
     std::cout << hrtfTestName << " tests done." << std::endl;
 
-    benchmarkUsingProjectData(hrtfData, sourceBuffer, speakerBuffer, forkUnionBuffer, stereoBuffer, sourcePeaks);
+    benchmarkUsingProjectData(hrtfData,
+                              sourceBuffer,
+                              speakerBuffer,
+    #if USE_FORK_UNION && (FU_METHOD == FU_USE_ARRAY_OF_ATOMICS || FU_METHOD == FU_USE_BUFFER_PER_THREAD)
+                              forkUnionBuffer,
+    #endif
+                              stereoBuffer,
+                              sourcePeaks);
 }
 
 #endif
