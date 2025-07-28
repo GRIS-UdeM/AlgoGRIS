@@ -147,9 +147,14 @@ std::unique_ptr<AbstractSpatAlgorithm> AbstractSpatAlgorithm::make(SpeakerSetup 
     if (stereoMode) {
         switch (*stereoMode) {
         case StereoMode::hrtf:
-            return HrtfSpatAlgorithm::make(speakerSetup, projectSpatMode, sources, sampleRate, bufferSize);
+            return HrtfSpatAlgorithm::make(speakerSetup,
+                                           projectSpatMode,
+                                           sources,
+                                           sampleRate,
+                                           bufferSize,
+                                           sources.getKeys());
         case StereoMode::stereo:
-            return StereoSpatAlgorithm::make(speakerSetup, projectSpatMode, sources);
+            return StereoSpatAlgorithm::make(speakerSetup, projectSpatMode, sources, sources.getKeys());
 #ifdef USE_DOPPLER
         case StereoMode::doppler:
             return DopplerSpatAlgorithm::make(sampleRate, bufferSize);

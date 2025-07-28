@@ -104,7 +104,6 @@ void StereoSpatAlgorithm::process(AudioConfig const & config,
 #endif
 
 #if USE_FORK_UNION
-    auto const sourceIds{ config.sourcesAudioConfig.getKeyVector() };
     ashvardanian::fork_union::for_n(threadPool, sourceIds.size(), [&](std::size_t i) noexcept {
         processSource(config, sourceIds[(int)i], sourcePeaks, sourcesBuffer, stereoBuffer);
     });
@@ -112,6 +111,7 @@ void StereoSpatAlgorithm::process(AudioConfig const & config,
     for (auto const & source : config.sourcesAudioConfig)
         processSource(config, source.key, sourcePeaks, sourcesBuffer, stereoBuffer);
 #endif
+
     // Apply gain compensation.
     auto const compensation{ std::pow(10.0f, (narrow<float>(config.sourcesAudioConfig.size()) - 1.0f) * -0.005f) };
     stereoBuffer.applyGain(0, sourcesBuffer.getNumSamples(), compensation);
@@ -159,7 +159,11 @@ inline void StereoSpatAlgorithm::processSource(const gris::AudioConfig & config,
             }
             for (int sampleIndex{}; sampleIndex < numSamples; ++sampleIndex) {
                 currentGain += gainSlope;
+#if USE_FORK_UNION && FU_METHOD == FU_USE_ATOMIC_CAST
+                std::atomic_ref<float>(outputSamples[sampleIndex]) += inputSamples[sampleIndex] * currentGain;
+#else
                 outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
+#endif
             }
         } else {
             // log interpolation with 1st order filter
@@ -187,17 +191,22 @@ juce::Array<Triplet> StereoSpatAlgorithm::getTriplets() const noexcept
 //==============================================================================
 std::unique_ptr<AbstractSpatAlgorithm> StereoSpatAlgorithm::make(SpeakerSetup const & speakerSetup,
                                                                  SpatMode const & projectSpatMode,
-                                                                 SourcesData const & sources)
+                                                                 SourcesData const & sources,
+                                                                 std::vector<source_index_t> && sourceIds)
 {
     JUCE_ASSERT_MESSAGE_THREAD;
 
-    return std::make_unique<StereoSpatAlgorithm>(speakerSetup, projectSpatMode, sources);
+    return std::make_unique<StereoSpatAlgorithm>(speakerSetup, projectSpatMode, sources, std::move(sourceIds));
 }
 
 //==============================================================================
 StereoSpatAlgorithm::StereoSpatAlgorithm(SpeakerSetup const & speakerSetup,
                                          SpatMode const & projectSpatMode,
-                                         SourcesData const & sources)
+                                         SourcesData const & sources,
+                                         std::vector<source_index_t> && theSourceIds)
+#if USE_FORK_UNION
+    : sourceIds{ theSourceIds }
+#endif
 {
     JUCE_ASSERT_MESSAGE_THREAD;
 

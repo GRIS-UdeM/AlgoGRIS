@@ -64,7 +64,7 @@ VbapType getVbapType(SpeakersData const & speakers)
 }
 
 //==============================================================================
-VbapSpatAlgorithm::VbapSpatAlgorithm(SpeakersData const & speakers, const std::vector<source_index_t> & theSourceIds)
+VbapSpatAlgorithm::VbapSpatAlgorithm(SpeakersData const & speakers, std::vector<source_index_t> && theSourceIds)
 #if USE_FORK_UNION
     : sourceIds{ theSourceIds }
 #endif
@@ -115,7 +115,7 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
 #if USE_FORK_UNION && (FU_METHOD == FU_USE_ARRAY_OF_ATOMICS || FU_METHOD == FU_USE_BUFFER_PER_THREAD)
                                 ForkUnionBuffer & forkUnionBuffer,
 #endif
-                                [[maybe_unused]] juce::AudioBuffer<float> & stereoBuffer,
+                                juce::AudioBuffer<float> & /*stereoBuffer*/,
                                 SourcePeaks const & sourcePeaks,
                                 SpeakersAudioConfig const * altSpeakerConfig)
 {

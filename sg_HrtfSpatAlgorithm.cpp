@@ -50,7 +50,11 @@ HrtfSpatAlgorithm::HrtfSpatAlgorithm(SpeakerSetup const & speakerSetup,
                                      SpatMode const & projectSpatMode,
                                      SourcesData const & sources,
                                      double const sampleRate,
-                                     int const bufferSize)
+                                     int const bufferSize,
+                                     std::vector<source_index_t> && theSourceIds)
+#if USE_FORK_UNION
+    : sourceIds{ theSourceIds }
+#endif
 {
     JUCE_ASSERT_MESSAGE_THREAD;
 
@@ -273,10 +277,16 @@ std::unique_ptr<AbstractSpatAlgorithm> HrtfSpatAlgorithm::make(SpeakerSetup cons
                                                                SpatMode const & projectSpatMode,
                                                                SourcesData const & sources,
                                                                double const sampleRate,
-                                                               int const bufferSize)
+                                                               int const bufferSize,
+                                                               std::vector<source_index_t> && theSourceIds)
 {
     JUCE_ASSERT_MESSAGE_THREAD;
-    return std::make_unique<HrtfSpatAlgorithm>(speakerSetup, projectSpatMode, sources, sampleRate, bufferSize);
+    return std::make_unique<HrtfSpatAlgorithm>(speakerSetup,
+                                               projectSpatMode,
+                                               sources,
+                                               sampleRate,
+                                               bufferSize,
+                                               std::move(theSourceIds));
 }
 
 } // namespace gris

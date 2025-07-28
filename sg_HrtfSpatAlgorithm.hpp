@@ -66,7 +66,8 @@ public:
                       SpatMode const & projectSpatMode,
                       SourcesData const & sources,
                       double sampleRate,
-                      int bufferSize);
+                      int bufferSize,
+                      std::vector<source_index_t> && theSourceIds);
     //==============================================================================
     HrtfSpatAlgorithm() = delete;
     ~HrtfSpatAlgorithm() override = default;
@@ -91,7 +92,8 @@ public:
                                                        SpatMode const & projectSpatMode,
                                                        SourcesData const & sources,
                                                        double sampleRate,
-                                                       int bufferSize);
+                                                       int bufferSize,
+                                                       std::vector<source_index_t> && theSourceIds);
 
 private:
     //==============================================================================
@@ -101,6 +103,10 @@ private:
                         juce::AudioBuffer<float> & stereoBuffer);
 
     juce::AudioBuffer<float> convolutionBuffer;
+
+#if USE_FORK_UNION
+    std::vector<source_index_t> sourceIds;
+#endif
 
     JUCE_LEAK_DETECTOR(HrtfSpatAlgorithm)
 };

@@ -313,6 +313,8 @@ static SpatGrisData getSpatGrisDataFromFiles(const std::string & projectFilename
     return spatGrisData;
 }
 
+#if ONLY_TEST_VBAP
+
 TEST_CASE(vbapTestName, "[spat]")
 {
     // 1. init needed structures
@@ -322,24 +324,24 @@ TEST_CASE(vbapTestName, "[spat]")
 
     SourceAudioBuffer sourceBuffer;
     SpeakerAudioBuffer speakerBuffer;
-#if USE_FORK_UNION && (FU_METHOD == FU_USE_ARRAY_OF_ATOMICS || FU_METHOD == FU_USE_BUFFER_PER_THREAD)
+    #if USE_FORK_UNION && (FU_METHOD == FU_USE_ARRAY_OF_ATOMICS || FU_METHOD == FU_USE_BUFFER_PER_THREAD)
     ForkUnionBuffer forkUnionBuffer;
-#endif
+    #endif
     juce::AudioBuffer<float> stereoBuffer;
     SourcePeaks sourcePeaks;
 
     // 2. tests
     std::cout << "Starting " << vbapTestName << " tests:" << std::endl;
-#if WRITE_TEST_OUTPUT_TO_DISK
+    #if WRITE_TEST_OUTPUT_TO_DISK
     renderProjectOutput(vbapTestName, vbapData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
-#endif
+    #endif
     testUsingProjectData(vbapTestName,
                          vbapData,
                          sourceBuffer,
                          speakerBuffer,
-#if USE_FORK_UNION && (FU_METHOD == FU_USE_ARRAY_OF_ATOMICS || FU_METHOD == FU_USE_BUFFER_PER_THREAD)
+    #if USE_FORK_UNION && (FU_METHOD == FU_USE_ARRAY_OF_ATOMICS || FU_METHOD == FU_USE_BUFFER_PER_THREAD)
                          forkUnionBuffer,
-#endif
+    #endif
                          stereoBuffer,
                          sourcePeaks);
     std::cout << vbapTestName << " tests done." << std::endl;
@@ -349,14 +351,14 @@ TEST_CASE(vbapTestName, "[spat]")
     benchmarkUsingProjectData(vbapData,
                               sourceBuffer,
                               speakerBuffer,
-#if USE_FORK_UNION && (FU_METHOD == FU_USE_ARRAY_OF_ATOMICS || FU_METHOD == FU_USE_BUFFER_PER_THREAD)
+    #if USE_FORK_UNION && (FU_METHOD == FU_USE_ARRAY_OF_ATOMICS || FU_METHOD == FU_USE_BUFFER_PER_THREAD)
                               forkUnionBuffer,
-#endif
+    #endif
                               stereoBuffer,
                               sourcePeaks);
 }
 
-#if !ONLY_TEST_VBAP
+#else
 
 TEST_CASE(stereoTestName, "[spat]")
 {
