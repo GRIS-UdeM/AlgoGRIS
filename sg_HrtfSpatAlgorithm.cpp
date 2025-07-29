@@ -209,7 +209,7 @@ void HrtfSpatAlgorithm::process(AudioConfig const & config,
 
     convolutionBuffer.clear();
 
-#if USE_FORK_UNION
+#if USE_FORK_UNION && (FU_METHOD == FU_USE_ARRAY_OF_ATOMICS || FU_METHOD == FU_USE_BUFFER_PER_THREAD)
     jassert(speakerIds.size() > 0);
 
     ashvardanian::fork_union::for_n(threadPool, speakerIds.size(), [&](std::size_t i) noexcept {

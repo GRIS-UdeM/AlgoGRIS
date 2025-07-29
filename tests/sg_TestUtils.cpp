@@ -242,6 +242,7 @@ void AudioBufferComparator::writeCachedBuffersToDisk(juce::StringRef testName,
     cachedBuffers.clear();
 }
 
+// TODO VB: disable this before merging
 #define PRINT_BUFFERS 1
 
 void AudioBufferComparator::compareBuffers(const float * const curBuffer, const juce::AudioBuffer<float> & savedBuffer)

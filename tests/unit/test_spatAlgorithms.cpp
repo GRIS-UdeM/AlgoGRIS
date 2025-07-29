@@ -313,7 +313,7 @@ static SpatGrisData getSpatGrisDataFromFiles(const std::string & projectFilename
     return spatGrisData;
 }
 
-#if ONLY_TEST_VBAP
+#if 1 // ONLY_TEST_VBAP
 
 TEST_CASE(vbapTestName, "[spat]")
 {
@@ -438,7 +438,7 @@ TEST_CASE(mbapTestName, "[spat]")
                               sourcePeaks);
 }
 
-#else
+// #else
 
 TEST_CASE(hrtfTestName, "[spat]")
 {
