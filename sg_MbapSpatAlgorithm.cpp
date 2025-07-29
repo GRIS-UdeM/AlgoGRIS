@@ -101,7 +101,7 @@ void MbapSpatAlgorithm::updateSpatData(source_index_t const sourceIndex, SourceD
 
 //==============================================================================
 void MbapSpatAlgorithm::process(AudioConfig const & config,
-                                SourceAudioBuffer & sourceBuffer,
+                                SourceAudioBuffer & sourcesBuffer,
                                 SpeakerAudioBuffer & speakersBuffer,
 #if USE_FORK_UNION && (FU_METHOD == FU_USE_ARRAY_OF_ATOMICS || FU_METHOD == FU_USE_BUFFER_PER_THREAD)
                                 ForkUnionBuffer & forkUnionBuffer,
@@ -115,13 +115,15 @@ void MbapSpatAlgorithm::process(AudioConfig const & config,
     auto const & speakersAudioConfig{ altSpeakerConfig ? *altSpeakerConfig : config.speakersAudioConfig };
 
 #if USE_FORK_UNION
+    namespace fu = ashvardanian::fork_union;
+
     jassert(sourceIds.size() > 0);
 
-    ashvardanian::fork_union::for_n(threadPool, sourceIds.size(), [&](std::size_t i) noexcept {
+    fu::for_n(threadPool, sourceIds.size(), [&](fu::prong_t prong) noexcept {
         processSource(config,
-                      sourceIds[(int)i],
+                      sourceIds[prong.task_index],
                       sourcePeaks,
-                      sourceBuffer,
+                      sourcesBuffer,
                       speakersAudioConfig,
     #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
                       forkUnionBuffer,
@@ -167,7 +169,7 @@ void MbapSpatAlgorithm::process(AudioConfig const & config,
     #endif
 #else
     for (auto const & source : config.sourcesAudioConfig)
-        processSource(config, source.key, sourcePeaks, sourceBuffer, speakersAudioConfig, speakersBuffer);
+        processSource(config, source.key, sourcePeaks, sourcesBuffer, speakersAudioConfig, speakersBuffer);
 #endif
 }
 
@@ -215,6 +217,7 @@ inline void MbapSpatAlgorithm::processSource(const gris::AudioConfig & config,
     }
 
     // Process spatialization
+    [[maybe_unused]] size_t i = 0;
     for (auto const & speaker : speakersAudioConfig) {
         if (speaker.value.isMuted || speaker.value.isDirectOutOnly || speaker.value.gain < SMALL_GAIN) {
             // speaker silent

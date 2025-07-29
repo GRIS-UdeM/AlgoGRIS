@@ -161,7 +161,8 @@ inline void StereoSpatAlgorithm::processSource(const gris::AudioConfig & config,
             }
             for (int sampleIndex{}; sampleIndex < numSamples; ++sampleIndex) {
                 currentGain += gainSlope;
-#if USE_FORK_UNION && FU_METHOD == FU_USE_ATOMIC_CAST
+                // TODO: FU_METHOD == FU_USE_ATOMIC_CAST and == FU_USE_BUFFER_PER_THREAD
+#if USE_FORK_UNION // && FU_METHOD == FU_USE_ATOMIC_CAST
                 std::atomic_ref<float>(outputSamples[sampleIndex]) += inputSamples[sampleIndex] * currentGain;
 #else
                 outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
@@ -176,7 +177,8 @@ inline void StereoSpatAlgorithm::processSource(const gris::AudioConfig & config,
                     // currentGain will no ever increase over this buffer
                     break;
                 }
-#if USE_FORK_UNION && FU_METHOD == FU_USE_ATOMIC_CAST
+                // TODO: FU_METHOD == FU_USE_ATOMIC_CAST and == FU_USE_BUFFER_PER_THREAD
+#if USE_FORK_UNION //&& FU_METHOD == FU_USE_ATOMIC_CAST
                 std::atomic_ref<float>(outputSamples[sampleIndex]) += inputSamples[sampleIndex] * currentGain;
 #else
                 outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
