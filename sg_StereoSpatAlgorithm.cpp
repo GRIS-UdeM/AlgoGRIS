@@ -104,6 +104,8 @@ void StereoSpatAlgorithm::process(AudioConfig const & config,
 #endif
 
 #if USE_FORK_UNION
+    jassert(sourceIds.size() > 0);
+
     ashvardanian::fork_union::for_n(threadPool, sourceIds.size(), [&](std::size_t i) noexcept {
         processSource(config, sourceIds[(int)i], sourcePeaks, sourcesBuffer, stereoBuffer);
     });

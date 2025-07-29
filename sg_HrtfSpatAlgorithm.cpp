@@ -50,11 +50,7 @@ HrtfSpatAlgorithm::HrtfSpatAlgorithm(SpeakerSetup const & speakerSetup,
                                      SpatMode const & projectSpatMode,
                                      SourcesData const & sources,
                                      double const sampleRate,
-                                     int const bufferSize,
-                                     std::vector<source_index_t> && theSourceIds)
-#if USE_FORK_UNION
-    : sourceIds{ theSourceIds }
-#endif
+                                     int const bufferSize)
 {
     JUCE_ASSERT_MESSAGE_THREAD;
 
@@ -123,6 +119,10 @@ HrtfSpatAlgorithm::HrtfSpatAlgorithm(SpeakerSetup const & speakerSetup,
 
     speakers.sort();
     mHrtfData.speakersBuffer.init(speakers);
+
+#if USE_FORK_UNION
+    speakerIds = mHrtfData.speakersAudioConfig.getKeyVector();
+#endif
 
     auto const & binauralSpeakerData{ binauralSpeakerSetup->speakers };
 
@@ -210,8 +210,8 @@ void HrtfSpatAlgorithm::process(AudioConfig const & config,
     convolutionBuffer.clear();
 
 #if USE_FORK_UNION
-    // TODO VB: this cannot be on the audio thread
-    auto const speakerIds{ mHrtfData.speakersAudioConfig.getKeyVector() };
+    jassert(speakerIds.size() > 0);
+
     ashvardanian::fork_union::for_n(threadPool, speakerIds.size(), [&](std::size_t i) noexcept {
         processSpeaker((int)i, speakerIds[(int)i], sourcesBuffer, stereoBuffer);
     });
@@ -277,16 +277,10 @@ std::unique_ptr<AbstractSpatAlgorithm> HrtfSpatAlgorithm::make(SpeakerSetup cons
                                                                SpatMode const & projectSpatMode,
                                                                SourcesData const & sources,
                                                                double const sampleRate,
-                                                               int const bufferSize,
-                                                               std::vector<source_index_t> && theSourceIds)
+                                                               int const bufferSize)
 {
     JUCE_ASSERT_MESSAGE_THREAD;
-    return std::make_unique<HrtfSpatAlgorithm>(speakerSetup,
-                                               projectSpatMode,
-                                               sources,
-                                               sampleRate,
-                                               bufferSize,
-                                               std::move(theSourceIds));
+    return std::make_unique<HrtfSpatAlgorithm>(speakerSetup, projectSpatMode, sources, sampleRate, bufferSize);
 }
 
 } // namespace gris
