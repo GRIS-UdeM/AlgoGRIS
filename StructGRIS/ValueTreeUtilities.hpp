@@ -66,4 +66,9 @@ const juce::Identifier CARTESIAN_POSITION{ "CARTESIAN_POSITION" };
 const juce::Identifier GAIN{ "GAIN" };
 const juce::Identifier HIGHPASS_FREQ{ "HIGHPASS_FREQ" };
 const juce::Identifier DIRECT_OUT_ONLY{ "DIRECT_OUT_ONLY" };
+
+const juce::Identifier YAW{ "YAW" };
+const juce::Identifier PITCH{ "PITCH" };
+const juce::Identifier ROLL{ "ROLL" };
+
 } // namespace gris

@@ -32,6 +32,7 @@
 #include <cstdint>
 #include <memory>
 #include <utility>
+#include "../StructGRIS/Quaternion.hpp"
 #include "../StructGRIS/ValueTreeUtilities.hpp"
 
 namespace gris
@@ -461,18 +462,42 @@ tl::optional<Position> SpeakerData::getAbsoluteSpeakerPosition(juce::ValueTree s
         return tl::nullopt;
     }
 
-    // get speaker position and offset it by the group center
     auto const speakerPosition{ juce::VariantConverter<Position>::fromVar(speakerVt[CARTESIAN_POSITION]) };
     auto const parentPosition{ juce::VariantConverter<Position>::fromVar(speakerGroup[CARTESIAN_POSITION]) };
 
-    return getAbsoluteSpeakerPosition(speakerPosition, parentPosition);
+    // compute the parent group's rotation quaternion
+    const float yaw{ speakerGroup.getProperty(YAW, 0.0) };
+    const float pitch{ speakerGroup.getProperty(PITCH, 0.0) };
+    const float roll{ speakerGroup.getProperty(ROLL, 0.0) };
+
+    tl::optional<Quaternion> parentQuat;
+
+    if (yaw == 0.0 && pitch == 0.0 && roll == 0.0) {
+        parentQuat = tl::nullopt;
+    } else {
+        parentQuat = getQuaternionFromEulerAngles(yaw, pitch, roll);
+    }
+
+    return getAbsoluteSpeakerPosition(speakerPosition, parentPosition, parentQuat);
 }
 
-tl::optional<Position> SpeakerData::getAbsoluteSpeakerPosition(Position speakerPosition, Position parentPosition)
+tl::optional<Position> SpeakerData::getAbsoluteSpeakerPosition(Position speakerPosition,
+                                                               Position parentPosition,
+                                                               tl::optional<Quaternion> parentQuat)
 {
-    return Position{ CartesianVector{ parentPosition.getCartesian().x + speakerPosition.getCartesian().x,
-                                      parentPosition.getCartesian().y + speakerPosition.getCartesian().y,
-                                      parentPosition.getCartesian().z + speakerPosition.getCartesian().z } };
+    auto const speakerCartesian = speakerPosition.getCartesian();
+    auto const parentCartesian = parentPosition.getCartesian();
+    // if our quaternion is tl::nullopt, our rotated position is simply the speakers position.
+    Position rotatedPosition = std::move(speakerPosition);
+    if (parentQuat) {
+        auto rotatedVector = quatRotation({ speakerCartesian.x, speakerCartesian.y, speakerCartesian.z }, *parentQuat);
+        rotatedPosition = Position{ CartesianVector{ rotatedVector[0], rotatedVector[1], rotatedVector[2] } };
+    }
+    auto const rotatedCartesian = rotatedPosition.getCartesian();
+    // once we are rotated, add the parent's position to our components.
+    return Position{ CartesianVector{ parentCartesian.x + rotatedCartesian.x,
+                                      parentCartesian.y + rotatedCartesian.y,
+                                      parentCartesian.z + rotatedCartesian.z } };
 }
 
 //==============================================================================
