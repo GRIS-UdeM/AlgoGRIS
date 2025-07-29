@@ -397,8 +397,6 @@ TEST_CASE(stereoTestName, "[spat]")
                               sourcePeaks);
 }
 
-#else
-
 TEST_CASE(mbapTestName, "[spat]")
 {
     SpatGrisData mbapData
@@ -439,6 +437,8 @@ TEST_CASE(mbapTestName, "[spat]")
                               stereoBuffer,
                               sourcePeaks);
 }
+
+#else
 
 TEST_CASE(hrtfTestName, "[spat]")
 {

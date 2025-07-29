@@ -88,7 +88,14 @@ private:
                        const gris::SourcePeaks & sourcePeaks,
                        gris::SourceAudioBuffer & sourcesBuffer,
                        const gris::SpeakersAudioConfig & speakersAudioConfig,
-                       gris::SpeakerAudioBuffer & speakersBuffer);
+#if USE_FORK_UNION
+    #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
+                       ForkUnionBuffer & forkUnionBuffer,
+    #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
+                       std::vector<std::vector<float>> & speakerBuffer,
+    #endif
+#endif
+                       gris::SpeakerAudioBuffer & speakerBuffers);
 
 #if USE_FORK_UNION
     std::vector<source_index_t> sourceIds;

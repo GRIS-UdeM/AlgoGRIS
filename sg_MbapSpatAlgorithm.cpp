@@ -118,8 +118,53 @@ void MbapSpatAlgorithm::process(AudioConfig const & config,
     jassert(sourceIds.size() > 0);
 
     ashvardanian::fork_union::for_n(threadPool, sourceIds.size(), [&](std::size_t i) noexcept {
-        processSource(config, sourceIds[(int)i], sourcePeaks, sourceBuffer, speakersAudioConfig, speakersBuffer);
+        processSource(config,
+                      sourceIds[(int)i],
+                      sourcePeaks,
+                      sourceBuffer,
+                      speakersAudioConfig,
+    #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
+                      forkUnionBuffer,
+    #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
+                      forkUnionBuffer[prong.thread_index],
+    #endif
+                      speakersBuffer);
     });
+
+    // TODO VB: if this builds I need to extract that and what's in VbapSpatAlgorithm::process() into a common function
+    #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
+    // Copy ForkUnionBuffer into speakersBuffer
+    size_t i = 0;
+    for (auto const & speaker : speakersAudioConfig) {
+        // skip silent speaker
+        if (speaker.value.isMuted || speaker.value.isDirectOutOnly || speaker.value.gain < SMALL_GAIN)
+            continue;
+
+        auto const numSamples{ sourcesBuffer.getNumSamples() };
+        auto * outputSamples{ speakersBuffer[speaker.key].getWritePointer(0) };
+        auto & inputSamples{ forkUnionBuffer[i++] };
+
+        for (int sampleIdx = 0; sampleIdx < numSamples; ++sampleIdx)
+            outputSamples[sampleIdx] = inputSamples[sampleIdx]._a;
+    }
+    #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
+    // Copy forkUnionBuffer into speakersBuffer
+    for (auto const & threadBuffers : forkUnionBuffer) {
+        size_t curSpeakerNumber = 0;
+        for (auto const & speaker : speakersAudioConfig) {
+            // skip silent speaker
+            if (speaker.value.isMuted || speaker.value.isDirectOutOnly || speaker.value.gain < SMALL_GAIN)
+                continue;
+
+            auto const numSamples{ sourcesBuffer.getNumSamples() };
+            auto * mainOutputSamples{ speakersBuffer[speaker.key].getWritePointer(0) };
+            auto & threadOutputSamples{ threadBuffers[curSpeakerNumber++] };
+
+            for (int sampleIdx = 0; sampleIdx < numSamples; ++sampleIdx)
+                mainOutputSamples[sampleIdx] += threadOutputSamples[sampleIdx];
+        }
+    }
+    #endif
 #else
     for (auto const & source : config.sourcesAudioConfig)
         processSource(config, source.key, sourcePeaks, sourceBuffer, speakersAudioConfig, speakersBuffer);
@@ -131,7 +176,14 @@ inline void MbapSpatAlgorithm::processSource(const gris::AudioConfig & config,
                                              const gris::SourcePeaks & sourcePeaks,
                                              gris::SourceAudioBuffer & sourceBuffer,
                                              const gris::SpeakersAudioConfig & speakersAudioConfig,
-                                             gris::SpeakerAudioBuffer & speakersBuffer)
+#if USE_FORK_UNION
+    #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
+                                             ForkUnionBuffer & forkUnionBuffer,
+    #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
+                                             std::vector<std::vector<float>> & speakerBuffer,
+    #endif
+#endif
+                                             gris::SpeakerAudioBuffer & speakerBuffers)
 {
     auto const & source = config.sourcesAudioConfig[sourceId];
     if (source.isMuted || source.directOut || sourcePeaks[sourceId] < SMALL_GAIN) {
@@ -171,24 +223,63 @@ inline void MbapSpatAlgorithm::processSource(const gris::AudioConfig & config,
 
         auto & currentGain{ lastGains[speaker.key] };
         auto const & targetGain{ targetGains[speaker.key] };
-        auto * outputSamples{ speakersBuffer[speaker.key].getWritePointer(0) };
         auto const gainDiff{ targetGain - currentGain };
         auto const gainSlope{ gainDiff / narrow<float>(numSamples) };
 
-        if (gainSlope == 0.0f || std::abs(gainDiff) < SMALL_GAIN) {
+#if USE_FORK_UNION
+    #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
+        auto & outputSamples{ forkUnionBuffer[i++] };
+    #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
+        auto & outputSamples{ speakerBuffer[i++] };
+    #elif FU_METHOD == FU_USE_ATOMIC_CAST
+        auto * outputSamples{ speakerBuffers[speaker.key].getWritePointer(0) };
+    #endif
+#else
+        auto * outputSamples{ speakerBuffers[speaker.key].getWritePointer(0) };
+#endif
+
+        if (juce::approximatelyEqual(gainSlope, 0.f) || std::abs(gainDiff) < SMALL_GAIN) {
             // no interpolation
             currentGain = targetGain;
             if (currentGain >= SMALL_GAIN) {
+#if USE_FORK_UNION
+    #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
+                for (int sampleIndex{}; sampleIndex < numSamples; ++sampleIndex)
+                    outputSamples[sampleIndex]._a += inputSamples[sampleIndex] * currentGain;
+    #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
+                juce::FloatVectorOperations::addWithMultiply(outputSamples.data(),
+                                                             inputSamples,
+                                                             currentGain,
+                                                             numSamples);
+    #elif FU_METHOD == FU_USE_ATOMIC_CAST
+                for (int sampleIndex{}; sampleIndex < numSamples; ++sampleIndex)
+                    std::atomic_ref<float>(outputSamples[sampleIndex]) += inputSamples[sampleIndex] * currentGain;
+    #endif
+#else
                 juce::FloatVectorOperations::addWithMultiply(outputSamples, inputSamples, currentGain, numSamples);
+#endif
             }
             continue;
         }
 
-        if (gainInterpolation == 0.0f) {
+        // interpolation necessary
+        if (juce::approximatelyEqual(gainInterpolation, 0.f)) {
             // linear interpolation over buffer size
             for (int sampleIndex{}; sampleIndex < numSamples; ++sampleIndex) {
                 currentGain += gainSlope;
+#if USE_FORK_UNION
+    #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
+                outputSamples[sampleIndex]._a += inputSamples[sampleIndex] * currentGain;
+    #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
                 outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
+    #elif FU_METHOD == FU_USE_ATOMIC_CAST
+                std::atomic_ref<float>(outputSamples[sampleIndex]) += inputSamples[sampleIndex] * currentGain;
+    #else
+        #error "Invalid FORK_UNION_METHOD selected"
+    #endif
+#else
+                outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
+#endif
             }
         } else {
             // log interpolation with 1st order filter
@@ -196,7 +287,19 @@ inline void MbapSpatAlgorithm::processSource(const gris::AudioConfig & config,
                 // targeting silence
                 for (int sampleIndex{}; sampleIndex < numSamples && currentGain >= SMALL_GAIN; ++sampleIndex) {
                     currentGain = targetGain + (currentGain - targetGain) * gainFactor;
+#if USE_FORK_UNION
+    #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
+                    outputSamples[sampleIndex]._a += inputSamples[sampleIndex] * currentGain;
+    #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
                     outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
+    #elif FU_METHOD == FU_USE_ATOMIC_CAST
+                    std::atomic_ref<float>(outputSamples[sampleIndex]) += inputSamples[sampleIndex] * currentGain;
+    #else
+        #error "Invalid FORK_UNION_METHOD selected"
+    #endif
+#else
+                    outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
+#endif
                 }
                 continue;
             }
@@ -204,7 +307,19 @@ inline void MbapSpatAlgorithm::processSource(const gris::AudioConfig & config,
             // not targeting silence
             for (int sampleIndex{}; sampleIndex < numSamples; ++sampleIndex) {
                 currentGain = (currentGain - targetGain) * gainFactor + targetGain;
+#if USE_FORK_UNION
+    #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
+                outputSamples[sampleIndex]._a += inputSamples[sampleIndex] * currentGain;
+    #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
                 outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
+    #elif FU_METHOD == FU_USE_ATOMIC_CAST
+                std::atomic_ref<float>(outputSamples[sampleIndex]) += inputSamples[sampleIndex] * currentGain;
+    #else
+        #error "Invalid FORK_UNION_METHOD selected"
+    #endif
+#else
+                outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
+#endif
             }
         }
     }

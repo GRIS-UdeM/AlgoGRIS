@@ -227,7 +227,6 @@ inline void VbapSpatAlgorithm::processSource(const gris::AudioConfig & config,
 
         auto & currentGain{ lastGains[speaker.key] };
         auto const & targetGain{ gains[speaker.key] };
-
         auto const gainDiff{ targetGain - currentGain };
         auto const gainSlope{ gainDiff / narrow<float>(numSamples) };
 
@@ -285,7 +284,6 @@ inline void VbapSpatAlgorithm::processSource(const gris::AudioConfig & config,
 #else
                 outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
 #endif
-                // jassert(outputSamples[sampleIndex] >= -1.f && outputSamples[sampleIndex] <= 1.f);
             }
         } else {
             // log interpolation with 1st order filter
@@ -306,7 +304,6 @@ inline void VbapSpatAlgorithm::processSource(const gris::AudioConfig & config,
 #else
                     outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
 #endif
-                    // jassert(outputSamples[sampleIndex] >= -1.f && outputSamples[sampleIndex] <= 1.f);
                 }
                 continue;
             }
@@ -327,7 +324,6 @@ inline void VbapSpatAlgorithm::processSource(const gris::AudioConfig & config,
 #else
                 outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
 #endif
-                // jassert(outputSamples[sampleIndex] >= -1.f && outputSamples[sampleIndex] <= 1.f);
             }
         }
     }
