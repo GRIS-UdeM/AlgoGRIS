@@ -43,7 +43,7 @@ namespace gris
 //==============================================================================
 MbapSpatAlgorithm::MbapSpatAlgorithm(SpeakerSetup const & speakerSetup, std::vector<source_index_t> && theSourceIds)
     : mField(mbapInit(speakerSetup.speakers))
-#if USE_FORK_UNION
+#if SG_USE_FORK_UNION
     , sourceIds{ std::move(theSourceIds) }
 #endif
 {
@@ -103,7 +103,7 @@ void MbapSpatAlgorithm::updateSpatData(source_index_t const sourceIndex, SourceD
 void MbapSpatAlgorithm::process(AudioConfig const & config,
                                 SourceAudioBuffer & sourcesBuffer,
                                 SpeakerAudioBuffer & speakersBuffer,
-#if USE_FORK_UNION && (FU_METHOD == FU_USE_ARRAY_OF_ATOMICS || FU_METHOD == FU_USE_BUFFER_PER_THREAD)
+#if SG_USE_FORK_UNION && (SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS || SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD)
                                 ForkUnionBuffer & forkUnionBuffer,
 #endif
                                 [[maybe_unused]] juce::AudioBuffer<float> & stereoBuffer,
@@ -114,7 +114,7 @@ void MbapSpatAlgorithm::process(AudioConfig const & config,
 
     auto const & speakersAudioConfig{ altSpeakerConfig ? *altSpeakerConfig : config.speakersAudioConfig };
 
-#if USE_FORK_UNION
+#if SG_USE_FORK_UNION
     namespace fu = ashvardanian::fork_union;
 
     jassert(sourceIds.size() > 0);
@@ -125,14 +125,14 @@ void MbapSpatAlgorithm::process(AudioConfig const & config,
                       sourcePeaks,
                       sourcesBuffer,
                       speakersAudioConfig,
-    #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
+    #if SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS
                       forkUnionBuffer,
-    #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
+    #elif SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD
                       forkUnionBuffer[prong.thread_index],
     #endif
                       speakersBuffer);
     });
-    #if USE_FORK_UNION && (FU_METHOD == FU_USE_ARRAY_OF_ATOMICS || FU_METHOD == FU_USE_BUFFER_PER_THREAD)
+    #if SG_USE_FORK_UNION && (SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS || SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD)
     copyForkUnionBuffer(speakersAudioConfig, sourcesBuffer, speakersBuffer, forkUnionBuffer);
     #endif
 #else
@@ -146,10 +146,10 @@ inline void MbapSpatAlgorithm::processSource(const gris::AudioConfig & config,
                                              const gris::SourcePeaks & sourcePeaks,
                                              gris::SourceAudioBuffer & sourceBuffer,
                                              const gris::SpeakersAudioConfig & speakersAudioConfig,
-#if USE_FORK_UNION
-    #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
+#if SG_USE_FORK_UNION
+    #if SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS
                                              ForkUnionBuffer & forkUnionBuffer,
-    #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
+    #elif SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD
                                              std::vector<std::vector<float>> & speakerBuffer,
     #endif
 #endif
@@ -197,12 +197,12 @@ inline void MbapSpatAlgorithm::processSource(const gris::AudioConfig & config,
         auto const gainDiff{ targetGain - currentGain };
         auto const gainSlope{ gainDiff / narrow<float>(numSamples) };
 
-#if USE_FORK_UNION
-    #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
+#if SG_USE_FORK_UNION
+    #if SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS
         auto & outputSamples{ forkUnionBuffer[i++] };
-    #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
+    #elif SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD
         auto & outputSamples{ speakerBuffer[i++] };
-    #elif FU_METHOD == FU_USE_ATOMIC_CAST
+    #elif SG_FU_METHOD == SG_FU_USE_ATOMIC_CAST
         auto * outputSamples{ speakerBuffers[speaker.key].getWritePointer(0) };
     #endif
 #else
@@ -213,16 +213,16 @@ inline void MbapSpatAlgorithm::processSource(const gris::AudioConfig & config,
             // no interpolation
             currentGain = targetGain;
             if (currentGain >= SMALL_GAIN) {
-#if USE_FORK_UNION
-    #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
+#if SG_USE_FORK_UNION
+    #if SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS
                 for (int sampleIndex{}; sampleIndex < numSamples; ++sampleIndex)
                     outputSamples[sampleIndex]._a += inputSamples[sampleIndex] * currentGain;
-    #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
+    #elif SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD
                 juce::FloatVectorOperations::addWithMultiply(outputSamples.data(),
                                                              inputSamples,
                                                              currentGain,
                                                              numSamples);
-    #elif FU_METHOD == FU_USE_ATOMIC_CAST
+    #elif SG_FU_METHOD == SG_FU_USE_ATOMIC_CAST
                 for (int sampleIndex{}; sampleIndex < numSamples; ++sampleIndex)
                     std::atomic_ref<float>(outputSamples[sampleIndex]) += inputSamples[sampleIndex] * currentGain;
     #endif
@@ -238,12 +238,12 @@ inline void MbapSpatAlgorithm::processSource(const gris::AudioConfig & config,
             // linear interpolation over buffer size
             for (int sampleIndex{}; sampleIndex < numSamples; ++sampleIndex) {
                 currentGain += gainSlope;
-#if USE_FORK_UNION
-    #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
+#if SG_USE_FORK_UNION
+    #if SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS
                 outputSamples[sampleIndex]._a += inputSamples[sampleIndex] * currentGain;
-    #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
+    #elif SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD
                 outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
-    #elif FU_METHOD == FU_USE_ATOMIC_CAST
+    #elif SG_FU_METHOD == SG_FU_USE_ATOMIC_CAST
                 std::atomic_ref<float>(outputSamples[sampleIndex]) += inputSamples[sampleIndex] * currentGain;
     #else
         #error "Invalid FORK_UNION_METHOD selected"
@@ -258,12 +258,12 @@ inline void MbapSpatAlgorithm::processSource(const gris::AudioConfig & config,
                 // targeting silence
                 for (int sampleIndex{}; sampleIndex < numSamples && currentGain >= SMALL_GAIN; ++sampleIndex) {
                     currentGain = targetGain + (currentGain - targetGain) * gainFactor;
-#if USE_FORK_UNION
-    #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
+#if SG_USE_FORK_UNION
+    #if SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS
                     outputSamples[sampleIndex]._a += inputSamples[sampleIndex] * currentGain;
-    #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
+    #elif SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD
                     outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
-    #elif FU_METHOD == FU_USE_ATOMIC_CAST
+    #elif SG_FU_METHOD == SG_FU_USE_ATOMIC_CAST
                     std::atomic_ref<float>(outputSamples[sampleIndex]) += inputSamples[sampleIndex] * currentGain;
     #else
         #error "Invalid FORK_UNION_METHOD selected"
@@ -278,12 +278,12 @@ inline void MbapSpatAlgorithm::processSource(const gris::AudioConfig & config,
             // not targeting silence
             for (int sampleIndex{}; sampleIndex < numSamples; ++sampleIndex) {
                 currentGain = (currentGain - targetGain) * gainFactor + targetGain;
-#if USE_FORK_UNION
-    #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
+#if SG_USE_FORK_UNION
+    #if SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS
                 outputSamples[sampleIndex]._a += inputSamples[sampleIndex] * currentGain;
-    #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
+    #elif SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD
                 outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
-    #elif FU_METHOD == FU_USE_ATOMIC_CAST
+    #elif SG_FU_METHOD == SG_FU_USE_ATOMIC_CAST
                 std::atomic_ref<float>(outputSamples[sampleIndex]) += inputSamples[sampleIndex] * currentGain;
     #else
         #error "Invalid FORK_UNION_METHOD selected"

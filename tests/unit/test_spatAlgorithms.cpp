@@ -111,7 +111,7 @@ static void testUsingProjectData(juce::StringRef testName,
                                  gris::SpatGrisData & data,
                                  SourceAudioBuffer & sourceBuffer,
                                  SpeakerAudioBuffer & speakerBuffer,
-#if USE_FORK_UNION && (FU_METHOD == FU_USE_ARRAY_OF_ATOMICS || FU_METHOD == FU_USE_BUFFER_PER_THREAD)
+#if SG_USE_FORK_UNION && (SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS || SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD)
                                  ForkUnionBuffer & forkUnionBuffer,
 #endif
                                  juce::AudioBuffer<float> & stereoBuffer,
@@ -136,10 +136,10 @@ static void testUsingProjectData(juce::StringRef testName,
                     numSpeakers,
                     sourceBuffer,
                     speakerBuffer,
-    #if USE_FORK_UNION
-        #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
+    #if SG_USE_FORK_UNION
+        #if SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS
                     forkUnionBuffer,
-        #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
+        #elif SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD
                     forkUnionBuffer,
         #endif
     #endif
@@ -175,13 +175,13 @@ static void testUsingProjectData(juce::StringRef testName,
             // process the audio
             speakerBuffer.silence();
             stereoBuffer.clear();
-    #if USE_FORK_UNION && (FU_METHOD == FU_USE_ARRAY_OF_ATOMICS || FU_METHOD == FU_USE_BUFFER_PER_THREAD)
+    #if SG_USE_FORK_UNION && (SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS || SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD)
             algo->silenceForkUnionBuffer(forkUnionBuffer);
     #endif
             algo->process(*config,
                           sourceBuffer,
                           speakerBuffer,
-    #if USE_FORK_UNION && (FU_METHOD == FU_USE_ARRAY_OF_ATOMICS || FU_METHOD == FU_USE_BUFFER_PER_THREAD)
+    #if SG_USE_FORK_UNION && (SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS || SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD)
                           forkUnionBuffer,
     #endif
                           stereoBuffer,
@@ -209,7 +209,7 @@ static void testUsingProjectData(juce::StringRef testName,
 static void benchmarkUsingProjectData(gris::SpatGrisData & data,
                                       SourceAudioBuffer & sourceBuffer,
                                       SpeakerAudioBuffer & speakerBuffer,
-#if USE_FORK_UNION && (FU_METHOD == FU_USE_ARRAY_OF_ATOMICS || FU_METHOD == FU_USE_BUFFER_PER_THREAD)
+#if SG_USE_FORK_UNION && (SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS || SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD)
                                       ForkUnionBuffer & forkUnionBuffer,
 #endif
                                       juce::AudioBuffer<float> & stereoBuffer,
@@ -228,10 +228,10 @@ static void benchmarkUsingProjectData(gris::SpatGrisData & data,
                 numSpeakers,
                 sourceBuffer,
                 speakerBuffer,
-    #if USE_FORK_UNION
-        #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
+    #if SG_USE_FORK_UNION
+        #if SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS
                 forkUnionBuffer,
-        #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
+        #elif SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD
                 forkUnionBuffer,
         #endif
     #endif
@@ -258,17 +258,17 @@ static void benchmarkUsingProjectData(gris::SpatGrisData & data,
         speakerBuffer.silence();
         stereoBuffer.clear();
 
-    #if USE_FORK_UNION && (FU_METHOD == FU_USE_ARRAY_OF_ATOMICS || FU_METHOD == FU_USE_BUFFER_PER_THREAD)
+    #if SG_USE_FORK_UNION && (SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS || SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD)
         algo->silenceForkUnionBuffer(forkUnionBuffer);
     #endif
 
         algo->process(*config,
                       sourceBuffer,
                       speakerBuffer,
-    #if USE_FORK_UNION
-        #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
+    #if SG_USE_FORK_UNION
+        #if SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS
                       forkUnionBuffer,
-        #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
+        #elif SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD
                       forkUnionBuffer,
         #endif
     #endif
@@ -321,7 +321,7 @@ TEST_CASE(vbapTestName, "[spat]")
 
     SourceAudioBuffer sourceBuffer;
     SpeakerAudioBuffer speakerBuffer;
-#if USE_FORK_UNION && (FU_METHOD == FU_USE_ARRAY_OF_ATOMICS || FU_METHOD == FU_USE_BUFFER_PER_THREAD)
+#if SG_USE_FORK_UNION && (SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS || SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD)
     ForkUnionBuffer forkUnionBuffer;
 #endif
     juce::AudioBuffer<float> stereoBuffer;
@@ -336,7 +336,7 @@ TEST_CASE(vbapTestName, "[spat]")
                          vbapData,
                          sourceBuffer,
                          speakerBuffer,
-#if USE_FORK_UNION && (FU_METHOD == FU_USE_ARRAY_OF_ATOMICS || FU_METHOD == FU_USE_BUFFER_PER_THREAD)
+#if SG_USE_FORK_UNION && (SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS || SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD)
                          forkUnionBuffer,
 #endif
                          stereoBuffer,
@@ -348,7 +348,7 @@ TEST_CASE(vbapTestName, "[spat]")
     benchmarkUsingProjectData(vbapData,
                               sourceBuffer,
                               speakerBuffer,
-#if USE_FORK_UNION && (FU_METHOD == FU_USE_ARRAY_OF_ATOMICS || FU_METHOD == FU_USE_BUFFER_PER_THREAD)
+#if SG_USE_FORK_UNION && (SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS || SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD)
                               forkUnionBuffer,
 #endif
                               stereoBuffer,
@@ -363,7 +363,7 @@ TEST_CASE(stereoTestName, "[spat]")
 
     SourceAudioBuffer sourceBuffer;
     SpeakerAudioBuffer speakerBuffer;
-#if USE_FORK_UNION && (FU_METHOD == FU_USE_ARRAY_OF_ATOMICS || FU_METHOD == FU_USE_BUFFER_PER_THREAD)
+#if SG_USE_FORK_UNION && (SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS || SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD)
     ForkUnionBuffer forkUnionBuffer;
 #endif
     juce::AudioBuffer<float> stereoBuffer;
@@ -377,7 +377,7 @@ TEST_CASE(stereoTestName, "[spat]")
                          stereoData,
                          sourceBuffer,
                          speakerBuffer,
-#if USE_FORK_UNION && (FU_METHOD == FU_USE_ARRAY_OF_ATOMICS || FU_METHOD == FU_USE_BUFFER_PER_THREAD)
+#if SG_USE_FORK_UNION && (SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS || SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD)
                          forkUnionBuffer,
 #endif
                          stereoBuffer,
@@ -387,7 +387,7 @@ TEST_CASE(stereoTestName, "[spat]")
     benchmarkUsingProjectData(stereoData,
                               sourceBuffer,
                               speakerBuffer,
-#if USE_FORK_UNION && (FU_METHOD == FU_USE_ARRAY_OF_ATOMICS || FU_METHOD == FU_USE_BUFFER_PER_THREAD)
+#if SG_USE_FORK_UNION && (SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS || SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD)
                               forkUnionBuffer,
 #endif
                               stereoBuffer,
@@ -404,7 +404,7 @@ TEST_CASE(mbapTestName, "[spat]")
 
     SourceAudioBuffer sourceBuffer;
     SpeakerAudioBuffer speakerBuffer;
-#if USE_FORK_UNION && (FU_METHOD == FU_USE_ARRAY_OF_ATOMICS || FU_METHOD == FU_USE_BUFFER_PER_THREAD)
+#if SG_USE_FORK_UNION && (SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS || SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD)
     ForkUnionBuffer forkUnionBuffer;
 #endif
     juce::AudioBuffer<float> stereoBuffer;
@@ -418,7 +418,7 @@ TEST_CASE(mbapTestName, "[spat]")
                          mbapData,
                          sourceBuffer,
                          speakerBuffer,
-#if USE_FORK_UNION && (FU_METHOD == FU_USE_ARRAY_OF_ATOMICS || FU_METHOD == FU_USE_BUFFER_PER_THREAD)
+#if SG_USE_FORK_UNION && (SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS || SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD)
                          forkUnionBuffer,
 #endif
                          stereoBuffer,
@@ -428,7 +428,7 @@ TEST_CASE(mbapTestName, "[spat]")
     benchmarkUsingProjectData(mbapData,
                               sourceBuffer,
                               speakerBuffer,
-#if USE_FORK_UNION && (FU_METHOD == FU_USE_ARRAY_OF_ATOMICS || FU_METHOD == FU_USE_BUFFER_PER_THREAD)
+#if SG_USE_FORK_UNION && (SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS || SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD)
                               forkUnionBuffer,
 #endif
                               stereoBuffer,
@@ -443,7 +443,7 @@ TEST_CASE(hrtfTestName, "[spat]")
 
     SourceAudioBuffer sourceBuffer;
     SpeakerAudioBuffer speakerBuffer;
-#if USE_FORK_UNION && (FU_METHOD == FU_USE_ARRAY_OF_ATOMICS || FU_METHOD == FU_USE_BUFFER_PER_THREAD)
+#if SG_USE_FORK_UNION && (SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS || SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD)
     ForkUnionBuffer forkUnionBuffer;
 #endif
     juce::AudioBuffer<float> stereoBuffer;
@@ -457,7 +457,7 @@ TEST_CASE(hrtfTestName, "[spat]")
                          hrtfData,
                          sourceBuffer,
                          speakerBuffer,
-#if USE_FORK_UNION && (FU_METHOD == FU_USE_ARRAY_OF_ATOMICS || FU_METHOD == FU_USE_BUFFER_PER_THREAD)
+#if SG_USE_FORK_UNION && (SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS || SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD)
                          forkUnionBuffer,
 #endif
                          stereoBuffer,
@@ -467,7 +467,7 @@ TEST_CASE(hrtfTestName, "[spat]")
     benchmarkUsingProjectData(hrtfData,
                               sourceBuffer,
                               speakerBuffer,
-#if USE_FORK_UNION && (FU_METHOD == FU_USE_ARRAY_OF_ATOMICS || FU_METHOD == FU_USE_BUFFER_PER_THREAD)
+#if SG_USE_FORK_UNION && (SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS || SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD)
                               forkUnionBuffer,
 #endif
                               stereoBuffer,

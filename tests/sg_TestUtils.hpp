@@ -18,8 +18,8 @@
 
 #define ENABLE_TESTS 1
 #define ENABLE_BENCHMARKS 1
-#define USE_FIXED_NUM_LOOPS 1
-#define USE_ONLY_TWO_BUFFER_SIZES 1
+#define USE_FIXED_NUM_LOOPS 0
+#define USE_ONLY_TWO_BUFFER_SIZES 0
 #define WRITE_TEST_OUTPUT_TO_DISK 0
 
 #define REQUIRE_MESSAGE(cond, msg)                                                                                     \
@@ -66,7 +66,7 @@ void initBuffers(const int bufferSize,
                  const size_t numSpeakers,
                  SourceAudioBuffer & sourceBuffer,
                  SpeakerAudioBuffer & speakerBuffer,
-#if USE_FORK_UNION && (FU_METHOD == FU_USE_ARRAY_OF_ATOMICS || FU_METHOD == FU_USE_BUFFER_PER_THREAD)
+#if SG_USE_FORK_UNION && (SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS || SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD)
                  ForkUnionBuffer & forkUnionBuffer,
 #endif
                  juce::AudioBuffer<float> & stereoBuffer);

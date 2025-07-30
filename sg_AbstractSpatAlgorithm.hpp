@@ -33,7 +33,7 @@
 #include <cstdint>
 #include <memory>
 
-#if USE_FORK_UNION
+#if SG_USE_FORK_UNION
     #if JUCE_WINDOWS
         // this disables an annoying warning about structure alignment
         #pragma warning(disable : 4324)
@@ -83,7 +83,7 @@ public:
     virtual ~AbstractSpatAlgorithm() = default;
     SG_DELETE_COPY_AND_MOVE(AbstractSpatAlgorithm)
 
-#if USE_FORK_UNION && (FU_METHOD == FU_USE_ARRAY_OF_ATOMICS || FU_METHOD == FU_USE_BUFFER_PER_THREAD)
+#if SG_USE_FORK_UNION && (SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS || SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD)
     void silenceForkUnionBuffer(ForkUnionBuffer & forkUnionBuffer) noexcept;
 
     static void copyForkUnionBuffer(const gris::SpeakersAudioConfig & speakersAudioConfig,
@@ -120,7 +120,7 @@ public:
     virtual void process(AudioConfig const & config,
                          SourceAudioBuffer & sourcesBuffer,
                          SpeakerAudioBuffer & speakersBuffer,
-#if USE_FORK_UNION && (FU_METHOD == FU_USE_ARRAY_OF_ATOMICS || FU_METHOD == FU_USE_BUFFER_PER_THREAD)
+#if SG_USE_FORK_UNION && (SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS || SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD)
                          ForkUnionBuffer & forkUnionBuffer,
 #endif
                          juce::AudioBuffer<float> & stereoBuffer,
@@ -151,7 +151,7 @@ public:
                                                                      int bufferSize);
 
 protected:
-#if USE_FORK_UNION
+#if SG_USE_FORK_UNION
     ashvardanian::fork_union::thread_pool_t threadPool;
 #endif
 

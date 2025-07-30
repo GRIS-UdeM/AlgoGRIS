@@ -8,7 +8,7 @@ void initBuffers(const int bufferSize,
                  const size_t numSpeakers,
                  SourceAudioBuffer & sourceBuffer,
                  SpeakerAudioBuffer & speakerBuffer,
-#if USE_FORK_UNION && (FU_METHOD == FU_USE_ARRAY_OF_ATOMICS || FU_METHOD == FU_USE_BUFFER_PER_THREAD)
+#if SG_USE_FORK_UNION && (SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS || SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD)
                  ForkUnionBuffer & forkUnionBuffer,
 #endif
                  juce::AudioBuffer<float> & stereoBuffer)
@@ -25,15 +25,15 @@ void initBuffers(const int bufferSize,
     speakerBuffer.init(speakerIndices);
     speakerBuffer.setNumSamples(bufferSize);
 
-#if USE_FORK_UNION
-    #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
+#if SG_USE_FORK_UNION
+    #if SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS
     forkUnionBuffer.resize(numSpeakers);
     for (int i = 0; i < numSpeakers; ++i) {
         forkUnionBuffer[i].clear();
         for (int j = 0; j < bufferSize; ++j)
             forkUnionBuffer[i].emplace_back(0.0f);
     }
-    #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
+    #elif SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD
     // so we have a buffer for each hardware thread
     auto const numThreads = std::thread::hardware_concurrency();
     forkUnionBuffer.resize(numThreads);

@@ -85,7 +85,7 @@ void StereoSpatAlgorithm::updateSpatData(source_index_t const sourceIndex, Sourc
 void StereoSpatAlgorithm::process(AudioConfig const & config,
                                   SourceAudioBuffer & sourcesBuffer,
                                   SpeakerAudioBuffer & speakersBuffer,
-#if USE_FORK_UNION && (FU_METHOD == FU_USE_ARRAY_OF_ATOMICS || FU_METHOD == FU_USE_BUFFER_PER_THREAD)
+#if SG_USE_FORK_UNION && (SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS || SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD)
                                   ForkUnionBuffer & forkUnionBuffer,
 #endif
                                   juce::AudioBuffer<float> & stereoBuffer,
@@ -96,14 +96,14 @@ void StereoSpatAlgorithm::process(AudioConfig const & config,
     jassert(!altSpeakerConfig);
     jassert(stereoBuffer.getNumChannels() == 2);
 
-#if USE_FORK_UNION && (FU_METHOD == FU_USE_ARRAY_OF_ATOMICS || FU_METHOD == FU_USE_BUFFER_PER_THREAD)
+#if SG_USE_FORK_UNION && (SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS || SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD)
     mInnerAlgorithm
         ->process(config, sourcesBuffer, speakersBuffer, forkUnionBuffer, stereoBuffer, sourcePeaks, altSpeakerConfig);
 #else
     mInnerAlgorithm->process(config, sourcesBuffer, speakersBuffer, stereoBuffer, sourcePeaks, altSpeakerConfig);
 #endif
 
-#if USE_FORK_UNION
+#if SG_USE_FORK_UNION
     jassert(sourceIds.size() > 0);
 
     ashvardanian::fork_union::for_n(threadPool, sourceIds.size(), [&](std::size_t i) noexcept {
@@ -161,8 +161,8 @@ inline void StereoSpatAlgorithm::processSource(const gris::AudioConfig & config,
             }
             for (int sampleIndex{}; sampleIndex < numSamples; ++sampleIndex) {
                 currentGain += gainSlope;
-                // TODO: FU_METHOD == FU_USE_ATOMIC_CAST and == FU_USE_BUFFER_PER_THREAD
-#if USE_FORK_UNION // && FU_METHOD == FU_USE_ATOMIC_CAST
+                // TODO: SG_FU_METHOD == SG_FU_USE_ATOMIC_CAST and == SG_FU_USE_BUFFER_PER_THREAD
+#if SG_USE_FORK_UNION // && SG_FU_METHOD == SG_FU_USE_ATOMIC_CAST
                 std::atomic_ref<float>(outputSamples[sampleIndex]) += inputSamples[sampleIndex] * currentGain;
 #else
                 outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
@@ -177,8 +177,8 @@ inline void StereoSpatAlgorithm::processSource(const gris::AudioConfig & config,
                     // currentGain will no ever increase over this buffer
                     break;
                 }
-                // TODO: FU_METHOD == FU_USE_ATOMIC_CAST and == FU_USE_BUFFER_PER_THREAD
-#if USE_FORK_UNION //&& FU_METHOD == FU_USE_ATOMIC_CAST
+                // TODO: SG_FU_METHOD == SG_FU_USE_ATOMIC_CAST and == SG_FU_USE_BUFFER_PER_THREAD
+#if SG_USE_FORK_UNION //&& SG_FU_METHOD == SG_FU_USE_ATOMIC_CAST
                 std::atomic_ref<float>(outputSamples[sampleIndex]) += inputSamples[sampleIndex] * currentGain;
 #else
                 outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
@@ -212,7 +212,7 @@ StereoSpatAlgorithm::StereoSpatAlgorithm(SpeakerSetup const & speakerSetup,
                                          SpatMode const & projectSpatMode,
                                          SourcesData const & sources,
                                          std::vector<source_index_t> && theSourceIds)
-#if USE_FORK_UNION
+#if SG_USE_FORK_UNION
     : sourceIds{ theSourceIds }
 #endif
 {

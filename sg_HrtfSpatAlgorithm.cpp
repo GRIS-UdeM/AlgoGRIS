@@ -120,7 +120,7 @@ HrtfSpatAlgorithm::HrtfSpatAlgorithm(SpeakerSetup const & speakerSetup,
     speakers.sort();
     mHrtfData.speakersBuffer.init(speakers);
 
-#if USE_FORK_UNION
+#if SG_USE_FORK_UNION
     speakerIds = mHrtfData.speakersAudioConfig.getKeyVector();
 #endif
 
@@ -179,7 +179,7 @@ void HrtfSpatAlgorithm::updateSpatData(source_index_t const sourceIndex, SourceD
 void HrtfSpatAlgorithm::process(AudioConfig const & config,
                                 SourceAudioBuffer & sourcesBuffer,
                                 SpeakerAudioBuffer & speakersBuffer,
-#if USE_FORK_UNION && (FU_METHOD == FU_USE_ARRAY_OF_ATOMICS || FU_METHOD == FU_USE_BUFFER_PER_THREAD)
+#if SG_USE_FORK_UNION && (SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS || SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD)
                                 ForkUnionBuffer & forkUnionBuffer,
 #endif
                                 juce::AudioBuffer<float> & stereoBuffer,
@@ -200,7 +200,7 @@ void HrtfSpatAlgorithm::process(AudioConfig const & config,
         mInnerAlgorithm->process(config,
                                  sourcesBuffer,
                                  hrtfBuffer,
-#if USE_FORK_UNION && (FU_METHOD == FU_USE_ARRAY_OF_ATOMICS || FU_METHOD == FU_USE_BUFFER_PER_THREAD)
+#if SG_USE_FORK_UNION && (SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS || SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD)
                                  forkUnionBuffer,
 #endif
                                  stereoBuffer,
@@ -210,7 +210,8 @@ void HrtfSpatAlgorithm::process(AudioConfig const & config,
     convolutionBuffer.clear();
 
 // TODO: these 2 modes need to be implemented here. Using these modes will work, but will be slower than ideal
-#if 0 // USE_FORK_UNION && (FU_METHOD == FU_USE_ARRAY_OF_ATOMICS || FU_METHOD == FU_USE_BUFFER_PER_THREAD)
+#if 0 // SG_USE_FORK_UNION && (SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS || SG_FU_METHOD ==
+      // SG_FU_USE_BUFFER_PER_THREAD)
     jassert(speakerIds.size() > 0);
 
     ashvardanian::fork_union::for_n(threadPool, speakerIds.size(), [&](std::size_t i) noexcept {

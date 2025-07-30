@@ -56,7 +56,7 @@ bool isProbablyAudioThread()
 //==============================================================================
 AbstractSpatAlgorithm::AbstractSpatAlgorithm()
 {
-#if USE_FORK_UNION
+#if SG_USE_FORK_UNION
     if (!threadPool.try_spawn(std::thread::hardware_concurrency())) {
         std::fprintf(stderr, "Failed to fork the threads\n");
         jassertfalse;
@@ -64,9 +64,9 @@ AbstractSpatAlgorithm::AbstractSpatAlgorithm()
 #endif
 }
 
-#if USE_FORK_UNION
+#if SG_USE_FORK_UNION
 namespace fu = ashvardanian::fork_union;
-    #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
+    #if SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS
 void AbstractSpatAlgorithm::silenceForkUnionBuffer(ForkUnionBuffer & forkUnionBuffer) noexcept
 {
     fu::for_n(threadPool, forkUnionBuffer.size(), [&](std::size_t i) noexcept {
@@ -96,7 +96,7 @@ void AbstractSpatAlgorithm::copyForkUnionBuffer(const gris::SpeakersAudioConfig 
             outputSamples[sampleIdx] = inputSamples[sampleIdx]._a;
     }
 }
-    #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
+    #elif SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD
 void AbstractSpatAlgorithm::silenceForkUnionBuffer(ForkUnionBuffer & forkUnionBuffer) noexcept
 {
     fu::for_n(threadPool, forkUnionBuffer.size(), [&](fu::prong_t prong) noexcept {

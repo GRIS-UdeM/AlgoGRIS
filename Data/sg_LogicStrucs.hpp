@@ -43,20 +43,20 @@
 #include "../Containers/sg_StaticMap.hpp"
 
 // this is the main switch to enable/disable fork_union
-#define USE_FORK_UNION 0
+#define SG_USE_FORK_UNION 0
 
-// fork_union concurrency method options (used to set FU_METHOD right below)
+// fork_union concurrency method options (used to set SG_FU_METHOD right below)
 // Use an array of atomics for concurrent float access: (vector<vector<AtomicWrapper<float>>>)
-#define FU_USE_ARRAY_OF_ATOMICS 1
+#define SG_FU_USE_ARRAY_OF_ATOMICS 1
 
 // Use a buffer per thread for concurrent float access: (vector<vector<vector<float>>>)
-#define FU_USE_BUFFER_PER_THREAD 2
+#define SG_FU_USE_BUFFER_PER_THREAD 2
 
 // Use std::atomic_ref<float> for lock-free atomic access to floats
-#define FU_USE_ATOMIC_CAST 3
+#define SG_FU_USE_ATOMIC_CAST 3
 
-// and FU_METHOD is the "algorithm" used by fork_union, which is set to one of the above macros
-#define FU_METHOD FU_USE_ARRAY_OF_ATOMICS
+// and SG_FU_METHOD is the "algorithm" used by fork_union, which is set to one of the above macros
+#define SG_FU_METHOD SG_FU_USE_BUFFER_PER_THREAD
 
 namespace gris
 {
@@ -83,8 +83,8 @@ enum class AttenuationBypassSate : std::uint8_t { invalid, on, off };
 [[nodiscard]] juce::String attenuationBypassStateToString(AttenuationBypassSate state);
 [[nodiscard]] AttenuationBypassSate stringToAttenuationBypassState(juce::String const & string);
 
-#if USE_FORK_UNION
-    #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
+#if SG_USE_FORK_UNION
+    #if SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS
 /* Taken from https://stackoverflow.com/questions/13193484/how-to-declare-a-vector-of-atomic-in-c
  **/
 template<typename T>
@@ -103,10 +103,10 @@ struct AtomicWrapper {
 
 using ForkUnionBuffer = std::vector<std::vector<AtomicWrapper<float>>>;
 
-    #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
+    #elif SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD
 using ForkUnionBuffer = std::vector<std::vector<std::vector<float>>>;
 
-    #elif FU_METHOD == FU_USE_ATOMIC_CAST
+    #elif SG_FU_METHOD == SG_FU_USE_ATOMIC_CAST
 static_assert(std::atomic_ref<float>::is_always_lock_free, "float cannot be converted to a lock-free atomic_ref!");
     #endif
 #endif

@@ -68,7 +68,7 @@ public:
     void process(AudioConfig const & config,
                  SourceAudioBuffer & sourcesBuffer,
                  SpeakerAudioBuffer & speakersBuffer,
-#if USE_FORK_UNION && (FU_METHOD == FU_USE_ARRAY_OF_ATOMICS || FU_METHOD == FU_USE_BUFFER_PER_THREAD)
+#if SG_USE_FORK_UNION && (SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS || SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD)
                  ForkUnionBuffer & forkUnionBuffer,
 #endif
                  juce::AudioBuffer<float> & stereoBuffer,
@@ -90,7 +90,7 @@ private:
                        gris::SourceAudioBuffer & sourcesBuffer,
                        juce::AudioBuffer<float> & stereoBuffer);
 
-#if USE_FORK_UNION
+#if SG_USE_FORK_UNION
     std::vector<source_index_t> sourceIds;
 #endif
 
