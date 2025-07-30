@@ -56,7 +56,7 @@
 #define FU_USE_ATOMIC_CAST 3
 
 // and FU_METHOD is the "algorithm" used by fork_union, which is set to one of the above macros
-#define FU_METHOD FU_USE_ARRAY_OF_ATOMICS
+#define FU_METHOD FU_USE_BUFFER_PER_THREAD
 
 namespace gris
 {
@@ -102,8 +102,10 @@ struct AtomicWrapper {
 };
 
 using ForkUnionBuffer = std::vector<std::vector<AtomicWrapper<float>>>;
+
     #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
 using ForkUnionBuffer = std::vector<std::vector<std::vector<float>>>;
+
     #elif FU_METHOD == FU_USE_ATOMIC_CAST
 static_assert(std::atomic_ref<float>::is_always_lock_free, "float cannot be converted to a lock-free atomic_ref!");
     #endif
