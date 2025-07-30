@@ -55,7 +55,7 @@ class VbapSpatAlgorithm final : public AbstractSpatAlgorithm
 
 public:
     //==============================================================================
-    explicit VbapSpatAlgorithm(SpeakersData const & speakers, std::vector<source_index_t> && theSourceIds);
+    explicit VbapSpatAlgorithm(SpeakersData const & speakers, std::vector<source_index_t> theSourceIds);
     ~VbapSpatAlgorithm() override = default;
     SG_DELETE_COPY_AND_MOVE(VbapSpatAlgorithm)
     //==============================================================================

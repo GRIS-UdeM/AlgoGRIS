@@ -64,7 +64,8 @@ VbapType getVbapType(SpeakersData const & speakers)
 }
 
 //==============================================================================
-VbapSpatAlgorithm::VbapSpatAlgorithm(SpeakersData const & speakers, std::vector<source_index_t> && theSourceIds)
+VbapSpatAlgorithm::VbapSpatAlgorithm(SpeakersData const & speakers,
+                                     [[maybe_unused]] std::vector<source_index_t> theSourceIds)
 #if SG_USE_FORK_UNION
     : sourceIds{ theSourceIds }
 #endif
