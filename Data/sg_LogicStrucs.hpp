@@ -56,7 +56,7 @@
 #define FU_USE_ATOMIC_CAST 3
 
 // and FU_METHOD is the "algorithm" used by fork_union, which is set to one of the above macros
-#define FU_METHOD FU_USE_ATOMIC_CAST
+#define FU_METHOD FU_USE_ARRAY_OF_ATOMICS
 
 namespace gris
 {

@@ -90,9 +90,8 @@ jobs:
                 -DCMAKE_CXX_COMPILER_LAUNCHER=sccache \
                 ${{ matrix.extra-flags }}
 
-      #TODO VB: PUT BACK
-      # - name: Build debug
-      #   run: cmake --build build --config Debug --parallel
+      - name: Build debug
+        run: cmake --build build --config Debug --parallel
 
       - name: Build release
         run: cmake --build build --config Release --parallel

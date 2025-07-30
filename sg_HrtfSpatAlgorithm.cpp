@@ -209,7 +209,7 @@ void HrtfSpatAlgorithm::process(AudioConfig const & config,
 
     convolutionBuffer.clear();
 
-// TODO: these 2 fork_union modes need to be implemented here
+// TODO: these 2 modes need to be implemented here. Using these modes will work, but will be slower than ideal
 #if 0 // USE_FORK_UNION && (FU_METHOD == FU_USE_ARRAY_OF_ATOMICS || FU_METHOD == FU_USE_BUFFER_PER_THREAD)
     jassert(speakerIds.size() > 0);
 

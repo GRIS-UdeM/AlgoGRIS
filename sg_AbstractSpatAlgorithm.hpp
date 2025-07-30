@@ -86,10 +86,10 @@ public:
 #if USE_FORK_UNION && (FU_METHOD == FU_USE_ARRAY_OF_ATOMICS || FU_METHOD == FU_USE_BUFFER_PER_THREAD)
     void silenceForkUnionBuffer(ForkUnionBuffer & forkUnionBuffer) noexcept;
 
-    void copyForkUnionBuffer(const gris::SpeakersAudioConfig & speakersAudioConfig,
-                             gris::SourceAudioBuffer & sourcesBuffer,
-                             gris::SpeakerAudioBuffer & speakersBuffer,
-                             gris::ForkUnionBuffer & forkUnionBuffer);
+    static void copyForkUnionBuffer(const gris::SpeakersAudioConfig & speakersAudioConfig,
+                                    gris::SourceAudioBuffer & sourcesBuffer,
+                                    gris::SpeakerAudioBuffer & speakersBuffer,
+                                    gris::ForkUnionBuffer & forkUnionBuffer);
 
 #endif
 
