@@ -211,7 +211,7 @@ std::unique_ptr<AbstractSpatAlgorithm> StereoSpatAlgorithm::make(SpeakerSetup co
 StereoSpatAlgorithm::StereoSpatAlgorithm(SpeakerSetup const & speakerSetup,
                                          SpatMode const & projectSpatMode,
                                          SourcesData const & sources,
-                                         std::vector<source_index_t> && theSourceIds)
+                                         [[maybe_unused]] std::vector<source_index_t> && theSourceIds)
 #if SG_USE_FORK_UNION
     : sourceIds{ theSourceIds }
 #endif

@@ -101,6 +101,9 @@ struct AtomicWrapper {
     AtomicWrapper & operator=(const AtomicWrapper & other) { _a.store(other._a.load()); }
 };
 
+// TODO FU: instead of using another set of arrays, could we deal with concurrency inside SpeakerAudioBuffer directly?
+// TODO FU: explore using a boost::multi_array or https://github.com/correaa/boost-multi, with the important point that
+// we need to make sure buffers are separated by std::hardware_destructive_interference_size
 using ForkUnionBuffer = std::vector<std::vector<AtomicWrapper<float>>>;
 
     #elif SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD

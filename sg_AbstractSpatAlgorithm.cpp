@@ -57,6 +57,7 @@ bool isProbablyAudioThread()
 AbstractSpatAlgorithm::AbstractSpatAlgorithm()
 {
 #if SG_USE_FORK_UNION
+    // TODO FU: we need to handle this failure better
     if (!threadPool.try_spawn(std::thread::hardware_concurrency())) {
         std::fprintf(stderr, "Failed to fork the threads\n");
         jassertfalse;
@@ -100,8 +101,10 @@ void AbstractSpatAlgorithm::copyForkUnionBuffer(const gris::SpeakersAudioConfig 
 void AbstractSpatAlgorithm::silenceForkUnionBuffer(ForkUnionBuffer & forkUnionBuffer) noexcept
 {
     fu::for_n(threadPool, forkUnionBuffer.size(), [&](fu::prong_t prong) noexcept {
+        // TODO FU: test on rasberry pi
         jassert(threadPool.is_lock_free());
 
+        // TODO FU: if this were a boost multi_array we could clear it directly
         // for each thread buffer
         auto & individualThreadBuffer{ forkUnionBuffer[prong.task_index] };
 
