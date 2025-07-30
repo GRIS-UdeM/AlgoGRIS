@@ -103,10 +103,4 @@ private:
 
     JUCE_LEAK_DETECTOR(MbapSpatAlgorithm)
 };
-
-void copyForkUnionBuffer(const gris::SpeakersAudioConfig & speakersAudioConfig,
-                         gris::SourceAudioBuffer & sourcesBuffer,
-                         gris::SpeakerAudioBuffer & speakersBuffer,
-                         gris::ForkUnionBuffer & forkUnionBuffer);
-
 } // namespace gris

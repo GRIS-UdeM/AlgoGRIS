@@ -21,7 +21,6 @@ static void distributeSourcesOnSphere(AbstractSpatAlgorithm * algo, SpatGrisData
         auto & source{ data.project.sources[sourceIndex] };
 
         source.position = PolarVector(radians_t{ curAzimuth }, radians_t{ curRing * elevSteps }, 1.f);
-        // DBG ("src " << i << ": " << source.position->getPolar ().toString ());
         curAzimuth += azimSteps;
 
         algo->updateSpatData(sourceIndex, source);
@@ -278,7 +277,7 @@ static void benchmarkUsingProjectData(gris::SpatGrisData & data,
                       nullptr);
     };
 #endif
-};
+}
 
 static SpatGrisData getSpatGrisDataFromFiles(const std::string & projectFilename,
                                              const std::string & speakerSetupFilename)
