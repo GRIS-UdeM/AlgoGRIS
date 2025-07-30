@@ -119,7 +119,7 @@ public:
     //==============================================================================
     void copyToPhysicalOutput(float * const * outs, int const numOutputs) const
     {
-        // TODO VB: this should be parallelized
+        // TODO: this could probably be parallelized with fork_union
         for (auto const buffer : mBuffers) {
             auto const outIndex{ buffer.key.template removeOffset<int>() };
             jassert(outIndex >= 0);

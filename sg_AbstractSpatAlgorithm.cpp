@@ -65,10 +65,11 @@ AbstractSpatAlgorithm::AbstractSpatAlgorithm()
 }
 
 #if USE_FORK_UNION
+namespace fu = ashvardanian::fork_union;
     #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
 void AbstractSpatAlgorithm::silenceForkUnionBuffer(ForkUnionBuffer & forkUnionBuffer) noexcept
 {
-    ashvardanian::fork_union::for_n(threadPool, forkUnionBuffer.size(), [&](std::size_t i) noexcept {
+    fu::for_n(threadPool, forkUnionBuffer.size(), [&](std::size_t i) noexcept {
         auto & individualSpeakerBuffer{ forkUnionBuffer[i] };
         for (auto & wrapper : individualSpeakerBuffer)
             wrapper._a.store(0.f, std::memory_order_relaxed);
@@ -77,8 +78,6 @@ void AbstractSpatAlgorithm::silenceForkUnionBuffer(ForkUnionBuffer & forkUnionBu
     #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
 void AbstractSpatAlgorithm::silenceForkUnionBuffer(ForkUnionBuffer & forkUnionBuffer) noexcept
 {
-    namespace fu = ashvardanian::fork_union;
-
     fu::for_n(threadPool, forkUnionBuffer.size(), [&](fu::prong_t prong) noexcept {
         jassert(threadPool.is_lock_free());
 
