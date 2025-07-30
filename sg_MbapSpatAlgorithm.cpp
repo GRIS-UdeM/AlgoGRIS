@@ -99,6 +99,46 @@ void MbapSpatAlgorithm::updateSpatData(source_index_t const sourceIndex, SourceD
     exchanger.setMostRecent(ticket);
 }
 
+void CopyForkUnionBuffer(const gris::SpeakersAudioConfig & speakersAudioConfig,
+                         gris::SourceAudioBuffer & sourcesBuffer,
+                         gris::SpeakerAudioBuffer & speakersBuffer,
+                         gris::ForkUnionBuffer & forkUnionBuffer)
+{
+#if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
+    // Copy ForkUnionBuffer into speakersBuffer
+    size_t i = 0;
+    for (auto const & speaker : speakersAudioConfig) {
+        // skip silent speaker
+        if (speaker.value.isMuted || speaker.value.isDirectOutOnly || speaker.value.gain < SMALL_GAIN)
+            continue;
+
+        auto const numSamples{ sourcesBuffer.getNumSamples() };
+        auto * outputSamples{ speakersBuffer[speaker.key].getWritePointer(0) };
+        auto & inputSamples{ forkUnionBuffer[i++] };
+
+        for (int sampleIdx = 0; sampleIdx < numSamples; ++sampleIdx)
+            outputSamples[sampleIdx] = inputSamples[sampleIdx]._a;
+    }
+#elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
+    // Copy forkUnionBuffer into speakersBuffer
+    for (auto const & threadBuffers : forkUnionBuffer) {
+        size_t curSpeakerNumber = 0;
+        for (auto const & speaker : speakersAudioConfig) {
+            // skip silent speaker
+            if (speaker.value.isMuted || speaker.value.isDirectOutOnly || speaker.value.gain < SMALL_GAIN)
+                continue;
+
+            auto const numSamples{ sourcesBuffer.getNumSamples() };
+            auto * mainOutputSamples{ speakersBuffer[speaker.key].getWritePointer(0) };
+            auto & threadOutputSamples{ threadBuffers[curSpeakerNumber++] };
+
+            for (int sampleIdx = 0; sampleIdx < numSamples; ++sampleIdx)
+                mainOutputSamples[sampleIdx] += threadOutputSamples[sampleIdx];
+        }
+    }
+#endif
+}
+
 //==============================================================================
 void MbapSpatAlgorithm::process(AudioConfig const & config,
                                 SourceAudioBuffer & sourcesBuffer,
@@ -133,40 +173,7 @@ void MbapSpatAlgorithm::process(AudioConfig const & config,
                       speakersBuffer);
     });
 
-    // TODO VB: if this builds I need to extract that and what's in VbapSpatAlgorithm::process() into a common function
-    #if FU_METHOD == FU_USE_ARRAY_OF_ATOMICS
-    // Copy ForkUnionBuffer into speakersBuffer
-    size_t i = 0;
-    for (auto const & speaker : speakersAudioConfig) {
-        // skip silent speaker
-        if (speaker.value.isMuted || speaker.value.isDirectOutOnly || speaker.value.gain < SMALL_GAIN)
-            continue;
-
-        auto const numSamples{ sourcesBuffer.getNumSamples() };
-        auto * outputSamples{ speakersBuffer[speaker.key].getWritePointer(0) };
-        auto & inputSamples{ forkUnionBuffer[i++] };
-
-        for (int sampleIdx = 0; sampleIdx < numSamples; ++sampleIdx)
-            outputSamples[sampleIdx] = inputSamples[sampleIdx]._a;
-    }
-    #elif FU_METHOD == FU_USE_BUFFER_PER_THREAD
-    // Copy forkUnionBuffer into speakersBuffer
-    for (auto const & threadBuffers : forkUnionBuffer) {
-        size_t curSpeakerNumber = 0;
-        for (auto const & speaker : speakersAudioConfig) {
-            // skip silent speaker
-            if (speaker.value.isMuted || speaker.value.isDirectOutOnly || speaker.value.gain < SMALL_GAIN)
-                continue;
-
-            auto const numSamples{ sourcesBuffer.getNumSamples() };
-            auto * mainOutputSamples{ speakersBuffer[speaker.key].getWritePointer(0) };
-            auto & threadOutputSamples{ threadBuffers[curSpeakerNumber++] };
-
-            for (int sampleIdx = 0; sampleIdx < numSamples; ++sampleIdx)
-                mainOutputSamples[sampleIdx] += threadOutputSamples[sampleIdx];
-        }
-    }
-    #endif
+    CopyForkUnionBuffer(speakersAudioConfig, sourcesBuffer, speakersBuffer, forkUnionBuffer);
 #else
     for (auto const & source : config.sourcesAudioConfig)
         processSource(config, source.key, sourcePeaks, sourcesBuffer, speakersAudioConfig, speakersBuffer);
