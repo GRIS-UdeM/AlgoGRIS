@@ -41,7 +41,11 @@
 namespace gris
 {
 //==============================================================================
-MbapSpatAlgorithm::MbapSpatAlgorithm(SpeakerSetup const & speakerSetup) : mField(mbapInit(speakerSetup.speakers))
+MbapSpatAlgorithm::MbapSpatAlgorithm(SpeakerSetup const & speakerSetup, std::vector<source_index_t> && theSourceIds)
+    : mField(mbapInit(speakerSetup.speakers))
+#if SG_USE_FORK_UNION
+    , sourceIds{ std::move(theSourceIds) }
+#endif
 {
     JUCE_ASSERT_MESSAGE_THREAD;
 
@@ -97,8 +101,11 @@ void MbapSpatAlgorithm::updateSpatData(source_index_t const sourceIndex, SourceD
 
 //==============================================================================
 void MbapSpatAlgorithm::process(AudioConfig const & config,
-                                SourceAudioBuffer & sourceBuffer,
+                                SourceAudioBuffer & sourcesBuffer,
                                 SpeakerAudioBuffer & speakersBuffer,
+#if SG_USE_FORK_UNION && (SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS || SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD)
+                                ForkUnionBuffer & forkUnionBuffer,
+#endif
                                 [[maybe_unused]] juce::AudioBuffer<float> & stereoBuffer,
                                 SourcePeaks const & sourcePeaks,
                                 SpeakersAudioConfig const * altSpeakerConfig)
@@ -107,8 +114,31 @@ void MbapSpatAlgorithm::process(AudioConfig const & config,
 
     auto const & speakersAudioConfig{ altSpeakerConfig ? *altSpeakerConfig : config.speakersAudioConfig };
 
+#if SG_USE_FORK_UNION
+    namespace fu = ashvardanian::fork_union;
+
+    jassert(sourceIds.size() > 0);
+
+    fu::for_n(threadPool, sourceIds.size(), [&](fu::prong_t prong) noexcept {
+        processSource(config,
+                      sourceIds[prong.task_index],
+                      sourcePeaks,
+                      sourcesBuffer,
+                      speakersAudioConfig,
+    #if SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS
+                      forkUnionBuffer,
+    #elif SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD
+                      forkUnionBuffer[prong.thread_index],
+    #endif
+                      speakersBuffer);
+    });
+    #if SG_USE_FORK_UNION && (SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS || SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD)
+    copyForkUnionBuffer(speakersAudioConfig, sourcesBuffer, speakersBuffer, forkUnionBuffer);
+    #endif
+#else
     for (auto const & source : config.sourcesAudioConfig)
-        processSource(config, source.key, sourcePeaks, sourceBuffer, speakersAudioConfig, speakersBuffer);
+        processSource(config, source.key, sourcePeaks, sourcesBuffer, speakersAudioConfig, speakersBuffer);
+#endif
 }
 
 inline void MbapSpatAlgorithm::processSource(const gris::AudioConfig & config,
@@ -116,7 +146,14 @@ inline void MbapSpatAlgorithm::processSource(const gris::AudioConfig & config,
                                              const gris::SourcePeaks & sourcePeaks,
                                              gris::SourceAudioBuffer & sourceBuffer,
                                              const gris::SpeakersAudioConfig & speakersAudioConfig,
-                                             gris::SpeakerAudioBuffer & speakersBuffer)
+#if SG_USE_FORK_UNION
+    #if SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS
+                                             ForkUnionBuffer & forkUnionBuffer,
+    #elif SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD
+                                             std::vector<std::vector<float>> & speakerBuffer,
+    #endif
+#endif
+                                             gris::SpeakerAudioBuffer & speakerBuffers)
 {
     auto const & source = config.sourcesAudioConfig[sourceId];
     if (source.isMuted || source.directOut || sourcePeaks[sourceId] < SMALL_GAIN) {
@@ -148,6 +185,7 @@ inline void MbapSpatAlgorithm::processSource(const gris::AudioConfig & config,
     }
 
     // Process spatialization
+    [[maybe_unused]] size_t i = 0;
     for (auto const & speaker : speakersAudioConfig) {
         if (speaker.value.isMuted || speaker.value.isDirectOutOnly || speaker.value.gain < SMALL_GAIN) {
             // speaker silent
@@ -156,24 +194,63 @@ inline void MbapSpatAlgorithm::processSource(const gris::AudioConfig & config,
 
         auto & currentGain{ lastGains[speaker.key] };
         auto const & targetGain{ targetGains[speaker.key] };
-        auto * outputSamples{ speakersBuffer[speaker.key].getWritePointer(0) };
         auto const gainDiff{ targetGain - currentGain };
         auto const gainSlope{ gainDiff / narrow<float>(numSamples) };
 
-        if (gainSlope == 0.0f || std::abs(gainDiff) < SMALL_GAIN) {
+#if SG_USE_FORK_UNION
+    #if SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS
+        auto & outputSamples{ forkUnionBuffer[i++] };
+    #elif SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD
+        auto & outputSamples{ speakerBuffer[i++] };
+    #elif SG_FU_METHOD == SG_FU_USE_ATOMIC_CAST
+        auto * outputSamples{ speakerBuffers[speaker.key].getWritePointer(0) };
+    #endif
+#else
+        auto * outputSamples{ speakerBuffers[speaker.key].getWritePointer(0) };
+#endif
+
+        if (juce::approximatelyEqual(gainSlope, 0.f) || std::abs(gainDiff) < SMALL_GAIN) {
             // no interpolation
             currentGain = targetGain;
             if (currentGain >= SMALL_GAIN) {
+#if SG_USE_FORK_UNION
+    #if SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS
+                for (int sampleIndex{}; sampleIndex < numSamples; ++sampleIndex)
+                    outputSamples[sampleIndex]._a += inputSamples[sampleIndex] * currentGain;
+    #elif SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD
+                juce::FloatVectorOperations::addWithMultiply(outputSamples.data(),
+                                                             inputSamples,
+                                                             currentGain,
+                                                             numSamples);
+    #elif SG_FU_METHOD == SG_FU_USE_ATOMIC_CAST
+                for (int sampleIndex{}; sampleIndex < numSamples; ++sampleIndex)
+                    std::atomic_ref<float>(outputSamples[sampleIndex]) += inputSamples[sampleIndex] * currentGain;
+    #endif
+#else
                 juce::FloatVectorOperations::addWithMultiply(outputSamples, inputSamples, currentGain, numSamples);
+#endif
             }
             continue;
         }
 
-        if (gainInterpolation == 0.0f) {
+        // interpolation necessary
+        if (juce::approximatelyEqual(gainInterpolation, 0.f)) {
             // linear interpolation over buffer size
             for (int sampleIndex{}; sampleIndex < numSamples; ++sampleIndex) {
                 currentGain += gainSlope;
+#if SG_USE_FORK_UNION
+    #if SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS
+                outputSamples[sampleIndex]._a += inputSamples[sampleIndex] * currentGain;
+    #elif SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD
                 outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
+    #elif SG_FU_METHOD == SG_FU_USE_ATOMIC_CAST
+                std::atomic_ref<float>(outputSamples[sampleIndex]) += inputSamples[sampleIndex] * currentGain;
+    #else
+        #error "Invalid FORK_UNION_METHOD selected"
+    #endif
+#else
+                outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
+#endif
             }
         } else {
             // log interpolation with 1st order filter
@@ -181,7 +258,19 @@ inline void MbapSpatAlgorithm::processSource(const gris::AudioConfig & config,
                 // targeting silence
                 for (int sampleIndex{}; sampleIndex < numSamples && currentGain >= SMALL_GAIN; ++sampleIndex) {
                     currentGain = targetGain + (currentGain - targetGain) * gainFactor;
+#if SG_USE_FORK_UNION
+    #if SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS
+                    outputSamples[sampleIndex]._a += inputSamples[sampleIndex] * currentGain;
+    #elif SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD
                     outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
+    #elif SG_FU_METHOD == SG_FU_USE_ATOMIC_CAST
+                    std::atomic_ref<float>(outputSamples[sampleIndex]) += inputSamples[sampleIndex] * currentGain;
+    #else
+        #error "Invalid FORK_UNION_METHOD selected"
+    #endif
+#else
+                    outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
+#endif
                 }
                 continue;
             }
@@ -189,7 +278,19 @@ inline void MbapSpatAlgorithm::processSource(const gris::AudioConfig & config,
             // not targeting silence
             for (int sampleIndex{}; sampleIndex < numSamples; ++sampleIndex) {
                 currentGain = (currentGain - targetGain) * gainFactor + targetGain;
+#if SG_USE_FORK_UNION
+    #if SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS
+                outputSamples[sampleIndex]._a += inputSamples[sampleIndex] * currentGain;
+    #elif SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD
                 outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
+    #elif SG_FU_METHOD == SG_FU_USE_ATOMIC_CAST
+                std::atomic_ref<float>(outputSamples[sampleIndex]) += inputSamples[sampleIndex] * currentGain;
+    #else
+        #error "Invalid FORK_UNION_METHOD selected"
+    #endif
+#else
+                outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
+#endif
             }
         }
     }
@@ -204,7 +305,8 @@ juce::Array<Triplet> MbapSpatAlgorithm::getTriplets() const noexcept
 }
 
 //==============================================================================
-std::unique_ptr<AbstractSpatAlgorithm> MbapSpatAlgorithm::make(SpeakerSetup const & speakerSetup)
+std::unique_ptr<AbstractSpatAlgorithm> MbapSpatAlgorithm::make(SpeakerSetup const & speakerSetup,
+                                                               std::vector<source_index_t> && theSourceIds)
 {
     JUCE_ASSERT_MESSAGE_THREAD;
 
@@ -212,7 +314,7 @@ std::unique_ptr<AbstractSpatAlgorithm> MbapSpatAlgorithm::make(SpeakerSetup cons
         return std::make_unique<DummySpatAlgorithm>(Error::notEnoughCubeSpeakers);
     }
 
-    return std::make_unique<MbapSpatAlgorithm>(speakerSetup);
+    return std::make_unique<MbapSpatAlgorithm>(speakerSetup, std::move(theSourceIds));
 }
 
 } // namespace gris

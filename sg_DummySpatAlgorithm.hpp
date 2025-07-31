@@ -50,6 +50,9 @@ public:
     void process(AudioConfig const & /*config*/,
                  SourceAudioBuffer & /*sourcesBuffer*/,
                  SpeakerAudioBuffer & /*speakersBuffer*/,
+#if SG_USE_FORK_UNION && (SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS || SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD)
+                 ForkUnionBuffer & /*forkUnionBuffer*/,
+#endif
                  juce::AudioBuffer<float> & /*stereoBuffer*/,
                  SourcePeaks const & /*sourcePeaks*/,
                  SpeakersAudioConfig const * /*altSpeakerConfig*/) override

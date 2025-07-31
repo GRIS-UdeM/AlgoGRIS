@@ -55,7 +55,7 @@ class VbapSpatAlgorithm final : public AbstractSpatAlgorithm
 
 public:
     //==============================================================================
-    explicit VbapSpatAlgorithm(SpeakersData const & speakers);
+    explicit VbapSpatAlgorithm(SpeakersData const & speakers, std::vector<source_index_t> theSourceIds);
     ~VbapSpatAlgorithm() override = default;
     SG_DELETE_COPY_AND_MOVE(VbapSpatAlgorithm)
     //==============================================================================
@@ -63,6 +63,9 @@ public:
     void process(AudioConfig const & config,
                  SourceAudioBuffer & sourcesBuffer,
                  SpeakerAudioBuffer & speakersBuffer,
+#if SG_USE_FORK_UNION && (SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS || SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD)
+                 ForkUnionBuffer & forkUnionBuffer,
+#endif
                  juce::AudioBuffer<float> & stereoBuffer,
                  SourcePeaks const & sourcePeaks,
                  SpeakersAudioConfig const * altSpeakerConfig) override;
@@ -70,7 +73,8 @@ public:
     [[nodiscard]] bool hasTriplets() const noexcept override;
     [[nodiscard]] tl::optional<Error> getError() const noexcept override { return tl::nullopt; }
     //==============================================================================
-    static std::unique_ptr<AbstractSpatAlgorithm> make(SpeakerSetup const & speakerSetup);
+    static std::unique_ptr<AbstractSpatAlgorithm> make(SpeakerSetup const & speakerSetup,
+                                                       std::vector<source_index_t> theSourceIds);
 
 private:
     void processSource(const gris::AudioConfig & config,
@@ -78,7 +82,18 @@ private:
                        const gris::SourcePeaks & sourcePeaks,
                        gris::SourceAudioBuffer & sourcesBuffer,
                        const gris::SpeakersAudioConfig & speakersAudioConfig,
-                       gris::SpeakerAudioBuffer & speakersBuffer);
+#if SG_USE_FORK_UNION
+    #if SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS
+                       ForkUnionBuffer & forkUnionBuffer,
+    #elif SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD
+                       std::vector<std::vector<float>> & speakerBuffer,
+    #endif
+#endif
+                       SpeakerAudioBuffer & speakersBuffer);
+
+#if SG_USE_FORK_UNION
+    std::vector<source_index_t> sourceIds;
+#endif
 
     JUCE_LEAK_DETECTOR(VbapSpatAlgorithm)
 };

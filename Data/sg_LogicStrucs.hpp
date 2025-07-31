@@ -27,6 +27,7 @@
 #include "Containers/sg_AtomicUpdater.hpp"
 #include "Containers/sg_StrongArray.hpp"
 #include "Data/StrongTypes/sg_OutputPatch.hpp"
+#include "Data/sg_LogicStrucs.hpp"
 #include "Data/sg_SpatMode.hpp"
 #include "Data/sg_constants.hpp"
 #include "sg_AudioStructs.hpp"
@@ -35,10 +36,27 @@
 #include "juce_core/juce_core.h"
 #include "juce_graphics/juce_graphics.h"
 #include "tl/optional.hpp"
+#include <atomic>
 #include <cstdint>
 #include <memory>
 #include "../Containers/sg_OwnedMap.hpp"
 #include "../Containers/sg_StaticMap.hpp"
+
+// this is the main switch to enable/disable fork_union
+#define SG_USE_FORK_UNION 0
+
+// fork_union concurrency method options (used to set SG_FU_METHOD right below)
+// Use an array of atomics for concurrent float access: (vector<vector<AtomicWrapper<float>>>)
+#define SG_FU_USE_ARRAY_OF_ATOMICS 1
+
+// Use a buffer per thread for concurrent float access: (vector<vector<vector<float>>>)
+#define SG_FU_USE_BUFFER_PER_THREAD 2
+
+// Use std::atomic_ref<float> for lock-free atomic access to floats
+#define SG_FU_USE_ATOMIC_CAST 3
+
+// and SG_FU_METHOD is the "algorithm" used by fork_union, which is set to one of the above macros
+#define SG_FU_METHOD SG_FU_USE_ATOMIC_CAST
 
 namespace gris
 {
@@ -64,6 +82,37 @@ enum class SliceState : std::uint8_t { normal, muted, solo };
 enum class AttenuationBypassSate : std::uint8_t { invalid, on, off };
 [[nodiscard]] juce::String attenuationBypassStateToString(AttenuationBypassSate state);
 [[nodiscard]] AttenuationBypassSate stringToAttenuationBypassState(juce::String const & string);
+
+#if SG_USE_FORK_UNION
+    #if SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS
+/* Taken from https://stackoverflow.com/questions/13193484/how-to-declare-a-vector-of-atomic-in-c
+ **/
+template<typename T>
+struct AtomicWrapper {
+    std::atomic<T> _a;
+
+    AtomicWrapper() : _a() {}
+
+    AtomicWrapper(const std::atomic<T> & a) : _a(a.load()) {}
+
+    AtomicWrapper(const AtomicWrapper & other) : _a(other._a.load()) {}
+
+    /* This isn't atomic so shouldn't be done in concurent contexts! */
+    AtomicWrapper & operator=(const AtomicWrapper & other) { _a.store(other._a.load()); }
+};
+
+// TODO FU: instead of using another set of arrays, could we deal with concurrency inside SpeakerAudioBuffer directly?
+// TODO FU: explore using a boost::multi_array or https://github.com/correaa/boost-multi, with the important point that
+// we need to make sure buffers are separated by std::hardware_destructive_interference_size
+using ForkUnionBuffer = std::vector<std::vector<AtomicWrapper<float>>>;
+
+    #elif SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD
+using ForkUnionBuffer = std::vector<std::vector<std::vector<float>>>;
+
+    #elif SG_FU_METHOD == SG_FU_USE_ATOMIC_CAST
+static_assert(std::atomic_ref<float>::is_always_lock_free, "float cannot be converted to a lock-free atomic_ref!");
+    #endif
+#endif
 
 //==============================================================================
 /** For the following data structures, we use the following semantics:

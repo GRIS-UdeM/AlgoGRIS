@@ -33,6 +33,14 @@
 #include <cstdint>
 #include <memory>
 
+#if SG_USE_FORK_UNION
+    #if JUCE_WINDOWS
+        // this disables an annoying warning about structure alignment
+        #pragma warning(disable : 4324)
+    #endif
+    #include <fork_union.hpp>
+#endif
+
 namespace gris
 {
 //==============================================================================
@@ -71,9 +79,20 @@ public:
         flatDomeSpeakersTooFarApart,
     };
     //==============================================================================
-    AbstractSpatAlgorithm() = default;
+    AbstractSpatAlgorithm();
     virtual ~AbstractSpatAlgorithm() = default;
     SG_DELETE_COPY_AND_MOVE(AbstractSpatAlgorithm)
+
+#if SG_USE_FORK_UNION && (SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS || SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD)
+    void silenceForkUnionBuffer(ForkUnionBuffer & forkUnionBuffer) noexcept;
+
+    static void copyForkUnionBuffer(const gris::SpeakersAudioConfig & speakersAudioConfig,
+                                    gris::SourceAudioBuffer & sourcesBuffer,
+                                    gris::SpeakerAudioBuffer & speakersBuffer,
+                                    gris::ForkUnionBuffer & forkUnionBuffer);
+
+#endif
+
     //==============================================================================
     /** Assigns the position of sources in direct out mode to their assigned speakers' positions.
      *
@@ -101,6 +120,9 @@ public:
     virtual void process(AudioConfig const & config,
                          SourceAudioBuffer & sourcesBuffer,
                          SpeakerAudioBuffer & speakersBuffer,
+#if SG_USE_FORK_UNION && (SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS || SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD)
+                         ForkUnionBuffer & forkUnionBuffer,
+#endif
                          juce::AudioBuffer<float> & stereoBuffer,
                          SourcePeaks const & sourcePeaks,
                          SpeakersAudioConfig const * altSpeakerConfig)
@@ -127,6 +149,11 @@ public:
                                                                      SourcesData const & sources,
                                                                      double sampleRate,
                                                                      int bufferSize);
+
+protected:
+#if SG_USE_FORK_UNION
+    ashvardanian::fork_union::thread_pool_t threadPool;
+#endif
 
 private:
     //==============================================================================

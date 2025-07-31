@@ -63,12 +63,15 @@ public:
     ~MbapSpatAlgorithm() override = default;
     SG_DELETE_COPY_AND_MOVE(MbapSpatAlgorithm)
     //==============================================================================
-    explicit MbapSpatAlgorithm(SpeakerSetup const & speakerSetup);
+    explicit MbapSpatAlgorithm(SpeakerSetup const & speakerSetup, std::vector<source_index_t> && sourceIds);
     //==============================================================================
     void updateSpatData(source_index_t sourceIndex, SourceData const & sourceData) noexcept override;
     void process(AudioConfig const & config,
                  SourceAudioBuffer & sourceBuffer,
                  SpeakerAudioBuffer & speakersBuffer,
+#if SG_USE_FORK_UNION && (SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS || SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD)
+                 ForkUnionBuffer & forkUnionBuffer,
+#endif
                  juce::AudioBuffer<float> & stereoBuffer,
                  SourcePeaks const & sourcesPeaks,
                  SpeakersAudioConfig const * altSpeakerConfig) override;
@@ -76,7 +79,8 @@ public:
     [[nodiscard]] bool hasTriplets() const noexcept override { return false; }
     [[nodiscard]] tl::optional<Error> getError() const noexcept override { return tl::nullopt; }
     //==============================================================================
-    static std::unique_ptr<AbstractSpatAlgorithm> make(SpeakerSetup const & speakerSetup);
+    static std::unique_ptr<AbstractSpatAlgorithm> make(SpeakerSetup const & speakerSetup,
+                                                       std::vector<source_index_t> && sourceIds);
 
 private:
     void processSource(const gris::AudioConfig & config,
@@ -84,8 +88,19 @@ private:
                        const gris::SourcePeaks & sourcePeaks,
                        gris::SourceAudioBuffer & sourcesBuffer,
                        const gris::SpeakersAudioConfig & speakersAudioConfig,
-                       gris::SpeakerAudioBuffer & speakersBuffer);
+#if SG_USE_FORK_UNION
+    #if SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS
+                       ForkUnionBuffer & forkUnionBuffer,
+    #elif SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD
+                       std::vector<std::vector<float>> & speakerBuffer,
+    #endif
+#endif
+                       gris::SpeakerAudioBuffer & speakerBuffers);
+
+#if SG_USE_FORK_UNION
+    std::vector<source_index_t> sourceIds;
+#endif
+
     JUCE_LEAK_DETECTOR(MbapSpatAlgorithm)
 };
-
 } // namespace gris

@@ -23,9 +23,9 @@
 namespace gris
 {
 //==============================================================================
-HybridSpatAlgorithm::HybridSpatAlgorithm(SpeakerSetup const & speakerSetup)
-    : mVbap(std::make_unique<VbapSpatAlgorithm>(speakerSetup.speakers))
-    , mMbap(std::make_unique<MbapSpatAlgorithm>(speakerSetup))
+HybridSpatAlgorithm::HybridSpatAlgorithm(SpeakerSetup const & speakerSetup, std::vector<source_index_t> && sourceIds)
+    : mVbap(std::make_unique<VbapSpatAlgorithm>(speakerSetup.speakers, sourceIds))
+    , mMbap(std::make_unique<MbapSpatAlgorithm>(speakerSetup, std::move(sourceIds)))
 {
 }
 
@@ -58,12 +58,20 @@ void HybridSpatAlgorithm::updateSpatData(source_index_t const sourceIndex, Sourc
 void HybridSpatAlgorithm::process(AudioConfig const & config,
                                   SourceAudioBuffer & sourcesBuffer,
                                   SpeakerAudioBuffer & speakersBuffer,
+#if SG_USE_FORK_UNION && (SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS || SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD)
+                                  ForkUnionBuffer & forkUnionBuffer,
+#endif
                                   juce::AudioBuffer<float> & stereoBuffer,
                                   SourcePeaks const & sourcePeaks,
                                   SpeakersAudioConfig const * altSpeakerConfig)
 {
+#if SG_USE_FORK_UNION && (SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS || SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD)
+    mVbap->process(config, sourcesBuffer, speakersBuffer, forkUnionBuffer, stereoBuffer, sourcePeaks, altSpeakerConfig);
+    mMbap->process(config, sourcesBuffer, speakersBuffer, forkUnionBuffer, stereoBuffer, sourcePeaks, altSpeakerConfig);
+#else
     mVbap->process(config, sourcesBuffer, speakersBuffer, stereoBuffer, sourcePeaks, altSpeakerConfig);
     mMbap->process(config, sourcesBuffer, speakersBuffer, stereoBuffer, sourcePeaks, altSpeakerConfig);
+#endif
 }
 
 //==============================================================================
@@ -86,12 +94,13 @@ tl::optional<AbstractSpatAlgorithm::Error> HybridSpatAlgorithm::getError() const
 }
 
 //==============================================================================
-std::unique_ptr<AbstractSpatAlgorithm> HybridSpatAlgorithm::make(SpeakerSetup const & speakerSetup)
+std::unique_ptr<AbstractSpatAlgorithm> HybridSpatAlgorithm::make(SpeakerSetup const & speakerSetup,
+                                                                 std::vector<source_index_t> && sourceIds)
 {
     if (speakerSetup.numOfSpatializedSpeakers() < 3) {
         return std::make_unique<DummySpatAlgorithm>(Error::notEnoughDomeSpeakers);
     }
-    return std::make_unique<HybridSpatAlgorithm>(speakerSetup);
+    return std::make_unique<HybridSpatAlgorithm>(speakerSetup, std::move(sourceIds));
 }
 
 } // namespace gris

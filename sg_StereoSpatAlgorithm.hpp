@@ -59,7 +59,8 @@ public:
     //==============================================================================
     StereoSpatAlgorithm(SpeakerSetup const & speakerSetup,
                         SpatMode const & projectSpatMode,
-                        SourcesData const & sources);
+                        SourcesData const & sources,
+                        std::vector<source_index_t> && theSourceIds);
     ~StereoSpatAlgorithm() override = default;
     SG_DELETE_COPY_AND_MOVE(StereoSpatAlgorithm)
     //==============================================================================
@@ -67,6 +68,9 @@ public:
     void process(AudioConfig const & config,
                  SourceAudioBuffer & sourcesBuffer,
                  SpeakerAudioBuffer & speakersBuffer,
+#if SG_USE_FORK_UNION && (SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS || SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD)
+                 ForkUnionBuffer & forkUnionBuffer,
+#endif
                  juce::AudioBuffer<float> & stereoBuffer,
                  SourcePeaks const & sourcePeaks,
                  SpeakersAudioConfig const * altSpeakerConfig) override;
@@ -74,8 +78,10 @@ public:
     [[nodiscard]] bool hasTriplets() const noexcept override { return false; }
     [[nodiscard]] tl::optional<Error> getError() const noexcept override { return tl::nullopt; }
     //==============================================================================
-    static std::unique_ptr<AbstractSpatAlgorithm>
-        make(SpeakerSetup const & speakerSetup, SpatMode const & projectSpatMode, SourcesData const & sources);
+    static std::unique_ptr<AbstractSpatAlgorithm> make(SpeakerSetup const & speakerSetup,
+                                                       SpatMode const & projectSpatMode,
+                                                       SourcesData const & sources,
+                                                       std::vector<source_index_t> && sourceIds);
 
 private:
     void processSource(const gris::AudioConfig & config,
@@ -83,6 +89,10 @@ private:
                        const gris::SourcePeaks & sourcePeaks,
                        gris::SourceAudioBuffer & sourcesBuffer,
                        juce::AudioBuffer<float> & stereoBuffer);
+
+#if SG_USE_FORK_UNION
+    std::vector<source_index_t> sourceIds;
+#endif
 
     JUCE_LEAK_DETECTOR(StereoSpatAlgorithm)
 };

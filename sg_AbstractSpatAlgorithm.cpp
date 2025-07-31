@@ -54,6 +54,92 @@ bool isProbablyAudioThread()
 }
 
 //==============================================================================
+AbstractSpatAlgorithm::AbstractSpatAlgorithm()
+{
+#if SG_USE_FORK_UNION
+    // TODO FU: we need to handle this failure better
+    if (!threadPool.try_spawn(std::thread::hardware_concurrency())) {
+        std::fprintf(stderr, "Failed to fork the threads\n");
+        jassertfalse;
+    }
+#endif
+}
+
+#if SG_USE_FORK_UNION
+namespace fu = ashvardanian::fork_union;
+    #if SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS
+void AbstractSpatAlgorithm::silenceForkUnionBuffer(ForkUnionBuffer & forkUnionBuffer) noexcept
+{
+    fu::for_n(threadPool, forkUnionBuffer.size(), [&](std::size_t i) noexcept {
+        auto & individualSpeakerBuffer{ forkUnionBuffer[i] };
+        for (auto & wrapper : individualSpeakerBuffer)
+            wrapper._a.store(0.f, std::memory_order_relaxed);
+    });
+}
+
+void AbstractSpatAlgorithm::copyForkUnionBuffer(const gris::SpeakersAudioConfig & speakersAudioConfig,
+                                                gris::SourceAudioBuffer & sourcesBuffer,
+                                                gris::SpeakerAudioBuffer & speakersBuffer,
+                                                gris::ForkUnionBuffer & forkUnionBuffer)
+{
+    // Copy ForkUnionBuffer into speakersBuffer
+    size_t i = 0;
+    for (auto const & speaker : speakersAudioConfig) {
+        // skip silent speaker
+        if (speaker.value.isMuted || speaker.value.isDirectOutOnly || speaker.value.gain < SMALL_GAIN)
+            continue;
+
+        auto const numSamples{ sourcesBuffer.getNumSamples() };
+        auto * outputSamples{ speakersBuffer[speaker.key].getWritePointer(0) };
+        auto & inputSamples{ forkUnionBuffer[i++] };
+
+        for (int sampleIdx = 0; sampleIdx < numSamples; ++sampleIdx)
+            outputSamples[sampleIdx] = inputSamples[sampleIdx]._a;
+    }
+}
+    #elif SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD
+void AbstractSpatAlgorithm::silenceForkUnionBuffer(ForkUnionBuffer & forkUnionBuffer) noexcept
+{
+    fu::for_n(threadPool, forkUnionBuffer.size(), [&](fu::prong_t prong) noexcept {
+        // TODO FU: test on rasberry pi
+        jassert(threadPool.is_lock_free());
+
+        // TODO FU: if this were a boost multi_array we could clear it directly
+        // for each thread buffer
+        auto & individualThreadBuffer{ forkUnionBuffer[prong.task_index] };
+
+        // for each speaker buffer in the thread buffer
+        for (auto & speakerBuffer : individualThreadBuffer)
+            std::fill(speakerBuffer.begin(), speakerBuffer.end(), 0.f); // silence all speaker samples
+    });
+}
+
+void AbstractSpatAlgorithm::copyForkUnionBuffer(const gris::SpeakersAudioConfig & speakersAudioConfig,
+                                                gris::SourceAudioBuffer & sourcesBuffer,
+                                                gris::SpeakerAudioBuffer & speakersBuffer,
+                                                gris::ForkUnionBuffer & forkUnionBuffer)
+{
+    // Copy forkUnionBuffer into speakersBuffer
+    for (auto const & threadBuffers : forkUnionBuffer) {
+        size_t curSpeakerNumber = 0;
+        for (auto const & speaker : speakersAudioConfig) {
+            // skip silent speaker
+            if (speaker.value.isMuted || speaker.value.isDirectOutOnly || speaker.value.gain < SMALL_GAIN)
+                continue;
+
+            auto const numSamples{ sourcesBuffer.getNumSamples() };
+            auto * mainOutputSamples{ speakersBuffer[speaker.key].getWritePointer(0) };
+            auto & threadOutputSamples{ threadBuffers[curSpeakerNumber++] };
+
+            for (int sampleIdx = 0; sampleIdx < numSamples; ++sampleIdx)
+                mainOutputSamples[sampleIdx] += threadOutputSamples[sampleIdx];
+        }
+    }
+}
+    #endif
+#endif
+
+//==============================================================================
 void AbstractSpatAlgorithm::fixDirectOutsIntoPlace(SourcesData const & sources,
                                                    SpeakerSetup const & speakerSetup,
                                                    SpatMode const & projectSpatMode) noexcept
@@ -109,7 +195,7 @@ std::unique_ptr<AbstractSpatAlgorithm> AbstractSpatAlgorithm::make(SpeakerSetup 
         case StereoMode::hrtf:
             return HrtfSpatAlgorithm::make(speakerSetup, projectSpatMode, sources, sampleRate, bufferSize);
         case StereoMode::stereo:
-            return StereoSpatAlgorithm::make(speakerSetup, projectSpatMode, sources);
+            return StereoSpatAlgorithm::make(speakerSetup, projectSpatMode, sources, sources.getKeys());
 #ifdef USE_DOPPLER
         case StereoMode::doppler:
             return DopplerSpatAlgorithm::make(sampleRate, bufferSize);
@@ -120,11 +206,11 @@ std::unique_ptr<AbstractSpatAlgorithm> AbstractSpatAlgorithm::make(SpeakerSetup 
 
     switch (projectSpatMode) {
     case SpatMode::vbap:
-        return VbapSpatAlgorithm::make(speakerSetup);
+        return VbapSpatAlgorithm::make(speakerSetup, sources.getKeys());
     case SpatMode::mbap:
-        return MbapSpatAlgorithm::make(speakerSetup);
+        return MbapSpatAlgorithm::make(speakerSetup, sources.getKeys());
     case SpatMode::hybrid:
-        return HybridSpatAlgorithm::make(speakerSetup);
+        return HybridSpatAlgorithm::make(speakerSetup, sources.getKeys());
     case SpatMode::invalid:
         break;
     }

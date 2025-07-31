@@ -8,6 +8,9 @@ void initBuffers(const int bufferSize,
                  const size_t numSpeakers,
                  SourceAudioBuffer & sourceBuffer,
                  SpeakerAudioBuffer & speakerBuffer,
+#if SG_USE_FORK_UNION && (SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS || SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD)
+                 ForkUnionBuffer & forkUnionBuffer,
+#endif
                  juce::AudioBuffer<float> & stereoBuffer)
 {
     juce::Array<source_index_t> sourcesIndices;
@@ -21,6 +24,30 @@ void initBuffers(const int bufferSize,
         speakerIndices.add(output_patch_t{ i });
     speakerBuffer.init(speakerIndices);
     speakerBuffer.setNumSamples(bufferSize);
+
+#if SG_USE_FORK_UNION
+    #if SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS
+    forkUnionBuffer.resize(numSpeakers);
+    for (int i = 0; i < numSpeakers; ++i) {
+        forkUnionBuffer[i].clear();
+        for (int j = 0; j < bufferSize; ++j)
+            forkUnionBuffer[i].emplace_back(0.0f);
+    }
+    #elif SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD
+    // so we have a buffer for each hardware thread
+    auto const numThreads = std::thread::hardware_concurrency();
+    forkUnionBuffer.resize(numThreads);
+
+    for (auto & curThreadSpeakerBuffer : forkUnionBuffer) {
+        // then within each thread we need a buffer for each speaker
+        curThreadSpeakerBuffer.resize(numSpeakers);
+
+        // and each speaker buffer contains bufferSize samples
+        for (auto & curSpeakerBuffer : curThreadSpeakerBuffer)
+            curSpeakerBuffer.assign(bufferSize, 0.f);
+    }
+    #endif
+#endif
 
     stereoBuffer.setSize(2, bufferSize);
     stereoBuffer.clear();
@@ -106,20 +133,20 @@ void AudioBufferComparator::forAllSpatializedSpeakers(const SpeakersAudioConfig 
                                                       std::function<void(int, const float * const, int)> func)
 {
     juce::Array<output_patch_t> const keys(speakersAudioConfig.getKeys());
-    juce::Array<float const *> usableNewBuffers = speakerBuffers.getArrayOfReadPointers(keys);
+    juce::Array<float const *> floatSpeakerBuffers = speakerBuffers.getArrayOfReadPointers(keys);
 
     // then for each spatialized, unmuted speaker
     for (const auto & speaker : speakersAudioConfig) {
         // get the new data
         const int speakerId = speaker.key.get();
-        const float * const newIndividualSpeakerBuffer = usableNewBuffers[speakerId];
+        const float * const individualFloatSpeakerBuffer = floatSpeakerBuffers[speakerId];
 
         // skip this speaker if it's not spatialized or muted
         if (speaker.value.isMuted || speaker.value.isDirectOutOnly || speaker.value.gain < SMALL_GAIN
-            || newIndividualSpeakerBuffer == nullptr)
+            || individualFloatSpeakerBuffer == nullptr)
             continue;
 
-        func(speakerId, newIndividualSpeakerBuffer, bufferSize);
+        func(speakerId, individualFloatSpeakerBuffer, bufferSize);
     }
 }
 
@@ -215,6 +242,8 @@ void AudioBufferComparator::writeCachedBuffersToDisk(juce::StringRef testName,
     cachedBuffers.clear();
 }
 
+#define PRINT_BUFFERS 0
+
 void AudioBufferComparator::compareBuffers(const float * const curBuffer, const juce::AudioBuffer<float> & savedBuffer)
 {
     REQUIRE_MESSAGE(curBuffer != nullptr, "Current buffer is null!");
@@ -222,6 +251,22 @@ void AudioBufferComparator::compareBuffers(const float * const curBuffer, const 
     for (int i = 0; i < savedBuffer.getNumSamples(); ++i) {
         const auto curSample = curBuffer[i];
         const auto savedSample = savedBuffer.getSample(0, i);
+
+#if PRINT_BUFFERS
+        if (std::abs(curSample - savedSample) >= .001f) {
+            jassertfalse;
+            DBG("curBuffer:");
+            for (int i = 0; i < savedBuffer.getNumSamples(); ++i)
+                DBG(curBuffer[i]);
+
+            DBG("savedBuffer:");
+            for (int i = 0; i < savedBuffer.getNumSamples(); ++i)
+                DBG(savedBuffer.getSample(0, i));
+
+            DBG("done");
+            return;
+        }
+#endif
 
         REQUIRE_MESSAGE(std::abs(curSample - savedSample) < .001f,
                         "Buffers do not match at sample " + juce::String(i) + ": " + juce::String(curSample) + " vs "

@@ -41,12 +41,15 @@ public:
     SG_DELETE_COPY_AND_MOVE(HybridSpatAlgorithm)
     //==============================================================================
     /** Note: do not use this function directly. Use HybridSpatAlgorithm::make() instead. */
-    explicit HybridSpatAlgorithm(SpeakerSetup const & speakerSetup);
+    explicit HybridSpatAlgorithm(SpeakerSetup const & speakerSetup, std::vector<source_index_t> && sourceIds);
     //==============================================================================
     void updateSpatData(source_index_t sourceIndex, SourceData const & sourceData) noexcept override;
     void process(AudioConfig const & config,
                  SourceAudioBuffer & sourcesBuffer,
                  SpeakerAudioBuffer & speakersBuffer,
+#if SG_USE_FORK_UNION && (SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS || SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD)
+                 ForkUnionBuffer & forkUnionBuffer,
+#endif
                  juce::AudioBuffer<float> & stereoBuffer,
                  SourcePeaks const & sourcePeaks,
                  SpeakersAudioConfig const * altSpeakerConfig) override;
@@ -55,7 +58,8 @@ public:
     [[nodiscard]] tl::optional<Error> getError() const noexcept override;
     //==============================================================================
     /** Instantiates an HybridSpatAlgorithm. Make sure to check getError() as this might fail. */
-    static std::unique_ptr<AbstractSpatAlgorithm> make(SpeakerSetup const & speakerSetup);
+    static std::unique_ptr<AbstractSpatAlgorithm> make(SpeakerSetup const & speakerSetup,
+                                                       std::vector<source_index_t> && sourceIds);
 
 private:
     //==============================================================================
