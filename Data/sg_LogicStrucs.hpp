@@ -56,7 +56,7 @@
 #define SG_FU_USE_ATOMIC_CAST 3
 
 // and SG_FU_METHOD is the "algorithm" used by fork_union, which is set to one of the above macros
-#define SG_FU_METHOD SG_FU_USE_BUFFER_PER_THREAD
+#define SG_FU_METHOD SG_FU_USE_ATOMIC_CAST
 
 namespace gris
 {

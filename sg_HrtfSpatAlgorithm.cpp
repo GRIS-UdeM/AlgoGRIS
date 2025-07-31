@@ -209,7 +209,7 @@ void HrtfSpatAlgorithm::process(AudioConfig const & config,
 
     convolutionBuffer.clear();
 
-// TODO: these 2 modes need to be implemented here. Using these modes will work, but will be slower than ideal
+// TODO FU: these 2 modes need to be implemented here. Using these modes will work, but will be slower than ideal
 #if 0 // SG_USE_FORK_UNION && (SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS || SG_FU_METHOD ==
       // SG_FU_USE_BUFFER_PER_THREAD)
     jassert(speakerIds.size() > 0);
