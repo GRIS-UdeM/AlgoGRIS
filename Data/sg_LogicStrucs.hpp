@@ -440,6 +440,9 @@ struct ProjectData {
     SourcesOrdering ordering{};
     MbapDistanceAttenuationData mbapDistanceAttenuationData{};
     int oscPort{ DEFAULT_OSC_INPUT_PORT };
+    tl::optional<int> standaloneSpeakerViewInputPort;
+    tl::optional<int> standaloneSpeakerViewOutputPort;
+    tl::optional<juce::String> standaloneSpeakerViewOutputAddress;
     dbfs_t masterGain{};
     float spatGainsInterpolation{};
     SpatMode spatMode{};
@@ -457,6 +460,9 @@ struct ProjectData {
         static juce::String const MASTER_GAIN;
         static juce::String const GAIN_INTERPOLATION;
         static juce::String const OSC_PORT;
+        static juce::String const STANDALONE_SPEAKERVIEW_INPUT_PORT;
+        static juce::String const STANDALONE_SPEAKERVIEW_OUTPUT_PORT;
+        static juce::String const STANDALONE_SPEAKERVIEW_OUTPUT_ADDRESS;
     };
 };
 
