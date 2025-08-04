@@ -92,7 +92,8 @@ juce::String const ProjectData::XmlTags::GAIN_INTERPOLATION = "GAIN_INTERPOLATIO
 juce::String const ProjectData::XmlTags::OSC_PORT = "OSC_PORT";
 juce::String const ProjectData::XmlTags::STANDALONE_SPEAKERVIEW_INPUT_PORT = "STANDALONE_SPEAKERVIEW_INPUT_PORT";
 juce::String const ProjectData::XmlTags::STANDALONE_SPEAKERVIEW_OUTPUT_PORT = "STANDALONE_SPEAKERVIEW_OUTPUT_PORT";
-juce::String const ProjectData::XmlTags::STANDALONE_SPEAKERVIEW_OUTPUT_ADDRESS = "STANDALONE_SPEAKERVIEW_OUTPUT_ADDRESS";
+juce::String const ProjectData::XmlTags::STANDALONE_SPEAKERVIEW_OUTPUT_ADDRESS
+    = "STANDALONE_SPEAKERVIEW_OUTPUT_ADDRESS";
 
 juce::String const AppData::XmlTags::MAIN_TAG = "SPAT_GRIS_APP_DATA";
 juce::String const AppData::XmlTags::LAST_SPEAKER_SETUP = "LAST_SPEAKER_SETUP";
@@ -814,7 +815,8 @@ tl::optional<ProjectData> ProjectData::fromXml(juce::XmlElement const & xml)
         result.standaloneSpeakerViewOutputPort = xml.getIntAttribute(XmlTags::STANDALONE_SPEAKERVIEW_OUTPUT_PORT);
     }
     if (xml.hasAttribute(XmlTags::STANDALONE_SPEAKERVIEW_OUTPUT_ADDRESS)) {
-        result.standaloneSpeakerViewOutputAddress = xml.getStringAttribute(XmlTags::STANDALONE_SPEAKERVIEW_OUTPUT_ADDRESS);
+        result.standaloneSpeakerViewOutputAddress
+            = xml.getStringAttribute(XmlTags::STANDALONE_SPEAKERVIEW_OUTPUT_ADDRESS);
     }
 
     for (auto const * sourceElement : sourcesElement->getChildIterator()) {
