@@ -60,8 +60,8 @@
 
 namespace gris
 {
-constexpr auto DEFAULT_UDP_INPUT_PORT = 18022;
-constexpr auto DEFAULT_UDP_OUTPUT_PORT = 18023;
+constexpr auto DEFAULT_UDP_OUTPUT_PORT = 18022;
+constexpr auto DEFAULT_UDP_INPUT_PORT = 18023;
 
 constexpr auto DEFAULT_OSC_INPUT_PORT = 18032;
 constexpr auto MAX_OSC_INPUT_PORT = 65535;
