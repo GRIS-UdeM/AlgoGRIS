@@ -90,6 +90,10 @@ juce::String const ProjectData::XmlTags::SOURCES = "SOURCES";
 juce::String const ProjectData::XmlTags::MASTER_GAIN = "MASTER_GAIN";
 juce::String const ProjectData::XmlTags::GAIN_INTERPOLATION = "GAIN_INTERPOLATION";
 juce::String const ProjectData::XmlTags::OSC_PORT = "OSC_PORT";
+juce::String const ProjectData::XmlTags::STANDALONE_SPEAKERVIEW_INPUT_PORT = "STANDALONE_SPEAKERVIEW_INPUT_PORT";
+juce::String const ProjectData::XmlTags::STANDALONE_SPEAKERVIEW_OUTPUT_PORT = "STANDALONE_SPEAKERVIEW_OUTPUT_PORT";
+juce::String const ProjectData::XmlTags::STANDALONE_SPEAKERVIEW_OUTPUT_ADDRESS
+    = "STANDALONE_SPEAKERVIEW_OUTPUT_ADDRESS";
 
 juce::String const AppData::XmlTags::MAIN_TAG = "SPAT_GRIS_APP_DATA";
 juce::String const AppData::XmlTags::LAST_SPEAKER_SETUP = "LAST_SPEAKER_SETUP";
@@ -743,6 +747,12 @@ std::unique_ptr<juce::XmlElement> ProjectData::toXml() const
     result->addChildElement(mbapDistanceAttenuationData.toXml().release());
 
     result->setAttribute(XmlTags::OSC_PORT, oscPort);
+    if (standaloneSpeakerViewInputPort)
+        result->setAttribute(XmlTags::STANDALONE_SPEAKERVIEW_INPUT_PORT, *standaloneSpeakerViewInputPort);
+    if (standaloneSpeakerViewOutputPort)
+        result->setAttribute(XmlTags::STANDALONE_SPEAKERVIEW_OUTPUT_PORT, *standaloneSpeakerViewOutputPort);
+    if (standaloneSpeakerViewOutputAddress)
+        result->setAttribute(XmlTags::STANDALONE_SPEAKERVIEW_OUTPUT_ADDRESS, *standaloneSpeakerViewOutputAddress);
     result->setAttribute(XmlTags::MASTER_GAIN, masterGain.get());
     result->setAttribute(XmlTags::GAIN_INTERPOLATION, spatGainsInterpolation);
     result->setAttribute(XmlTags::VERSION, SPAT_GRIS_VERSION.toString());
@@ -797,6 +807,17 @@ tl::optional<ProjectData> ProjectData::fromXml(juce::XmlElement const & xml)
     result.oscPort = xml.getIntAttribute(XmlTags::OSC_PORT); // TODO : validate value
     result.mbapDistanceAttenuationData = *mbapAttenuation;
     result.spatMode = *spatMode;
+
+    if (xml.hasAttribute(XmlTags::STANDALONE_SPEAKERVIEW_INPUT_PORT)) {
+        result.standaloneSpeakerViewInputPort = xml.getIntAttribute(XmlTags::STANDALONE_SPEAKERVIEW_INPUT_PORT);
+    }
+    if (xml.hasAttribute(XmlTags::STANDALONE_SPEAKERVIEW_OUTPUT_PORT)) {
+        result.standaloneSpeakerViewOutputPort = xml.getIntAttribute(XmlTags::STANDALONE_SPEAKERVIEW_OUTPUT_PORT);
+    }
+    if (xml.hasAttribute(XmlTags::STANDALONE_SPEAKERVIEW_OUTPUT_ADDRESS)) {
+        result.standaloneSpeakerViewOutputAddress
+            = xml.getStringAttribute(XmlTags::STANDALONE_SPEAKERVIEW_OUTPUT_ADDRESS);
+    }
 
     for (auto const * sourceElement : sourcesElement->getChildIterator()) {
         jassert(sourceElement);
