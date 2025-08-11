@@ -33,7 +33,7 @@ find_package(CURL QUIET)
 
 # 2. If not, look for the one we are shipping
 if(NOT TARGET juce::juce_core)
-  add_subdirectory(submodules/JUCE)
+  add_subdirectory(submodules/StructGRIS/submodules/JUCE)
 endif()
 
 # Library setup
@@ -108,7 +108,6 @@ add_library(AlgoGRIS
   StructGRIS/ValueTreeUtilities.hpp
   StructGRIS/Quaternion.cpp
   StructGRIS/Quaternion.hpp
-
 
   tl/optional.hpp
 )
