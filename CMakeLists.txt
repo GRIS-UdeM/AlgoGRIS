@@ -51,8 +51,6 @@ add_library(AlgoGRIS
     Implementations/sg_mbap.hpp
     Implementations/sg_vbap.cpp
     Implementations/sg_vbap.hpp
-
-    tl/optional.hpp
 )
 
 target_include_directories(AlgoGRIS
