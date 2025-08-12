@@ -38,10 +38,10 @@
 #include "juce_core/system/juce_PlatformDefs.h"
 #include "juce_dsp/juce_dsp.h"
 #include "juce_events/juce_events.h"
+#include <Utilities/ValueTreeUtilities.hpp>
 #include <array>
 #include <cstddef>
 #include <memory>
-#include "StructGRIS/ValueTreeUtilities.hpp"
 
 namespace gris
 {

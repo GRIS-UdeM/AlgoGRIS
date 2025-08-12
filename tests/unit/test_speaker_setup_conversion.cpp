@@ -1,7 +1,7 @@
 #include "../sg_TestUtils.hpp"
+#include <Data/sg_LegacySpatFileFormat.hpp>
 #include <catch2/catch_all.hpp>
-#include "../../Data/sg_LegacySpatFileFormat.hpp"
-#include "../../StructGRIS/ValueTreeUtilities.hpp"
+#include <UtilitiesValueTreeUtilities.hpp>
 
 using namespace gris;
 using namespace gris::tests;
