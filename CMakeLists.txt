@@ -17,25 +17,15 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(Catch2)
 
-add_subdirectory (submodules/fork_union)
-add_subdirectory (submodules/StructGRIS)
+add_subdirectory(submodules/fork_union)
+add_subdirectory(submodules/StructGRIS) # JUCE & JuceHeader.h now handled there
 
 # Global CMake configuration
 set(CMAKE_INCLUDE_CURRENT_DIR 1)
 set(CMAKE_CXX_SCAN_FOR_MODULES 0)
 set(CMAKE_CXX_STANDARD 20)
 
-# 1. Look for a system JUCE if any
-if(NOT TARGET juce::juce_core)
-  find_package(JUCE QUIET)
-endif()
-
 find_package(CURL QUIET)
-
-# 2. If not, look for the one we are shipping
-if(NOT TARGET juce::juce_core)
-  add_subdirectory(submodules/StructGRIS/submodules/JUCE)
-endif()
 
 # Library setup
 add_library(AlgoGRIS
@@ -70,33 +60,9 @@ target_include_directories(AlgoGRIS
         "${CMAKE_CURRENT_SOURCE_DIR}/submodules/StructGRIS"
 )
 
-file(GENERATE
-    OUTPUT JuceHeader.h
-    CONTENT
-    [=[
-#pragma once
-
-#include <juce_core/juce_core.h>
-#include <juce_events/juce_events.h>
-#include <juce_audio_basics/juce_audio_basics.h>
-#include <juce_graphics/juce_graphics.h>
-#include <juce_dsp/juce_dsp.h>
-#include <juce_gui_basics/juce_gui_basics.h>
-
-#if ! JUCE_DONT_DECLARE_PROJECTINFO
-namespace ProjectInfo
-{
-    const char* const  projectName    = "AlgoGRIS";
-    const char* const  companyName    = "Gris / SAT";
-    const char* const  versionString  = "1.0.0";
-    const int          versionNumber  = 0x100000;
-}
-#endif
-]=]
-)
-
 target_link_libraries(AlgoGRIS
   PUBLIC
+    StructGRIS
     juce::juce_core
     juce::juce_audio_basics
     juce::juce_data_structures
