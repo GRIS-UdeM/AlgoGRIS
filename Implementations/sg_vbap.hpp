@@ -26,6 +26,7 @@
 
 #pragma once
 
+#include <JuceHeader.h>
 #include "juce_core/juce_core.h"
 #include <Data/StrongTypes/sg_CartesianVector.hpp>
 #include <Data/StrongTypes/sg_OutputPatch.hpp>
