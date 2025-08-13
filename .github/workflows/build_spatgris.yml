@@ -89,8 +89,8 @@ jobs:
         run: |
           wget https://apt.llvm.org/llvm.sh
           chmod +x llvm.sh
-          ./llvm.sh 19
-          apt-get install -y clang-19 libclang-rt-19-dev clang-tools-19
+          ./llvm.sh 18
+          apt-get install -y clang-18
 
       - name: Install dependencies # taken from https://github.com/juce-framework/JUCE/blob/develop/docs/Linux%20Dependencies.md
         run: |
@@ -99,13 +99,13 @@ jobs:
               libfontconfig1-dev libx11-dev libxext-dev libxrender-dev libwebkit2gtk-4.0-dev libglu1-mesa-dev
 
       - name: Build Projucer
-        run: make -C submodules/AlgoGRIS/submodules/StructGRIS/submodules/JUCE/extras/Projucer/Builds/LinuxMakefile CXX=clang++-19 -j$(nproc)
+        run: make -C submodules/AlgoGRIS/submodules/StructGRIS/submodules/JUCE/extras/Projucer/Builds/LinuxMakefile CXX=clang++-18 -j$(nproc)
 
       - name: Generate Makefile
         run: submodules/AlgoGRIS/submodules/StructGRIS/submodules/JUCE/extras/Projucer/Builds/LinuxMakefile/build/Projucer --resave SpatGRIS.jucer
 
       - name: Compile SpatGRIS
-        run: make -C  Builds/LinuxMakefile CXX=clang++-19 -j$(nproc)
+        run: make -C  Builds/LinuxMakefile CXX=clang++-18 -j$(nproc)
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
