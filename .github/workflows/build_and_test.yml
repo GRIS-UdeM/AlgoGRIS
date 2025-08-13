@@ -60,6 +60,11 @@ jobs:
           sudo apt-get update -yqq
           sudo apt install -yqq libasound2-dev libx11-dev libxinerama-dev libxext-dev libfreetype6-dev libwebkit2gtk-4.1-dev libglu1-mesa-dev xvfb ninja-build libcurl4-openssl-dev ${{ matrix.packages }}
 
+          # Install clang-tools for benchmark runner if missing (clang-scan-deps lives here)
+          if [[ "${{ matrix.name }}" == "Linux (Benchmarks)" ]]; then
+            sudo apt-get install -yqq clang-tools-18
+          fi
+
       - name: Install Ninja (Windows)
         if: runner.os == 'Windows'
         run: choco install ninja

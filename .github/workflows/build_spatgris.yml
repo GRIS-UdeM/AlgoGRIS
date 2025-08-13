@@ -89,7 +89,7 @@ jobs:
         run: |
           wget https://apt.llvm.org/llvm.sh
           chmod +x llvm.sh
-          ./llvm.sh 18
+          ./llvm.sh 19
           apt-get install -y clang-19 libclang-rt-19-dev clang-tools-19
 
       - name: Install dependencies # taken from https://github.com/juce-framework/JUCE/blob/develop/docs/Linux%20Dependencies.md
