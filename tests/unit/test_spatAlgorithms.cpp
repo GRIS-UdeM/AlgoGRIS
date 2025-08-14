@@ -1,7 +1,7 @@
+#include <Utilities/ValueTreeUtilities.hpp>
 #include <catch2/catch_all.hpp>
 #include <tests/sg_TestUtils.hpp>
 #include <sg_AbstractSpatAlgorithm.hpp>
-#include "../../StructGRIS/ValueTreeUtilities.hpp"
 
 using namespace gris;
 using namespace gris::tests;

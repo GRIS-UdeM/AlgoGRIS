@@ -1,6 +1,6 @@
-[submodule "submodules/JUCE"]
-	path = submodules/JUCE
-	url = git@github.com:juce-framework/JUCE.git
 [submodule "submodules/fork_union"]
 	path = submodules/fork_union
 	url = https://github.com/vberthiaume/fork_union.git
+[submodule "submodules/StructGRIS"]
+	path = submodules/StructGRIS
+	url = git@github.com:GRIS-UdeM/StructGRIS.git

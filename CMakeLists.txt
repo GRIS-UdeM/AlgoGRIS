@@ -17,129 +17,50 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(Catch2)
 
-add_subdirectory (submodules/fork_union)
+add_subdirectory(submodules/fork_union)
+add_subdirectory(submodules/StructGRIS) # JUCE & JuceHeader.h now handled there
 
 # Global CMake configuration
 set(CMAKE_INCLUDE_CURRENT_DIR 1)
 set(CMAKE_CXX_SCAN_FOR_MODULES 0)
 set(CMAKE_CXX_STANDARD 20)
 
-# 1. Look for a system JUCE if any
-if(NOT TARGET juce::juce_core)
-  find_package(JUCE QUIET)
-endif()
-
 find_package(CURL QUIET)
-
-# 2. If not, look for the one we are shipping
-if(NOT TARGET juce::juce_core)
-  add_subdirectory(submodules/JUCE)
-endif()
 
 # Library setup
 add_library(AlgoGRIS
-  sg_AbstractSpatAlgorithm.cpp
-  sg_AbstractSpatAlgorithm.hpp
-  sg_DopplerSpatAlgorithm.cpp
-  sg_DopplerSpatAlgorithm.hpp
-  sg_DummySpatAlgorithm.hpp
-  sg_HrtfSpatAlgorithm.cpp
-  sg_HrtfSpatAlgorithm.hpp
-  sg_HybridSpatAlgorithm.cpp
-  sg_HybridSpatAlgorithm.hpp
-  sg_MbapSpatAlgorithm.cpp
-  sg_MbapSpatAlgorithm.hpp
-  sg_PinkNoiseGenerator.cpp
-  sg_PinkNoiseGenerator.hpp
-  sg_StereoSpatAlgorithm.cpp
-  sg_StereoSpatAlgorithm.hpp
-  sg_VbapSpatAlgorithm.cpp
-  sg_VbapSpatAlgorithm.hpp
+    sg_AbstractSpatAlgorithm.cpp
+    sg_AbstractSpatAlgorithm.hpp
+    sg_DopplerSpatAlgorithm.cpp
+    sg_DopplerSpatAlgorithm.hpp
+    sg_DummySpatAlgorithm.hpp
+    sg_HrtfSpatAlgorithm.cpp
+    sg_HrtfSpatAlgorithm.hpp
+    sg_HybridSpatAlgorithm.cpp
+    sg_HybridSpatAlgorithm.hpp
+    sg_MbapSpatAlgorithm.cpp
+    sg_MbapSpatAlgorithm.hpp
+    sg_PinkNoiseGenerator.cpp
+    sg_PinkNoiseGenerator.hpp
+    sg_StereoSpatAlgorithm.cpp
+    sg_StereoSpatAlgorithm.hpp
+    sg_VbapSpatAlgorithm.cpp
+    sg_VbapSpatAlgorithm.hpp
 
-  Containers/sg_AtomicUpdater.hpp
-  Containers/sg_LogBuffer.cpp
-  Containers/sg_LogBuffer.hpp
-  Containers/sg_OwnedMap.hpp
-  Containers/sg_StaticMap.hpp
-  Containers/sg_StaticVector.hpp
-  Containers/sg_StrongArray.hpp
-  Containers/sg_TaggedAudioBuffer.hpp
-  Containers/sg_ThreadSafeBuffer.hpp
-
-  Data/StrongTypes/sg_CartesianVector.cpp
-  Data/StrongTypes/sg_Dbfs.hpp
-  Data/StrongTypes/sg_Degrees.hpp
-  Data/StrongTypes/sg_Hz.hpp
-  Data/StrongTypes/sg_Meters.hpp
-  Data/StrongTypes/sg_OutputPatch.hpp
-  Data/StrongTypes/sg_Radians.hpp
-  Data/StrongTypes/sg_StrongFloat.hpp
-  Data/StrongTypes/sg_StrongIndex.hpp
-  Data/StrongTypes/sg_CartesianVector.hpp
-  Data/StrongTypes/sg_SourceIndex.hpp
-
-  Data/sg_AudioStructs.cpp
-  Data/sg_AudioStructs.hpp
-  Data/sg_CommandId.hpp
-  Data/sg_constants.cpp
-  Data/sg_constants.hpp
-  Data/sg_LegacyLbapPosition.cpp
-  Data/sg_LegacyLbapPosition.hpp
-  Data/sg_LegacySpatFileFormat.cpp
-  Data/sg_LegacySpatFileFormat.hpp
-  Data/sg_LogicStrucs.cpp
-  Data/sg_LogicStrucs.hpp
-  Data/sg_Macros.hpp
-  Data/sg_Narrow.hpp
-  Data/sg_PolarVector.cpp
-  Data/sg_PolarVector.hpp
-  Data/sg_Position.cpp
-  Data/sg_Position.hpp
-  Data/sg_SpatMode.cpp
-  Data/sg_SpatMode.hpp
-  Data/sg_Triplet.hpp
-
-  Implementations/sg_mbap.cpp
-  Implementations/sg_mbap.hpp
-  Implementations/sg_vbap.cpp
-  Implementations/sg_vbap.hpp
-
-  StructGRIS/ValueTreeUtilities.cpp
-  StructGRIS/ValueTreeUtilities.hpp
-  StructGRIS/Quaternion.cpp
-  StructGRIS/Quaternion.hpp
-
-
-  tl/optional.hpp
+    Implementations/sg_mbap.cpp
+    Implementations/sg_mbap.hpp
+    Implementations/sg_vbap.cpp
+    Implementations/sg_vbap.hpp
 )
 
-file(GENERATE
-    OUTPUT JuceHeader.h
-    CONTENT
-    [=[
-#pragma once
-
-#include <juce_core/juce_core.h>
-#include <juce_events/juce_events.h>
-#include <juce_audio_basics/juce_audio_basics.h>
-#include <juce_graphics/juce_graphics.h>
-#include <juce_dsp/juce_dsp.h>
-#include <juce_gui_basics/juce_gui_basics.h>
-
-#if ! JUCE_DONT_DECLARE_PROJECTINFO
-namespace ProjectInfo
-{
-    const char* const  projectName    = "AlgoGRIS";
-    const char* const  companyName    = "Gris / SAT";
-    const char* const  versionString  = "1.0.0";
-    const int          versionNumber  = 0x100000;
-}
-#endif
-]=]
+target_include_directories(AlgoGRIS
+    PUBLIC
+        "${CMAKE_CURRENT_SOURCE_DIR}/submodules/StructGRIS"
 )
 
 target_link_libraries(AlgoGRIS
   PUBLIC
+    StructGRIS
     juce::juce_core
     juce::juce_audio_basics
     juce::juce_data_structures
