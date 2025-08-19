@@ -41,7 +41,8 @@
 namespace gris
 {
 //==============================================================================
-MbapSpatAlgorithm::MbapSpatAlgorithm(SpeakerSetup const & speakerSetup, std::vector<source_index_t> && theSourceIds)
+MbapSpatAlgorithm::MbapSpatAlgorithm(SpeakerSetup const & speakerSetup,
+                                     [[maybe_unused]] std::vector<source_index_t> && theSourceIds)
     : mField(mbapInit(speakerSetup.speakers))
 #if SG_USE_FORK_UNION
     , sourceIds{ std::move(theSourceIds) }

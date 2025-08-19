@@ -9,10 +9,10 @@
 #include <Containers/sg_TaggedAudioBuffer.hpp>
 #include <Data/sg_AudioStructs.hpp>
 #include <Data/sg_LogicStrucs.hpp>
+#include <Utilities/ValueTreeUtilities.hpp>
 #include <cmath>
 #include <array>
 #include <random>
-#include "StructGRIS/ValueTreeUtilities.hpp"
 #include "catch2/catch_message.hpp"
 #include "catch2/catch_test_macros.hpp"
 

@@ -31,9 +31,12 @@
 */
 
 #include "sg_mbap.hpp"
-#include "Data/sg_LogicStrucs.hpp"
-#include "Data/sg_Position.hpp"
 #include "juce_core/system/juce_PlatformDefs.h"
+#include <Data/sg_AudioStructs.hpp>
+#include <Data/sg_LogicStrucs.hpp>
+#include <Data/sg_Narrow.hpp>
+#include <Data/sg_Position.hpp>
+#include <Data/sg_constants.hpp>
 #include <cmath>
 #include <algorithm>
 #include <array>
@@ -44,9 +47,6 @@
 #include <numeric>
 #include <utility>
 #include <vector>
-#include "../Data/sg_AudioStructs.hpp"
-#include "../Data/sg_Narrow.hpp"
-#include "../Data/sg_constants.hpp"
 
 namespace gris
 {
