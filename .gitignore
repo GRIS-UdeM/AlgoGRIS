@@ -16,6 +16,9 @@ WindowsInstallerOutput
 # VS code dir
 .vscode
 
+# CLion dir
+.idea
+
 # Mac OS Desktop Services Store files
 *.DS_Store
 
