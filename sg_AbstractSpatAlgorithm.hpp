@@ -153,7 +153,7 @@ public:
 
 protected:
 #if SG_USE_FORK_UNION
-    ashvardanian::fork_union::thread_pool_t threadPool;
+    alignas(ashvardanian::fork_union::default_alignment_k) ashvardanian::fork_union::basic_pool_t threadPool;
 #endif
 
 private:

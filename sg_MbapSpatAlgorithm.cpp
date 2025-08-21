@@ -120,9 +120,9 @@ void MbapSpatAlgorithm::process(AudioConfig const & config,
 
     jassert(sourceIds.size() > 0);
 
-    fu::for_n(threadPool, sourceIds.size(), [&](fu::prong_t prong) noexcept {
+    threadPool.for_n(sourceIds.size(), [&](std::size_t task_index) noexcept {
         processSource(config,
-                      sourceIds[prong.task_index],
+                      sourceIds[task_index],
                       sourcePeaks,
                       sourcesBuffer,
                       speakersAudioConfig,
