@@ -129,18 +129,18 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
 
     jassert(sourceIds.size() > 0);
 
-    threadPool.for_n(sourceIds.size(), [&](std::size_t task_index) noexcept {
+    threadPool.for_n(sourceIds.size(), [&](fu::prong_t prong) noexcept {
         jassert(threadPool.is_lock_free());
 
         processSource(config,
-                      sourceIds[task_index],
+                      sourceIds[prong.task],
                       sourcePeaks,
                       sourcesBuffer,
                       speakersAudioConfig,
     #if SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS
                       forkUnionBuffer,
     #elif SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD
-                      forkUnionBuffer[prong.thread_index],
+                      forkUnionBuffer[prong.thread],
     #endif
                       speakersBuffer);
     });
