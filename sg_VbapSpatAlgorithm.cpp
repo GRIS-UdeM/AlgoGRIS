@@ -118,7 +118,7 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
 #endif
                                 juce::AudioBuffer<float> & /*stereoBuffer*/,
                                 SourcePeaks const & sourcePeaks,
-                                SpeakersAudioConfig const * altSpeakerConfig)
+                                SpeakersAudioConfig const * altSpeakerConfig) [[clang::nonblocking]]
 {
     ASSERT_AUDIO_THREAD;
 

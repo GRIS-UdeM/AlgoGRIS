@@ -63,7 +63,7 @@ void HybridSpatAlgorithm::process(AudioConfig const & config,
 #endif
                                   juce::AudioBuffer<float> & stereoBuffer,
                                   SourcePeaks const & sourcePeaks,
-                                  SpeakersAudioConfig const * altSpeakerConfig)
+                                  SpeakersAudioConfig const * altSpeakerConfig) [[clang::nonblocking]]
 {
 #if SG_USE_FORK_UNION && (SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS || SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD)
     mVbap->process(config, sourcesBuffer, speakersBuffer, forkUnionBuffer, stereoBuffer, sourcePeaks, altSpeakerConfig);
