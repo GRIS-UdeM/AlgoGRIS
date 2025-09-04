@@ -48,7 +48,7 @@ jobs:
             packages: clang-19 libclang-rt-19-dev clang-tools-19
           - name: Linux (Clang-20 rtsan)
             os: ubuntu-latest
-            extra-flags: -DCMAKE_C_COMPILER=clang-20 -DCMAKE_CXX_COMPILER=clang++-20 -G"Ninja Multi-Config" -DCMAKE_C_FLAGS="-fsanitize=realtime"  -DCMAKE_CXX_FLAGS="-fsanitize=realtime"
+            extra-flags: -G"Ninja Multi-Config" -DCMAKE_C_FLAGS="-fsanitize=realtime"  -DCMAKE_CXX_FLAGS="-fsanitize=realtime"
             image: ghcr.io/guillaumeriousat/algogris-rtsan:latest
           - name: macOS
             os: macos-15
