@@ -49,7 +49,7 @@ jobs:
           - name: Linux (Clang-20 rtsan)
             os: ubuntu-latest
             extra-flags: -G"Ninja Multi-Config" -DCMAKE_C_FLAGS="-fsanitize=realtime"  -DCMAKE_CXX_FLAGS="-fsanitize=realtime"
-            image: ghcr.io/guillaumeriousat/algogris-rtsan:latest
+            image: realtimesanitizer/rtsan-clang
           - name: macOS
             os: macos-15
             extra-flags: -G"Ninja Multi-Config" -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64"  -DCMAKE_C_FLAGS=" -fsanitize=address -fsanitize=undefined" -DCMAKE_CXX_FLAGS="-fsanitize=address -fsanitize=undefined"
