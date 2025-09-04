@@ -34,7 +34,7 @@ jobs:
         include:
           - name: Linux (Benchmarks)
             os: [ benchmarks ]
-            extra-flags: -G"Ninja Multi-Config" -DCMAKE_C_FLAGS="-fsanitize=address -fsanitize=undefined"  -DCMAKE_CXX_FLAGS="-fsanitize=address -fsanitize=undefined"
+            extra-flags: -G"Ninja Multi-Config"
           - name: Linux (GCC)
             os: ubuntu-latest
             extra-flags: -DCMAKE_C_COMPILER=gcc-14 -DCMAKE_CXX_COMPILER=g++-14 -G"Ninja Multi-Config" -DCMAKE_C_FLAGS="-fsanitize=address -fsanitize=undefined"  -DCMAKE_CXX_FLAGS="-fsanitize=address -fsanitize=undefined"
@@ -96,6 +96,7 @@ jobs:
                 ${{ matrix.extra-flags }}
 
       - name: Build debug
+        if: matrix.name != 'Linux (Benchmarks)'
         run: cmake --build build --config Debug --parallel
 
       - name: Build release
@@ -106,7 +107,7 @@ jobs:
         run: ctest --verbose --output-on-failure
 
       - name: Benchmark (ran on our local linux runner)
-        if: matrix.name == 'Linux'
+        if: matrix.name == 'Linux (Benchmarks)'
         working-directory: build
         run: |
           mkdir -p benchmarks/${RUNNER_OS}
@@ -118,7 +119,7 @@ jobs:
           echo "================================"
 
       - name: Commit benchmark results to benchmarks branch (only for Linux for now)
-        if: matrix.name == 'Linux'
+        if: matrix.name == 'Linux (Benchmarks)'
         run: |
           # Set up git account
           git config --global user.email "ci-bot@example.com"
