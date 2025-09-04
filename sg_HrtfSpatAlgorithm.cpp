@@ -42,6 +42,7 @@
 #include <array>
 #include <cstddef>
 #include <memory>
+#include <vector>
 
 namespace gris
 {
@@ -186,6 +187,7 @@ void HrtfSpatAlgorithm::process(AudioConfig const & config,
                                 SourcePeaks const & sourcePeaks,
                                 [[maybe_unused]] SpeakersAudioConfig const * altSpeakerConfig) [[clang::nonblocking]]
 {
+    auto oh_no_memory_allocationsssss = std::vector<float>(255);
     ASSERT_AUDIO_THREAD;
     jassert(!altSpeakerConfig);
     jassert(stereoBuffer.getNumChannels() == 2);
