@@ -49,7 +49,7 @@ jobs:
           - name: Linux (Clang-20 rtsan)
             os: ubuntu-latest
             extra-flags: -G"Ninja Multi-Config" -DCMAKE_C_FLAGS="-fsanitize=realtime"  -DCMAKE_CXX_FLAGS="-fsanitize=realtime"
-            image: realtimesanitizer/rtsan-clang
+            image: ghcr.io/guillaumeriousat/algogris-rtsan:latest
           - name: macOS
             os: macos-15
             extra-flags: -G"Ninja Multi-Config" -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64"  -DCMAKE_C_FLAGS=" -fsanitize=address -fsanitize=undefined" -DCMAKE_CXX_FLAGS="-fsanitize=address -fsanitize=undefined"
@@ -60,21 +60,16 @@ jobs:
       # Setup MSVC toolchain and developer command prompt (Windows)
       - uses: ilammy/msvc-dev-cmd@v1
 
-      - name: Get sudo (for rtsan)
-        if: runner.os == 'Linux (Clang-20 rtsan)'
-        run: |
-
-
       - name: Install JUCE's Linux Deps
         if: runner.os == 'Linux'
         # Thanks to McMartin & co https://forum.juce.com/t/list-of-juce-dependencies-under-linux/15121/44
         run: |
-          apt-get update -yqq
-          apt install -yqq libasound2-dev libx11-dev libxinerama-dev libxext-dev libfreetype6-dev libwebkit2gtk-4.1-dev libglu1-mesa-dev xvfb ninja-build libcurl4-openssl-dev ${{ matrix.packages }}
+          sudo apt-get update -yqq
+          sudo apt install -yqq libasound2-dev libx11-dev libxinerama-dev libxext-dev libfreetype6-dev libwebkit2gtk-4.1-dev libglu1-mesa-dev xvfb ninja-build libcurl4-openssl-dev ${{ matrix.packages }}
 
           # Install clang-tools for benchmark runner if missing (clang-scan-deps lives here)
           if [[ "${{ matrix.name }}" == "Linux (Benchmarks)" ]]; then
-            apt-get install -yqq clang-tools-18
+            sudo apt-get install -yqq clang-tools-18
           fi
 
       - name: Install Ninja (Windows)
