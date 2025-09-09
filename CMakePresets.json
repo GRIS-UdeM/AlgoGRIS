@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "configurePresets": [
+    {
+      "name": "rtsan",
+      "displayName": "rtsan",
+      "description": "build with rtsan (needs a special clang20)",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "CMAKE_CXX_FLAGS": "-fsanitize=realtime",
+        "CMAKE_EXE_LINKER_FLAGS": "-fsanitize=realtime"
+      }
+    }
+  ]
+}
