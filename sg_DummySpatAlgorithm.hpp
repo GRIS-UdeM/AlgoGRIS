@@ -55,7 +55,7 @@ public:
 #endif
                  juce::AudioBuffer<float> & /*stereoBuffer*/,
                  SourcePeaks const & /*sourcePeaks*/,
-                 SpeakersAudioConfig const * /*altSpeakerConfig*/) override
+                 SpeakersAudioConfig const * /*altSpeakerConfig*/) [[clang::nonblocking]] override
     {
     }
     [[nodiscard]] juce::Array<Triplet> getTriplets() const noexcept override { return juce::Array<Triplet>{}; }

@@ -109,7 +109,7 @@ void MbapSpatAlgorithm::process(AudioConfig const & config,
 #endif
                                 [[maybe_unused]] juce::AudioBuffer<float> & stereoBuffer,
                                 SourcePeaks const & sourcePeaks,
-                                SpeakersAudioConfig const * altSpeakerConfig)
+                                SpeakersAudioConfig const * altSpeakerConfig) [[clang::nonblocking]]
 {
     ASSERT_AUDIO_THREAD;
 

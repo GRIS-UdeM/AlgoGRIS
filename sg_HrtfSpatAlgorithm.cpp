@@ -184,7 +184,7 @@ void HrtfSpatAlgorithm::process(AudioConfig const & config,
 #endif
                                 juce::AudioBuffer<float> & stereoBuffer,
                                 SourcePeaks const & sourcePeaks,
-                                [[maybe_unused]] SpeakersAudioConfig const * altSpeakerConfig)
+                                [[maybe_unused]] SpeakersAudioConfig const * altSpeakerConfig) [[clang::nonblocking]]
 {
     ASSERT_AUDIO_THREAD;
     jassert(!altSpeakerConfig);

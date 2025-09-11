@@ -28,6 +28,9 @@ jobs:
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
+    # we only have a container if we are using the rtsan build
+    container:
+      image: ${{ matrix.image || '' }}
     strategy:
       fail-fast: false # show all errors for each platform (vs. cancel jobs on error)
       matrix:
@@ -43,6 +46,10 @@ jobs:
             os: ubuntu-latest
             extra-flags: -DCMAKE_C_COMPILER=clang-19 -DCMAKE_CXX_COMPILER=clang++-19 -G"Ninja Multi-Config" -DCMAKE_C_FLAGS="-fsanitize=address -fsanitize=undefined"  -DCMAKE_CXX_FLAGS="-fsanitize=address -fsanitize=undefined"
             packages: clang-19 libclang-rt-19-dev clang-tools-19
+          - name: Linux (Clang-20 rtsan)
+            os: ubuntu-latest
+            extra-flags: -G"Ninja Multi-Config" -DCMAKE_C_FLAGS="-fsanitize=realtime"  -DCMAKE_CXX_FLAGS="-fsanitize=realtime"
+            image: ghcr.io/guillaumeriousat/algogris-rtsan:latest
           - name: macOS
             os: macos-15
             extra-flags: -G"Ninja Multi-Config" -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64"  -DCMAKE_C_FLAGS=" -fsanitize=address -fsanitize=undefined" -DCMAKE_CXX_FLAGS="-fsanitize=address -fsanitize=undefined"
