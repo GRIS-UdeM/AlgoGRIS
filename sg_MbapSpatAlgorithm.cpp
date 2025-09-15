@@ -196,6 +196,7 @@ inline void MbapSpatAlgorithm::processSource(const gris::AudioConfig & config,
         auto & currentGain{ lastGains[speaker.key] };
         auto const & targetGain{ targetGains[speaker.key] };
         auto const gainDiff{ targetGain - currentGain };
+        auto const gainOffset = targetGain * (1.0f - gainFactor);
         auto const gainSlope{ gainDiff / narrow<float>(numSamples) };
 
 #if SG_USE_FORK_UNION
@@ -258,7 +259,7 @@ inline void MbapSpatAlgorithm::processSource(const gris::AudioConfig & config,
             if (targetGain < SMALL_GAIN) {
                 // targeting silence
                 for (int sampleIndex{}; sampleIndex < numSamples && currentGain >= SMALL_GAIN; ++sampleIndex) {
-                    currentGain = targetGain + (currentGain - targetGain) * gainFactor;
+                    currentGain = std::fma(currentGain, gainFactor, gainOffset);
 #if SG_USE_FORK_UNION
     #if SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS
                     outputSamples[sampleIndex]._a += inputSamples[sampleIndex] * currentGain;
@@ -278,7 +279,7 @@ inline void MbapSpatAlgorithm::processSource(const gris::AudioConfig & config,
 
             // not targeting silence
             for (int sampleIndex{}; sampleIndex < numSamples; ++sampleIndex) {
-                currentGain = (currentGain - targetGain) * gainFactor + targetGain;
+                currentGain = std::fma(currentGain, gainFactor, gainOffset);
 #if SG_USE_FORK_UNION
     #if SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS
                 outputSamples[sampleIndex]._a += inputSamples[sampleIndex] * currentGain;
