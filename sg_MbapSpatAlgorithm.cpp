@@ -136,6 +136,8 @@ void MbapSpatAlgorithm::process(AudioConfig const & config,
     #if SG_USE_FORK_UNION && (SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS || SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD)
     copyForkUnionBuffer(speakersAudioConfig, sourcesBuffer, speakersBuffer, forkUnionBuffer);
     #endif
+    // sleep with 1us periodicity
+    threadPool.sleep(10);
 #else
     for (auto const & source : config.sourcesAudioConfig)
         processSource(config, source.key, sourcePeaks, sourcesBuffer, speakersAudioConfig, speakersBuffer);

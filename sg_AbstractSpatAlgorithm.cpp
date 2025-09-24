@@ -62,7 +62,6 @@ AbstractSpatAlgorithm::AbstractSpatAlgorithm()
         std::fprintf(stderr, "Failed to fork the threads\n");
         jassertfalse;
     }
-  std::cout << "tryspawn" << "\n";
 
 #endif
 }
