@@ -62,6 +62,8 @@ AbstractSpatAlgorithm::AbstractSpatAlgorithm()
         std::fprintf(stderr, "Failed to fork the threads\n");
         jassertfalse;
     }
+  std::cout << "tryspawn" << "\n";
+
 #endif
 }
 
@@ -70,7 +72,7 @@ namespace fu = ashvardanian::fork_union;
     #if SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS
 void AbstractSpatAlgorithm::silenceForkUnionBuffer(ForkUnionBuffer & forkUnionBuffer) noexcept
 {
-    fu::for_n(threadPool, forkUnionBuffer.size(), [&](std::size_t i) noexcept {
+    threadPool.for_n(forkUnionBuffer.size(), [&](std::size_t i) noexcept {
         auto & individualSpeakerBuffer{ forkUnionBuffer[i] };
         for (auto & wrapper : individualSpeakerBuffer)
             wrapper._a.store(0.f, std::memory_order_relaxed);
@@ -100,13 +102,13 @@ void AbstractSpatAlgorithm::copyForkUnionBuffer(const gris::SpeakersAudioConfig 
     #elif SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD
 void AbstractSpatAlgorithm::silenceForkUnionBuffer(ForkUnionBuffer & forkUnionBuffer) noexcept
 {
-    fu::for_n(threadPool, forkUnionBuffer.size(), [&](fu::prong_t prong) noexcept {
+    threadPool.for_n(forkUnionBuffer.size(), [&](fu::prong_t prong) noexcept {
         // TODO FU: test on rasberry pi
         jassert(threadPool.is_lock_free());
 
         // TODO FU: if this were a boost multi_array we could clear it directly
         // for each thread buffer
-        auto & individualThreadBuffer{ forkUnionBuffer[prong.task_index] };
+        auto & individualThreadBuffer{ forkUnionBuffer[prong.task] };
 
         // for each speaker buffer in the thread buffer
         for (auto & speakerBuffer : individualThreadBuffer)

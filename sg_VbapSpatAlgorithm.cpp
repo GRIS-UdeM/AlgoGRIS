@@ -129,11 +129,11 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
 
     jassert(sourceIds.size() > 0);
 
-    fu::for_n(threadPool, sourceIds.size(), [&](fu::prong_t prong) noexcept {
+    threadPool.for_n(sourceIds.size(), [&](fu::prong_t prong) noexcept {
         jassert(threadPool.is_lock_free());
 
         processSource(config,
-                      sourceIds[prong.task_index],
+                      sourceIds[prong.task],
                       sourcePeaks,
                       sourcesBuffer,
                       speakersAudioConfig,

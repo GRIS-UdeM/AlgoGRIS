@@ -17,7 +17,13 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(Catch2)
 
-add_subdirectory(submodules/fork_union)
+FetchContent_Declare(
+    fork_union
+    GIT_REPOSITORY https://github.com/ashvardanian/fork_union
+    GIT_TAG v2.2.7
+)
+FetchContent_MakeAvailable(fork_union)
+
 add_subdirectory(submodules/StructGRIS) # JUCE & JuceHeader.h now handled there
 
 # Global CMake configuration
@@ -67,8 +73,8 @@ target_link_libraries(AlgoGRIS
     juce::juce_graphics
     juce::juce_gui_basics
     juce::juce_dsp
-    fork_union
-)
+  )
+target_link_libraries(AlgoGRIS PRIVATE fork_union)
 
 target_compile_definitions(AlgoGRIS
   PUBLIC
@@ -81,6 +87,7 @@ add_library(MainTest STATIC
   tests/sg_TestUtils.cpp
   tests/sg_TestUtils.hpp
 )
+target_link_libraries(MainTest PRIVATE fork_union)
 
 target_link_libraries(MainTest PUBLIC
   Catch2::Catch2
@@ -97,6 +104,7 @@ if(TARGET Catch2::Catch2WithMain)
     get_filename_component(_testname "${_filename}" NAME_WE)
     add_executable("${_testname}" "${_filename}")
     target_link_libraries("${_testname}" PRIVATE MainTest)
+    target_link_libraries("${_testname}" PRIVATE fork_union)
     target_compile_options("${_testname}" PRIVATE -O0)
     catch_discover_tests("${_testname}")
   endfunction()

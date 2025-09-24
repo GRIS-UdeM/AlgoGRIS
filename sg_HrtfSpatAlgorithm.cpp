@@ -214,7 +214,7 @@ void HrtfSpatAlgorithm::process(AudioConfig const & config,
       // SG_FU_USE_BUFFER_PER_THREAD)
     jassert(speakerIds.size() > 0);
 
-    ashvardanian::fork_union::for_n(threadPool, speakerIds.size(), [&](std::size_t i) noexcept {
+    threadPool.for_n(speakerIds.size(), [&](std::size_t i) noexcept {
         processSpeaker((int)i, speakerIds[(int)i], sourcesBuffer, stereoBuffer);
     });
 #else
