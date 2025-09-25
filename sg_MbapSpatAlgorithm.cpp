@@ -137,7 +137,7 @@ void MbapSpatAlgorithm::process(AudioConfig const & config,
     copyForkUnionBuffer(speakersAudioConfig, sourcesBuffer, speakersBuffer, forkUnionBuffer);
     #endif
     // sleep with 1us periodicity
-    threadPool.sleep(10);
+    threadPool.sleep(1);
 #else
     for (auto const & source : config.sourcesAudioConfig)
         processSource(config, source.key, sourcePeaks, sourcesBuffer, speakersAudioConfig, speakersBuffer);
