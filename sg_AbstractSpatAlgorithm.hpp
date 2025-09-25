@@ -39,6 +39,8 @@
         // this disables an annoying warning about structure alignment
         #pragma warning(disable : 4324)
     #endif
+    // Disable numa, this breaks on the ubuntu 20.04 CI.
+    #define FU_ENABLE_NUMA 0
     #include <fork_union.hpp>
 #endif
 
