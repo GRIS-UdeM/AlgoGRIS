@@ -217,6 +217,7 @@ void HrtfSpatAlgorithm::process(AudioConfig const & config,
     threadPool.for_n(speakerIds.size(), [&](std::size_t i) noexcept {
         processSpeaker((int)i, speakerIds[(int)i], sourcesBuffer, stereoBuffer);
     });
+    threadPool.sleep(1);
 #else
     int i = 0;
     for (auto const & speaker : mHrtfData.speakersAudioConfig) {
