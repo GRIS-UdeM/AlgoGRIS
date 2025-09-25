@@ -109,7 +109,6 @@ void StereoSpatAlgorithm::process(AudioConfig const & config,
     threadPool.for_n(sourceIds.size(), [&](std::size_t i) noexcept {
         processSource(config, sourceIds[(int)i], sourcePeaks, sourcesBuffer, stereoBuffer);
     });
-    threadPool.sleep(1);
 #else
     for (auto const & source : config.sourcesAudioConfig)
         processSource(config, source.key, sourcePeaks, sourcesBuffer, stereoBuffer);
