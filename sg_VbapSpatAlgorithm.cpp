@@ -145,7 +145,6 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
                       speakersBuffer);
     });
 
-    threadPool.sleep(1);
     #if SG_USE_FORK_UNION && (SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS || SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD)
     copyForkUnionBuffer(speakersAudioConfig, sourcesBuffer, speakersBuffer, forkUnionBuffer);
     #endif
