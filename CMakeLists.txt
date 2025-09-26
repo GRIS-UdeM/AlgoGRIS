@@ -19,8 +19,8 @@ FetchContent_MakeAvailable(Catch2)
 
 FetchContent_Declare(
     fork_union
-    GIT_REPOSITORY https://github.com/ashvardanian/fork_union
-    GIT_TAG v2.2.7
+    GIT_REPOSITORY https://github.com/guillaumeriousat/fork_union
+    GIT_TAG af457c9562eaacd75b8238953b476531edd74109
 )
 FetchContent_MakeAvailable(fork_union)
 
