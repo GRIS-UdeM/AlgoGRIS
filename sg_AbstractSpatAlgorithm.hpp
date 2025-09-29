@@ -34,15 +34,17 @@
 #include <cstdint>
 #include <memory>
 
-#if SG_USE_FORK_UNION
-    #if JUCE_WINDOWS
-        // this disables an annoying warning about structure alignment
-        #pragma warning(disable : 4324)
-    #endif
-    // Disable numa, this breaks on the ubuntu 20.04 CI.
-    #define FU_ENABLE_NUMA 0
-    #include <fork_union.hpp>
+#if JUCE_WINDOWS
+// this disables an annoying warning about structure alignment (caused by fork_union's inclusion)
+#pragma warning(disable : 4324)
 #endif
+
+// Disable numa in fork_union, this breaks on the ubuntu 20.04 CI.
+// This disables NUMA related optimisation on linux. I think if we ever
+// get big linux spatialization servers with multiple cpu sockets this might matter but otherwise
+// I don't think we lose anything by disabling this.
+#define FU_ENABLE_NUMA 0
+#include <fork_union.hpp>
 
 namespace gris
 {
@@ -86,16 +88,6 @@ public:
     virtual ~AbstractSpatAlgorithm() = default;
     SG_DELETE_COPY_AND_MOVE(AbstractSpatAlgorithm)
 
-#if SG_USE_FORK_UNION && (SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS || SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD)
-    void silenceForkUnionBuffer(ForkUnionBuffer & forkUnionBuffer) noexcept;
-
-    static void copyForkUnionBuffer(const gris::SpeakersAudioConfig & speakersAudioConfig,
-                                    gris::SourceAudioBuffer & sourcesBuffer,
-                                    gris::SpeakerAudioBuffer & speakersBuffer,
-                                    gris::ForkUnionBuffer & forkUnionBuffer);
-
-#endif
-
     //==============================================================================
     /** Assigns the position of sources in direct out mode to their assigned speakers' positions.
      *
@@ -123,9 +115,6 @@ public:
     virtual void process(AudioConfig const & config,
                          SourceAudioBuffer & sourcesBuffer,
                          SpeakerAudioBuffer & speakersBuffer,
-#if SG_USE_FORK_UNION && (SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS || SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD)
-                         ForkUnionBuffer & forkUnionBuffer,
-#endif
                          juce::AudioBuffer<float> & stereoBuffer,
                          SourcePeaks const & sourcePeaks,
                          SpeakersAudioConfig const * altSpeakerConfig)
@@ -145,18 +134,18 @@ public:
      * @param sources the sources' data.
      * @param sampleRate the expected sample rate
      * @param bufferSize the expected buffer size in samples
+     * @param useMulticoreDSP use parallelized vbap and mbap. default false.
      */
     [[nodiscard]] static std::unique_ptr<AbstractSpatAlgorithm> make(SpeakerSetup const & speakerSetup,
                                                                      SpatMode const & projectSpatMode,
                                                                      tl::optional<StereoMode> stereoMode,
                                                                      SourcesData const & sources,
                                                                      double sampleRate,
-                                                                     int bufferSize);
+                                                                     int bufferSize,
+                                                                     bool useMulticoreDSP=true);
 
 protected:
-#if SG_USE_FORK_UNION
     ashvardanian::fork_union::basic_pool_t threadPool;
-#endif
 
 private:
     //==============================================================================
