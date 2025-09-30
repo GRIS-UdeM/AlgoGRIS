@@ -83,7 +83,6 @@ void ParallelVbapSpatAlgorithm::process(AudioConfig const & config,
     });
 
     threadPool.sleep(1);
-    std::cout << "paralellvbapprocess" << "\n";
 
 }
 

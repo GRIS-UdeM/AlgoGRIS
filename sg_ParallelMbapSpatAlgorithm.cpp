@@ -72,7 +72,6 @@ void ParallelMbapSpatAlgorithm::process(AudioConfig const & config,
     });
     // sleep with 1us periodicity
     threadPool.sleep(1);
-    std::cout << "parallelmbaprocess" << "\n";
 }
 
 inline void ParallelMbapSpatAlgorithm::processSource(const gris::AudioConfig & config,
