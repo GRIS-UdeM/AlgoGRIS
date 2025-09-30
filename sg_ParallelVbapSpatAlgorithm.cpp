@@ -17,7 +17,7 @@
  along with SpatGRIS.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "sg_VbapSpatAlgorithm.hpp"
+#include "sg_ParallelVbapSpatAlgorithm.hpp"
 #include "Containers/sg_StaticMap.hpp"
 #include "Containers/sg_StrongArray.hpp"
 #include "Containers/sg_TaggedAudioBuffer.hpp"
@@ -46,68 +46,17 @@
 
 namespace gris
 {
-//==============================================================================
-VbapType getVbapType(SpeakersData const & speakers)
-{
-    auto const firstSpeaker{ *speakers.begin() };
-    auto const firstZenith{ firstSpeaker.value->position.getPolar().elevation };
-    auto const minZenith{ firstZenith - radians_t{ degrees_t{ 4.9f } } };
-    auto const maxZenith{ firstZenith + radians_t{ degrees_t{ 4.9f } } };
 
-    auto const areSpeakersOnSamePlane{ std::all_of(speakers.cbegin(),
-                                                   speakers.cend(),
-                                                   [&](SpeakersData::ConstNode const node) {
-                                                       auto const zenith{ node.value->position.getPolar().elevation };
-                                                       return zenith < maxZenith && zenith > minZenith;
-                                                   }) };
-    return areSpeakersOnSamePlane ? VbapType::twoD : VbapType::threeD;
+//==============================================================================
+ParallelVbapSpatAlgorithm::ParallelVbapSpatAlgorithm(SpeakersData const & speakers,
+                                     [[maybe_unused]] std::vector<source_index_t> srcIds):
+  sourceIds{srcIds},
+  VbapSpatAlgorithm(speakers, srcIds)
+{
 }
 
 //==============================================================================
-VbapSpatAlgorithm::VbapSpatAlgorithm(SpeakersData const & speakers,
-                                     [[maybe_unused]] std::vector<source_index_t> theSourceIds)
-{
-    JUCE_ASSERT_MESSAGE_THREAD;
-
-    std::array<Position, MAX_NUM_SPEAKERS> loudSpeakers{};
-    std::array<output_patch_t, MAX_NUM_SPEAKERS> outputPatches{};
-    size_t index{};
-    for (auto const & speaker : speakers) {
-        if (speaker.value->isDirectOutOnly) {
-            continue;
-        }
-
-        loudSpeakers[index] = speaker.value->position;
-        outputPatches[index] = speaker.key;
-        ++index;
-    }
-    auto const dimensions{ getVbapType(speakers) == VbapType::twoD ? 2 : 3 };
-    auto const numSpeakers{ narrow<int>(index) };
-
-    mSetupData = vbapInit(loudSpeakers, numSpeakers, dimensions, outputPatches);
-}
-
-//==============================================================================
-void VbapSpatAlgorithm::updateSpatData(source_index_t const sourceIndex, SourceData const & sourceData) noexcept
-{
-    ASSERT_NOT_AUDIO_THREAD;
-
-    auto & spatDataQueue{ mData[sourceIndex].spatDataQueue };
-    auto * ticket{ spatDataQueue.acquire() };
-    assert(ticket);
-    auto & gains{ ticket->get() };
-
-    if (sourceData.position) {
-        vbapCompute(sourceData, gains, *mSetupData);
-    } else {
-        gains = SpeakersSpatGains{};
-    }
-
-    spatDataQueue.setMostRecent(ticket);
-}
-
-//==============================================================================
-void VbapSpatAlgorithm::process(AudioConfig const & config,
+void ParallelVbapSpatAlgorithm::process(AudioConfig const & config,
                                 SourceAudioBuffer & sourcesBuffer,
                                 SpeakerAudioBuffer & speakersBuffer,
                                 juce::AudioBuffer<float> & /*stereoBuffer*/,
@@ -118,12 +67,27 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
 
     auto const & speakersAudioConfig{ altSpeakerConfig ? *altSpeakerConfig : config.speakersAudioConfig };
 
-    for (auto const & source : config.sourcesAudioConfig)
-        processSource(config, source.key, sourcePeaks, sourcesBuffer, speakersAudioConfig, speakersBuffer);
+    namespace fu = ashvardanian::fork_union;
+
+    jassert(sourceIds.size() > 0);
+
+    threadPool.for_n(sourceIds.size(), [&](fu::prong_t prong) noexcept {
+        jassert(threadPool.is_lock_free());
+
+        processSource(config,
+                      sourceIds[prong.task],
+                      sourcePeaks,
+                      sourcesBuffer,
+                      speakersAudioConfig,
+                      speakersBuffer);
+    });
+
+    threadPool.sleep(1);
+    std::cout << "paralellvbapprocess" << "\n";
 
 }
 
-inline void VbapSpatAlgorithm::processSource(const gris::AudioConfig & config,
+inline void ParallelVbapSpatAlgorithm::processSource(const gris::AudioConfig & config,
                                              const gris::source_index_t & sourceId,
                                              const gris::SourcePeaks & sourcePeaks,
                                              gris::SourceAudioBuffer & sourcesBuffer,
@@ -168,7 +132,9 @@ inline void VbapSpatAlgorithm::processSource(const gris::AudioConfig & config,
             // no interpolation
             currentGain = targetGain;
             if (currentGain >= SMALL_GAIN) {
-                juce::FloatVectorOperations::addWithMultiply(outputSamples, inputSamples, currentGain, numSamples);
+                for (int sampleIndex{}; sampleIndex < numSamples; ++sampleIndex)
+                    std::atomic_ref<float>(outputSamples[sampleIndex]).fetch_add(inputSamples[sampleIndex] * currentGain, std::memory_order::relaxed);
+
             }
             continue;
         }
@@ -178,7 +144,7 @@ inline void VbapSpatAlgorithm::processSource(const gris::AudioConfig & config,
             // linear interpolation over buffer size
             for (int sampleIndex{}; sampleIndex < numSamples; ++sampleIndex) {
                 currentGain += gainSlope;
-                outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
+                std::atomic_ref<float>(outputSamples[sampleIndex]).fetch_add(inputSamples[sampleIndex] * currentGain, std::memory_order::relaxed);
             }
         } else {
             // log interpolation with 1st order filter
@@ -186,7 +152,8 @@ inline void VbapSpatAlgorithm::processSource(const gris::AudioConfig & config,
                 // targeting silence
                 for (int sampleIndex{}; sampleIndex < numSamples && currentGain >= SMALL_GAIN; ++sampleIndex) {
                     currentGain = targetGain + (currentGain - targetGain) * gainFactor;
-                    outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
+                    std::atomic_ref<float>(outputSamples[sampleIndex]).fetch_add(inputSamples[sampleIndex] * currentGain, std::memory_order::relaxed);
+
                 }
                 continue;
             }
@@ -194,36 +161,22 @@ inline void VbapSpatAlgorithm::processSource(const gris::AudioConfig & config,
             // not targeting silence
             for (int sampleIndex{}; sampleIndex < numSamples; ++sampleIndex) {
                 currentGain = targetGain + (currentGain - targetGain) * gainFactor;
-                outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
+                std::atomic_ref<float>(outputSamples[sampleIndex]).fetch_add(inputSamples[sampleIndex] * currentGain, std::memory_order::relaxed);
+
             }
         }
     }
 }
 
 //==============================================================================
-juce::Array<Triplet> VbapSpatAlgorithm::getTriplets() const noexcept
-{
-    JUCE_ASSERT_MESSAGE_THREAD;
-    jassert(hasTriplets());
-    return vbapExtractTriplets(*mSetupData);
-}
 
-//==============================================================================
-bool VbapSpatAlgorithm::hasTriplets() const noexcept
+// This is an awkward copy paste of sg_VbapSpatAlgorithm's make. we should find a way
+// to deduplicate this (and a looooot of other spatialization algorithm code...)
+std::unique_ptr<AbstractSpatAlgorithm> ParallelVbapSpatAlgorithm::make(SpeakerSetup const & speakerSetup, std::vector<source_index_t> srcIds)
 {
-    JUCE_ASSERT_MESSAGE_THREAD;
-    if (!mSetupData) {
-        return false;
-    }
-    return mSetupData->dimension == 3;
-}
 
-//==============================================================================
-std::unique_ptr<AbstractSpatAlgorithm> VbapSpatAlgorithm::make(SpeakerSetup const & speakerSetup,
-                                                               std::vector<source_index_t> sourceIds)
-{
     auto const getVbap
-        = [&]() { return std::make_unique<VbapSpatAlgorithm>(speakerSetup.speakers, std::move(sourceIds)); };
+            = [srcIds, &speakerSetup]() { return std::make_unique<ParallelVbapSpatAlgorithm>(speakerSetup.speakers, srcIds); };
 
     if (speakerSetup.numOfSpatializedSpeakers() < 3) {
         return std::make_unique<DummySpatAlgorithm>(Error::notEnoughDomeSpeakers);

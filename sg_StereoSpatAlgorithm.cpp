@@ -227,7 +227,7 @@ StereoSpatAlgorithm::StereoSpatAlgorithm(SpeakerSetup const & speakerSetup,
         mInnerAlgorithm = MbapSpatAlgorithm::make(speakerSetup, sources.getKeys());
         break;
     case SpatMode::hybrid:
-        mInnerAlgorithm = HybridSpatAlgorithm::make(speakerSetup, sources.getKeys());
+        mInnerAlgorithm = HybridSpatAlgorithm<MbapSpatAlgorithm, VbapSpatAlgorithm>::make(speakerSetup, sources.getKeys());
         break;
     case SpatMode::invalid:
         break;

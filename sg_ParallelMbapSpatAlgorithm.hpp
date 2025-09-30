@@ -58,14 +58,15 @@ public:
                  juce::AudioBuffer<float> & stereoBuffer,
                  SourcePeaks const & sourcesPeaks,
                  SpeakersAudioConfig const * altSpeakerConfig) override;
-
-private:
-    void processSource(const gris::AudioConfig & config,
+    static std::unique_ptr<AbstractSpatAlgorithm> make(SpeakerSetup const & speakerSetup,
+                                                       std::vector<source_index_t> && sourceIds);
+protected:
+    inline void processSource(const gris::AudioConfig & config,
                        const gris::source_index_t & sourceId,
                        const gris::SourcePeaks & sourcePeaks,
                        gris::SourceAudioBuffer & sourcesBuffer,
                        const gris::SpeakersAudioConfig & speakersAudioConfig,
-                       gris::SpeakerAudioBuffer & speakerBuffers) override;
+                       gris::SpeakerAudioBuffer & speakerBuffers);
 
     std::vector<source_index_t> sourceIds;
 

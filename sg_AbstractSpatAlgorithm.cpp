@@ -22,6 +22,7 @@
 #include "sg_HybridSpatAlgorithm.hpp"
 #include "sg_MbapSpatAlgorithm.hpp"
 #include "sg_ParallelMbapSpatAlgorithm.hpp"
+#include "sg_ParallelVbapSpatAlgorithm.hpp"
 #include "sg_PinkNoiseGenerator.hpp"
 #include "sg_StereoSpatAlgorithm.hpp"
 #include "sg_VbapSpatAlgorithm.hpp"
@@ -134,19 +135,26 @@ std::unique_ptr<AbstractSpatAlgorithm> AbstractSpatAlgorithm::make(SpeakerSetup 
 
     switch (projectSpatMode) {
     case SpatMode::vbap:
-        return VbapSpatAlgorithm::make(speakerSetup, sources.getKeys());
+        if (useMulticoreDSP) {
+            return ParallelVbapSpatAlgorithm::make(speakerSetup, sources.getKeys());
+        }
+        else {
+            return VbapSpatAlgorithm::make(speakerSetup, sources.getKeys());
+        }
     case SpatMode::mbap:
         if (useMulticoreDSP) {
-            std::cout << "mullltiiiii" << "\n";
-
             return ParallelMbapSpatAlgorithm::make(speakerSetup, sources.getKeys());
         }
         else {
-            std::cout << "single" << "\n";
             return MbapSpatAlgorithm::make(speakerSetup, sources.getKeys());
         }
     case SpatMode::hybrid:
-        return HybridSpatAlgorithm::make(speakerSetup, sources.getKeys());
+        if (useMulticoreDSP) {
+            return HybridSpatAlgorithm<ParallelMbapSpatAlgorithm, ParallelVbapSpatAlgorithm>::make(speakerSetup, sources.getKeys());
+        }
+        else {
+            return HybridSpatAlgorithm<MbapSpatAlgorithm, VbapSpatAlgorithm>::make(speakerSetup, sources.getKeys());
+        }
     case SpatMode::invalid:
         break;
     }

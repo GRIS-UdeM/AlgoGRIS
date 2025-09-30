@@ -42,7 +42,7 @@ namespace gris
 {
 
   ParallelMbapSpatAlgorithm::ParallelMbapSpatAlgorithm(SpeakerSetup const & speakerSetup, std::vector<source_index_t> srcIds):
-    sourceIds(srcIds),
+    sourceIds{srcIds},
     MbapSpatAlgorithm(speakerSetup, std::move(srcIds))
   {}
 
@@ -72,8 +72,7 @@ void ParallelMbapSpatAlgorithm::process(AudioConfig const & config,
     });
     // sleep with 1us periodicity
     threadPool.sleep(1);
-    std::cout << "cruuuunch" << "\n";
-
+    std::cout << "parallelmbaprocess" << "\n";
 }
 
 inline void ParallelMbapSpatAlgorithm::processSource(const gris::AudioConfig & config,
@@ -126,6 +125,7 @@ inline void ParallelMbapSpatAlgorithm::processSource(const gris::AudioConfig & c
         auto const gainSlope{ gainDiff / narrow<float>(numSamples) };
 
         auto * outputSamples{ speakerBuffers[speaker.key].getWritePointer(0) };
+
         if (juce::approximatelyEqual(gainSlope, 0.f) || std::abs(gainDiff) < SMALL_GAIN) {
             // no interpolation
             currentGain = targetGain;
@@ -141,7 +141,7 @@ inline void ParallelMbapSpatAlgorithm::processSource(const gris::AudioConfig & c
             // linear interpolation over buffer size
             for (int sampleIndex{}; sampleIndex < numSamples; ++sampleIndex) {
                 currentGain += gainSlope;
-                std::atomic_ref<float>(outputSamples[sampleIndex]).fetch_add(inputSamples[sampleIndex] * currentGain);
+                std::atomic_ref<float>(outputSamples[sampleIndex]).fetch_add(inputSamples[sampleIndex] * currentGain, std::memory_order::relaxed);
             }
         } else {
             // log interpolation with 1st order filter
@@ -149,7 +149,7 @@ inline void ParallelMbapSpatAlgorithm::processSource(const gris::AudioConfig & c
                 // targeting silence
                 for (int sampleIndex{}; sampleIndex < numSamples && currentGain >= SMALL_GAIN; ++sampleIndex) {
                     currentGain = targetGain + (currentGain - targetGain) * gainFactor;
-                    std::atomic_ref<float>(outputSamples[sampleIndex]).fetch_add(inputSamples[sampleIndex] * currentGain);
+                    std::atomic_ref<float>(outputSamples[sampleIndex]).fetch_add(inputSamples[sampleIndex] * currentGain, std::memory_order::relaxed);
                 }
                 continue;
             }
@@ -157,10 +157,22 @@ inline void ParallelMbapSpatAlgorithm::processSource(const gris::AudioConfig & c
             // not targeting silence
             for (int sampleIndex{}; sampleIndex < numSamples; ++sampleIndex) {
                 currentGain = (currentGain - targetGain) * gainFactor + targetGain;
-                std::atomic_ref<float>(outputSamples[sampleIndex]).fetch_add(inputSamples[sampleIndex] * currentGain);
+                std::atomic_ref<float>(outputSamples[sampleIndex]).fetch_add(inputSamples[sampleIndex] * currentGain, std::memory_order::relaxed);
             }
         }
     }
+}
+
+std::unique_ptr<AbstractSpatAlgorithm> ParallelMbapSpatAlgorithm::make(SpeakerSetup const & speakerSetup,
+                                                               std::vector<source_index_t> && theSourceIds)
+{
+    JUCE_ASSERT_MESSAGE_THREAD;
+
+    if (speakerSetup.numOfSpatializedSpeakers() < 2) {
+        return std::make_unique<DummySpatAlgorithm>(Error::notEnoughCubeSpeakers);
+    }
+
+    return std::make_unique<ParallelMbapSpatAlgorithm>(speakerSetup, std::move(theSourceIds));
 }
 
 } // namespace gris

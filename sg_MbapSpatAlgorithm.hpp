@@ -66,7 +66,7 @@ public:
     explicit MbapSpatAlgorithm(SpeakerSetup const & speakerSetup, std::vector<source_index_t> && sourceIds);
     //==============================================================================
     void updateSpatData(source_index_t sourceIndex, SourceData const & sourceData) noexcept override;
-    virtual void process(AudioConfig const & config,
+    void process(AudioConfig const & config,
                  SourceAudioBuffer & sourceBuffer,
                  SpeakerAudioBuffer & speakersBuffer,
                  juce::AudioBuffer<float> & stereoBuffer,
@@ -80,8 +80,8 @@ public:
     static std::unique_ptr<AbstractSpatAlgorithm> make(SpeakerSetup const & speakerSetup,
                                                        std::vector<source_index_t> && sourceIds);
 
-private:
-    void processSource(const gris::AudioConfig & config,
+protected:
+    inline void processSource(const gris::AudioConfig & config,
                        const gris::source_index_t & sourceId,
                        const gris::SourcePeaks & sourcePeaks,
                        gris::SourceAudioBuffer & sourcesBuffer,
