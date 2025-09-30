@@ -40,7 +40,7 @@ namespace gris
 {
 
 //==============================================================================
-class ParallelVbapSpatAlgorithm final : public VbapSpatAlgorithm
+class ParallelVbapSpatAlgorithm final : public ParallelAlgorithm, public VbapSpatAlgorithm
 {
     std::unique_ptr<VbapData> mSetupData{};
     StrongArray<source_index_t, VbapSourceData, MAX_NUM_SOURCES> mData{};
@@ -49,8 +49,13 @@ public:
     //==============================================================================
     ParallelVbapSpatAlgorithm() = delete;
     ~ParallelVbapSpatAlgorithm() override = default;
-    explicit ParallelVbapSpatAlgorithm(SpeakersData const & speakers, std::vector<source_index_t> theSourceIds);
-    SG_DELETE_COPY_AND_MOVE(ParallelVbapSpatAlgorithm)
+    ParallelVbapSpatAlgorithm(SpeakersData const & speakers, std::vector<source_index_t> theSourceIds, unsigned int numberOfThreads);
+    /**
+     * instanciate without numberOfThreads gets half the hardware thread. This is
+     * a hack so that hybrid can instanciate without knowing the type...
+     */
+    ParallelVbapSpatAlgorithm(SpeakersData const & speakers, std::vector<source_index_t> sid);
+    // SG_DELETE_COPY_AND_MOVE(ParallelVbapSpatAlgorithm)
     //==============================================================================
     void process(AudioConfig const & config,
                  SourceAudioBuffer & sourcesBuffer,
@@ -60,7 +65,7 @@ public:
                  SpeakersAudioConfig const * altSpeakerConfig) override;
     //==============================================================================
     static std::unique_ptr<AbstractSpatAlgorithm> make(SpeakerSetup const & speakerSetup,
-                                                       std::vector<source_index_t> theSourceIds);
+                                                       std::vector<source_index_t> theSourceIds, unsigned int numberOfThreads);
 
 private:
     void processSource(const gris::AudioConfig & config,

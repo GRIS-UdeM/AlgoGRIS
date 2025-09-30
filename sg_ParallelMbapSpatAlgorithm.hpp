@@ -40,7 +40,7 @@ namespace gris
 {
 
 //==============================================================================
-class ParallelMbapSpatAlgorithm final : public MbapSpatAlgorithm
+class ParallelMbapSpatAlgorithm final : public MbapSpatAlgorithm, public ParallelAlgorithm
 {
     MbapField mField{};
     StrongArray<source_index_t, MbapSourceData, MAX_NUM_SOURCES> mData{};
@@ -49,7 +49,13 @@ public:
     //==============================================================================
     ParallelMbapSpatAlgorithm() = delete;
     ~ParallelMbapSpatAlgorithm() override = default;
+    explicit ParallelMbapSpatAlgorithm(SpeakerSetup const & speakerSetup, std::vector<source_index_t> sourceIds, unsigned int numberOfThreads);
+    /**
+     * instanciate without numberOfThreads gets half the hardware thread. This is
+     * a hack so that hybrid can instanciate without knowing the type...
+     */
     explicit ParallelMbapSpatAlgorithm(SpeakerSetup const & speakerSetup, std::vector<source_index_t> sourceIds);
+
     SG_DELETE_COPY_AND_MOVE(ParallelMbapSpatAlgorithm)
     //==============================================================================
     void process(AudioConfig const & config,
@@ -59,7 +65,7 @@ public:
                  SourcePeaks const & sourcesPeaks,
                  SpeakersAudioConfig const * altSpeakerConfig) override;
     static std::unique_ptr<AbstractSpatAlgorithm> make(SpeakerSetup const & speakerSetup,
-                                                       std::vector<source_index_t> && sourceIds);
+                                                       std::vector<source_index_t> && sourceIds, unsigned int numberOfThreads);
 protected:
     inline void processSource(const gris::AudioConfig & config,
                        const gris::source_index_t & sourceId,

@@ -49,9 +49,15 @@ namespace gris
 
 //==============================================================================
 ParallelVbapSpatAlgorithm::ParallelVbapSpatAlgorithm(SpeakersData const & speakers,
-                                     [[maybe_unused]] std::vector<source_index_t> srcIds):
+                                                     [[maybe_unused]] std::vector<source_index_t> srcIds, unsigned int numberOfThreads):
   sourceIds{srcIds},
+  ParallelAlgorithm(numberOfThreads),
   VbapSpatAlgorithm(speakers, srcIds)
+{
+}
+
+ParallelVbapSpatAlgorithm::ParallelVbapSpatAlgorithm(SpeakersData const & speakers, std::vector<source_index_t> srcIds):
+        ParallelVbapSpatAlgorithm(speakers, srcIds, std::thread::hardware_concurrency()/2)
 {
 }
 
@@ -171,11 +177,11 @@ inline void ParallelVbapSpatAlgorithm::processSource(const gris::AudioConfig & c
 
 // This is an awkward copy paste of sg_VbapSpatAlgorithm's make. we should find a way
 // to deduplicate this (and a looooot of other spatialization algorithm code...)
-std::unique_ptr<AbstractSpatAlgorithm> ParallelVbapSpatAlgorithm::make(SpeakerSetup const & speakerSetup, std::vector<source_index_t> srcIds)
+std::unique_ptr<AbstractSpatAlgorithm> ParallelVbapSpatAlgorithm::make(SpeakerSetup const & speakerSetup, std::vector<source_index_t> srcIds, unsigned int numberOfThreads)
 {
 
     auto const getVbap
-            = [srcIds, &speakerSetup]() { return std::make_unique<ParallelVbapSpatAlgorithm>(speakerSetup.speakers, srcIds); };
+            = [srcIds, &speakerSetup, &numberOfThreads]() { return std::make_unique<ParallelVbapSpatAlgorithm>(speakerSetup.speakers, srcIds, numberOfThreads); };
 
     if (speakerSetup.numOfSpatializedSpeakers() < 3) {
         return std::make_unique<DummySpatAlgorithm>(Error::notEnoughDomeSpeakers);
@@ -184,7 +190,12 @@ std::unique_ptr<AbstractSpatAlgorithm> ParallelVbapSpatAlgorithm::make(SpeakerSe
     auto const dimensions{ getVbapType(speakerSetup.speakers) };
 
     if (dimensions == VbapType::threeD) {
-        return getVbap();
+        auto vbap = getVbap();
+        if (!vbap->isValid) {
+            return std::make_unique<DummySpatAlgorithm>(Error::failedToSpawnThreadpool);
+        } else {
+            return vbap;
+        }
     }
 
     // Verify that the speakers are not too far apart
@@ -211,7 +222,13 @@ std::unique_ptr<AbstractSpatAlgorithm> ParallelVbapSpatAlgorithm::make(SpeakerSe
     auto const firstAndLastAreValid{ angles.getFirst() + TWO_PI - angles.getLast() <= MAX_ANGLE_DIFF };
 
     if (innerAreValid && firstAndLastAreValid) {
-        return getVbap();
+        auto vbap = getVbap();
+        if (!vbap->isValid) {
+            return std::make_unique<DummySpatAlgorithm>(Error::failedToSpawnThreadpool);
+        } else {
+            return vbap;
+        }
+
     }
 
     return std::make_unique<DummySpatAlgorithm>(Error::flatDomeSpeakersTooFarApart);

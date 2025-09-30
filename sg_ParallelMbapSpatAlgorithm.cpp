@@ -41,10 +41,15 @@
 namespace gris
 {
 
-  ParallelMbapSpatAlgorithm::ParallelMbapSpatAlgorithm(SpeakerSetup const & speakerSetup, std::vector<source_index_t> srcIds):
+ParallelMbapSpatAlgorithm::ParallelMbapSpatAlgorithm(SpeakerSetup const & speakerSetup, std::vector<source_index_t> srcIds, unsigned int numberOfThreads):
     sourceIds{srcIds},
+    ParallelAlgorithm(numberOfThreads),
     MbapSpatAlgorithm(speakerSetup, std::move(srcIds))
   {}
+
+ParallelMbapSpatAlgorithm::ParallelMbapSpatAlgorithm(SpeakerSetup const & speakerSetup, std::vector<source_index_t> srcIds):
+  ParallelMbapSpatAlgorithm(speakerSetup, srcIds, std::thread::hardware_concurrency()/2)
+{}
 
 //==============================================================================
 void ParallelMbapSpatAlgorithm::process(AudioConfig const & config,
@@ -163,15 +168,18 @@ inline void ParallelMbapSpatAlgorithm::processSource(const gris::AudioConfig & c
 }
 
 std::unique_ptr<AbstractSpatAlgorithm> ParallelMbapSpatAlgorithm::make(SpeakerSetup const & speakerSetup,
-                                                               std::vector<source_index_t> && theSourceIds)
+                                                                       std::vector<source_index_t> && theSourceIds, unsigned int numberOfThreads)
 {
     JUCE_ASSERT_MESSAGE_THREAD;
 
     if (speakerSetup.numOfSpatializedSpeakers() < 2) {
         return std::make_unique<DummySpatAlgorithm>(Error::notEnoughCubeSpeakers);
     }
-
-    return std::make_unique<ParallelMbapSpatAlgorithm>(speakerSetup, std::move(theSourceIds));
+    auto algo = std::make_unique<ParallelMbapSpatAlgorithm>(speakerSetup, std::move(theSourceIds), numberOfThreads);
+    if (!algo->isValid) {
+        return std::make_unique<DummySpatAlgorithm>(Error::failedToSpawnThreadpool);
+    }
+    return algo;
 }
 
 } // namespace gris

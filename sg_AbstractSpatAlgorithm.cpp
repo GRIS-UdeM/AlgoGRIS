@@ -58,12 +58,6 @@ bool isProbablyAudioThread()
 //==============================================================================
 AbstractSpatAlgorithm::AbstractSpatAlgorithm()
 {
-    // TODO: ship all this in the parallel implementation and return a dummy algorithm if
-    // this somehow fails.
-    if (!threadPool.try_spawn(std::thread::hardware_concurrency())) {
-        std::fprintf(stderr, "Failed to fork the threads\n");
-        jassertfalse;
-    }
 }
 
 //==============================================================================
@@ -133,17 +127,18 @@ std::unique_ptr<AbstractSpatAlgorithm> AbstractSpatAlgorithm::make(SpeakerSetup 
         jassertfalse;
     }
 
+    auto hardwareConcurrency = std::thread::hardware_concurrency();
     switch (projectSpatMode) {
     case SpatMode::vbap:
         if (useMulticoreDSP) {
-            return ParallelVbapSpatAlgorithm::make(speakerSetup, sources.getKeys());
+            return ParallelVbapSpatAlgorithm::make(speakerSetup, sources.getKeys(), hardwareConcurrency);
         }
         else {
             return VbapSpatAlgorithm::make(speakerSetup, sources.getKeys());
         }
     case SpatMode::mbap:
         if (useMulticoreDSP) {
-            return ParallelMbapSpatAlgorithm::make(speakerSetup, sources.getKeys());
+            return ParallelMbapSpatAlgorithm::make(speakerSetup, sources.getKeys(), hardwareConcurrency);
         }
         else {
             return MbapSpatAlgorithm::make(speakerSetup, sources.getKeys());
@@ -162,5 +157,17 @@ std::unique_ptr<AbstractSpatAlgorithm> AbstractSpatAlgorithm::make(SpeakerSetup 
     jassertfalse;
     return nullptr;
 }
+
+
+//==============================================================================
+ParallelAlgorithm::ParallelAlgorithm(unsigned int numberOfThreads)
+{
+    isValid = threadPool.try_spawn(numberOfThreads);
+    if (!isValid) {
+        std::fprintf(stderr, "Failed to spawn the threadpool\n");
+        jassertfalse;
+    }
+}
+
 
 } // namespace gris

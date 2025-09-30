@@ -82,6 +82,7 @@ public:
         notEnoughDomeSpeakers,
         notEnoughCubeSpeakers,
         flatDomeSpeakersTooFarApart,
+        failedToSpawnThreadpool
     };
     //==============================================================================
     AbstractSpatAlgorithm();
@@ -144,12 +145,36 @@ public:
                                                                      int bufferSize,
                                                                      bool useMulticoreDSP=true);
 
-protected:
-    ashvardanian::fork_union::basic_pool_t threadPool;
 
 private:
     //==============================================================================
     JUCE_LEAK_DETECTOR(AbstractSpatAlgorithm)
+};
+
+class ParallelAlgorithm {
+  public:
+    /**
+     * Starts a threadpool and sets the valid bool if it works.
+     * It is up to the implemeter of this class to check valid and
+     * deal with the failure appropriately.
+     *
+     * Unless you spawn may algorithms that are going to be processed at the same time
+     * (like for the hybrid algorithm), you probably want std::thread::hardware_concurrency()
+     * number of threads or very close to this.
+     */
+    ParallelAlgorithm(unsigned int numberOfThreads);
+    /**
+     * set to true after successfuly spawning the threadpool
+     */
+    bool isValid=false;
+  protected:
+    /**
+     * fork union threadpool.
+     *
+     * TODO: make this use a CPU instruction appropriate micro_yield.
+     */
+    ashvardanian::fork_union::basic_pool_t threadPool;
+
 };
 
 } // namespace gris
