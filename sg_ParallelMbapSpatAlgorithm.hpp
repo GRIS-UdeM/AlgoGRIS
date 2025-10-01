@@ -40,7 +40,7 @@ namespace gris
 {
 
 //==============================================================================
-class ParallelMbapSpatAlgorithm final : public MbapSpatAlgorithm, public ParallelAlgorithm
+class ParallelMbapSpatAlgorithm final : public ParallelAlgorithm, public MbapSpatAlgorithm
 {
     MbapField mField{};
     StrongArray<source_index_t, MbapSourceData, MAX_NUM_SOURCES> mData{};

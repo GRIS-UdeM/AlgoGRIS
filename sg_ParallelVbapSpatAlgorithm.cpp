@@ -50,9 +50,9 @@ namespace gris
 //==============================================================================
 ParallelVbapSpatAlgorithm::ParallelVbapSpatAlgorithm(SpeakersData const & speakers,
                                                      [[maybe_unused]] std::vector<source_index_t> srcIds, unsigned int numberOfThreads):
-  sourceIds{srcIds},
   ParallelAlgorithm(numberOfThreads),
-  VbapSpatAlgorithm(speakers, srcIds)
+  VbapSpatAlgorithm(speakers, srcIds),
+  sourceIds{srcIds}
 {
 }
 
@@ -87,7 +87,6 @@ void ParallelVbapSpatAlgorithm::process(AudioConfig const & config,
                       speakersAudioConfig,
                       speakersBuffer);
     });
-
     threadPool.sleep(1);
 
 }

@@ -42,9 +42,9 @@ namespace gris
 {
 
 ParallelMbapSpatAlgorithm::ParallelMbapSpatAlgorithm(SpeakerSetup const & speakerSetup, std::vector<source_index_t> srcIds, unsigned int numberOfThreads):
-    sourceIds{srcIds},
     ParallelAlgorithm(numberOfThreads),
-    MbapSpatAlgorithm(speakerSetup, std::move(srcIds))
+    MbapSpatAlgorithm(speakerSetup, srcIds),
+    sourceIds{srcIds}
   {}
 
 ParallelMbapSpatAlgorithm::ParallelMbapSpatAlgorithm(SpeakerSetup const & speakerSetup, std::vector<source_index_t> srcIds):

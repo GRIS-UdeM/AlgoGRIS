@@ -63,7 +63,7 @@ public:
     ~MbapSpatAlgorithm() override = default;
     SG_DELETE_COPY_AND_MOVE(MbapSpatAlgorithm)
     //==============================================================================
-    explicit MbapSpatAlgorithm(SpeakerSetup const & speakerSetup, std::vector<source_index_t> && sourceIds);
+    explicit MbapSpatAlgorithm(SpeakerSetup const & speakerSetup, std::vector<source_index_t>  sourceIds);
     //==============================================================================
     void updateSpatData(source_index_t sourceIndex, SourceData const & sourceData) noexcept override;
     void process(AudioConfig const & config,

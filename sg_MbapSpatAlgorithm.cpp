@@ -42,7 +42,7 @@ namespace gris
 {
 //==============================================================================
 MbapSpatAlgorithm::MbapSpatAlgorithm(SpeakerSetup const & speakerSetup,
-                                     [[maybe_unused]] std::vector<source_index_t> && theSourceIds)
+                                     [[maybe_unused]] std::vector<source_index_t> theSourceIds)
     : mField(mbapInit(speakerSetup.speakers))
 {
     JUCE_ASSERT_MESSAGE_THREAD;
