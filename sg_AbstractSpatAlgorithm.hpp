@@ -43,7 +43,9 @@
 // This disables NUMA related optimisation on linux. I think if we ever
 // get big linux spatialization servers with multiple cpu sockets this might matter but otherwise
 // I don't think we lose anything by disabling this.
-#define FU_ENABLE_NUMA 0
+#if !defined(FU_ENABLE_NUMA)
+    #define FU_ENABLE_NUMA 0
+#endif
 #include <fork_union.hpp>
 
 namespace gris
