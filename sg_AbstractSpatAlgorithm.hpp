@@ -145,7 +145,7 @@ public:
                                                                      SourcesData const & sources,
                                                                      double sampleRate,
                                                                      int bufferSize,
-                                                                     bool useMulticoreDSP=true);
+                                                                     bool useMulticoreDSP=false);
 
 
 private:
