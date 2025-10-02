@@ -50,10 +50,10 @@ using VbapSourcesData = StrongArray<source_index_t, VbapSourceData, MAX_NUM_SOUR
 //==============================================================================
 class VbapSpatAlgorithm : public AbstractSpatAlgorithm
 {
-    std::unique_ptr<VbapData> mSetupData{};
-    VbapSourcesData mData{};
 
 public:
+    std::unique_ptr<VbapData> mSetupData{};
+    VbapSourcesData mData{};
     //==============================================================================
     explicit VbapSpatAlgorithm(SpeakersData const & speakers, std::vector<source_index_t> theSourceIds);
     ~VbapSpatAlgorithm() override = default;

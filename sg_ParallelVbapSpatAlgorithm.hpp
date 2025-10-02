@@ -42,8 +42,6 @@ namespace gris
 //==============================================================================
 class ParallelVbapSpatAlgorithm final : public ParallelAlgorithm, public VbapSpatAlgorithm
 {
-    std::unique_ptr<VbapData> mSetupData{};
-    StrongArray<source_index_t, VbapSourceData, MAX_NUM_SOURCES> mData{};
 
 public:
     //==============================================================================

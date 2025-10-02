@@ -54,10 +54,10 @@ struct MbapSourceData {
 //==============================================================================
 class MbapSpatAlgorithm : public AbstractSpatAlgorithm
 {
-    MbapField mField{};
-    StrongArray<source_index_t, MbapSourceData, MAX_NUM_SOURCES> mData{};
 
 public:
+    MbapField mField{};
+    StrongArray<source_index_t, MbapSourceData, MAX_NUM_SOURCES> mData{};
     //==============================================================================
     MbapSpatAlgorithm() = delete;
     ~MbapSpatAlgorithm() override = default;
@@ -80,7 +80,7 @@ public:
     static std::unique_ptr<AbstractSpatAlgorithm> make(SpeakerSetup const & speakerSetup,
                                                        std::vector<source_index_t> && sourceIds);
 
-protected:
+private:
     inline void processSource(const gris::AudioConfig & config,
                        const gris::source_index_t & sourceId,
                        const gris::SourcePeaks & sourcePeaks,
