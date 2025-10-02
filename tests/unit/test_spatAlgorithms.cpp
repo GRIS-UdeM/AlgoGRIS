@@ -129,12 +129,7 @@ static void testUsingProjectData(juce::StringRef testName,
         data.appData.audioSettings.bufferSize = bufferSize;
 
         // init our buffers
-        initBuffers(bufferSize,
-                    numSources,
-                    numSpeakers,
-                    sourceBuffer,
-                    speakerBuffer,
-                    stereoBuffer);
+        initBuffers(bufferSize, numSources, numSpeakers, sourceBuffer, speakerBuffer, stereoBuffer);
 
         // create our spatialization algorithm
         auto algo{ AbstractSpatAlgorithm::make(data.speakerSetup,
@@ -167,12 +162,7 @@ static void testUsingProjectData(juce::StringRef testName,
             // process the audio
             speakerBuffer.silence();
             stereoBuffer.clear();
-            algo->process(*config,
-                          sourceBuffer,
-                          speakerBuffer,
-                          stereoBuffer,
-                          sourcePeaks,
-                          nullptr);
+            algo->process(*config, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks, nullptr);
 
             checkSpeakerBufferValidity(speakerBuffer);
 
@@ -206,12 +196,7 @@ static void benchmarkUsingProjectData(gris::SpatGrisData & data,
     data.appData.audioSettings.bufferSize = bufferSize;
 
     // init our buffers
-    initBuffers(bufferSize,
-                numSources,
-                numSpeakers,
-                sourceBuffer,
-                speakerBuffer,
-                stereoBuffer);
+    initBuffers(bufferSize, numSources, numSpeakers, sourceBuffer, speakerBuffer, stereoBuffer);
 
     // create our spatialization algorithm
     auto algo{ AbstractSpatAlgorithm::make(data.speakerSetup,
@@ -232,13 +217,7 @@ static void benchmarkUsingProjectData(gris::SpatGrisData & data,
     BENCHMARK("processing loop")
     {
         for (int i = 0; i < 10; ++i) {
-
-            algo->process(*config,
-                          sourceBuffer,
-                          speakerBuffer,
-                          stereoBuffer,
-                          sourcePeaks,
-                          nullptr);
+            algo->process(*config, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks, nullptr);
         }
     };
 #endif
@@ -275,19 +254,20 @@ static SpatGrisData getSpatGrisDataFromFiles(const std::string & projectFilename
     return spatGrisData;
 }
 
-void spatTest(
-    std::string testName,
-    // some tests, like parallel vbap and mbap should use the same validation files
-    // as their non parallel counterpart
-    std::string validationFileTestName,
-    std::string testProjectFile,
-    std::string testSpeakerSetupFile,
-    std::string benchmarkProjectFile,
-    std::string benchmarkSpeakerSetupFile,
-    SpatMode spatMode,
-    tl::optional<StereoMode> stereoMode,
-    bool multicoreDSP) {
-    SECTION(testName) {
+void spatTest(std::string testName,
+              // some tests, like parallel vbap and mbap should use the same validation files
+              // as their non parallel counterpart
+              std::string validationFileTestName,
+              std::string testProjectFile,
+              std::string testSpeakerSetupFile,
+              std::string benchmarkProjectFile,
+              std::string benchmarkSpeakerSetupFile,
+              SpatMode spatMode,
+              tl::optional<StereoMode> stereoMode,
+              bool multicoreDSP)
+{
+    SECTION(testName)
+    {
         // 1. init needed structures
         SpatGrisData sgData = getSpatGrisDataFromFiles(testProjectFile, testSpeakerSetupFile);
         sgData.project.spatMode = spatMode;
@@ -304,12 +284,7 @@ void spatTest(
 #if WRITE_TEST_OUTPUT_TO_DISK
         renderProjectOutput(validationFileTestName, sgData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
 #endif
-        testUsingProjectData(validationFileTestName,
-                             sgData,
-                             sourceBuffer,
-                             speakerBuffer,
-                             stereoBuffer,
-                             sourcePeaks);
+        testUsingProjectData(validationFileTestName, sgData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
         std::cout << testName << " tests done." << std::endl;
 
         // 3. benchmarks, using more sources
@@ -318,25 +293,21 @@ void spatTest(
         sgData.project.useMulticoreDSP = multicoreDSP;
         sgData.appData.stereoMode = stereoMode;
 
-        benchmarkUsingProjectData(sgData,
-                                  sourceBuffer,
-                                  speakerBuffer,
-                                  stereoBuffer,
-                                  sourcePeaks);
+        benchmarkUsingProjectData(sgData, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks);
     }
 }
 
 TEST_CASE("Spatialization tests", "[spat]")
 {
-    spatTest(vbapTestName,                  // test name
-             vbapTestName,                  // test name used to load validation files
-             "default_preset.xml",          // project file used for tests
-             "default_speaker_setup.xml",   // speaker setup used for tests
-             "default_preset_256.xml",      // project file used for benchmarks
-             "default_speaker_setup.xml",   // speaker setup used for benchmarks
-             SpatMode::vbap,                // spatialisation algorithm flavour
-             tl::nullopt,                   // stereo reduction
-             false);                        // parallelize DSP computations
+    spatTest(vbapTestName,                // test name
+             vbapTestName,                // test name used to load validation files
+             "default_preset.xml",        // project file used for tests
+             "default_speaker_setup.xml", // speaker setup used for tests
+             "default_preset_256.xml",    // project file used for benchmarks
+             "default_speaker_setup.xml", // speaker setup used for benchmarks
+             SpatMode::vbap,              // spatialisation algorithm flavour
+             tl::nullopt,                 // stereo reduction
+             false);                      // parallelize DSP computations
 
     spatTest("Parallel Vbap test",
              vbapTestName,

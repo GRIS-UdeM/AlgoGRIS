@@ -41,23 +41,28 @@
 namespace gris
 {
 
-ParallelMbapSpatAlgorithm::ParallelMbapSpatAlgorithm(SpeakerSetup const & speakerSetup, std::vector<source_index_t> srcIds, unsigned int numberOfThreads):
-    ParallelAlgorithm(numberOfThreads),
-    MbapSpatAlgorithm(speakerSetup, srcIds),
-    sourceIds{srcIds}
-  {}
+ParallelMbapSpatAlgorithm::ParallelMbapSpatAlgorithm(SpeakerSetup const & speakerSetup,
+                                                     std::vector<source_index_t> srcIds,
+                                                     unsigned int numberOfThreads)
+    : ParallelAlgorithm(numberOfThreads)
+    , MbapSpatAlgorithm(speakerSetup, srcIds)
+    , sourceIds{ srcIds }
+{
+}
 
-ParallelMbapSpatAlgorithm::ParallelMbapSpatAlgorithm(SpeakerSetup const & speakerSetup, std::vector<source_index_t> srcIds):
-  ParallelMbapSpatAlgorithm(speakerSetup, srcIds, std::thread::hardware_concurrency()/2)
-{}
+ParallelMbapSpatAlgorithm::ParallelMbapSpatAlgorithm(SpeakerSetup const & speakerSetup,
+                                                     std::vector<source_index_t> srcIds)
+    : ParallelMbapSpatAlgorithm(speakerSetup, srcIds, std::thread::hardware_concurrency() / 2)
+{
+}
 
 //==============================================================================
 void ParallelMbapSpatAlgorithm::process(AudioConfig const & config,
-                                SourceAudioBuffer & sourcesBuffer,
-                                SpeakerAudioBuffer & speakersBuffer,
-                                [[maybe_unused]] juce::AudioBuffer<float> & stereoBuffer,
-                                SourcePeaks const & sourcePeaks,
-                                SpeakersAudioConfig const * altSpeakerConfig) [[clang::nonblocking]]
+                                        SourceAudioBuffer & sourcesBuffer,
+                                        SpeakerAudioBuffer & speakersBuffer,
+                                        [[maybe_unused]] juce::AudioBuffer<float> & stereoBuffer,
+                                        SourcePeaks const & sourcePeaks,
+                                        SpeakersAudioConfig const * altSpeakerConfig) [[clang::nonblocking]]
 {
     ASSERT_AUDIO_THREAD;
 
@@ -68,23 +73,18 @@ void ParallelMbapSpatAlgorithm::process(AudioConfig const & config,
     jassert(sourceIds.size() > 0);
 
     threadPool.for_n(sourceIds.size(), [&](fu::prong_t prong) noexcept {
-        processSource(config,
-                      sourceIds[prong.task],
-                      sourcePeaks,
-                      sourcesBuffer,
-                      speakersAudioConfig,
-                      speakersBuffer);
+        processSource(config, sourceIds[prong.task], sourcePeaks, sourcesBuffer, speakersAudioConfig, speakersBuffer);
     });
     // sleep with 1us periodicity
     threadPool.sleep(1);
 }
 
 inline void ParallelMbapSpatAlgorithm::processSource(const gris::AudioConfig & config,
-                                             const gris::source_index_t & sourceId,
-                                             const gris::SourcePeaks & sourcePeaks,
-                                             gris::SourceAudioBuffer & sourceBuffer,
-                                             const gris::SpeakersAudioConfig & speakersAudioConfig,
-                                             gris::SpeakerAudioBuffer & speakerBuffers)
+                                                     const gris::source_index_t & sourceId,
+                                                     const gris::SourcePeaks & sourcePeaks,
+                                                     gris::SourceAudioBuffer & sourceBuffer,
+                                                     const gris::SpeakersAudioConfig & speakersAudioConfig,
+                                                     gris::SpeakerAudioBuffer & speakerBuffers)
 {
     auto const & source = config.sourcesAudioConfig[sourceId];
     if (source.isMuted || source.directOut || sourcePeaks[sourceId] < SMALL_GAIN) {
@@ -135,7 +135,8 @@ inline void ParallelMbapSpatAlgorithm::processSource(const gris::AudioConfig & c
             currentGain = targetGain;
             if (currentGain >= SMALL_GAIN) {
                 for (int sampleIndex{}; sampleIndex < numSamples; ++sampleIndex)
-                    std::atomic_ref<float>(outputSamples[sampleIndex]).fetch_add(inputSamples[sampleIndex] * currentGain, std::memory_order::relaxed);
+                    std::atomic_ref<float>(outputSamples[sampleIndex])
+                        .fetch_add(inputSamples[sampleIndex] * currentGain, std::memory_order::relaxed);
             }
             continue;
         }
@@ -145,7 +146,8 @@ inline void ParallelMbapSpatAlgorithm::processSource(const gris::AudioConfig & c
             // linear interpolation over buffer size
             for (int sampleIndex{}; sampleIndex < numSamples; ++sampleIndex) {
                 currentGain += gainSlope;
-                std::atomic_ref<float>(outputSamples[sampleIndex]).fetch_add(inputSamples[sampleIndex] * currentGain, std::memory_order::relaxed);
+                std::atomic_ref<float>(outputSamples[sampleIndex])
+                    .fetch_add(inputSamples[sampleIndex] * currentGain, std::memory_order::relaxed);
             }
         } else {
             // log interpolation with 1st order filter
@@ -153,7 +155,8 @@ inline void ParallelMbapSpatAlgorithm::processSource(const gris::AudioConfig & c
                 // targeting silence
                 for (int sampleIndex{}; sampleIndex < numSamples && currentGain >= SMALL_GAIN; ++sampleIndex) {
                     currentGain = targetGain + (currentGain - targetGain) * gainFactor;
-                    std::atomic_ref<float>(outputSamples[sampleIndex]).fetch_add(inputSamples[sampleIndex] * currentGain, std::memory_order::relaxed);
+                    std::atomic_ref<float>(outputSamples[sampleIndex])
+                        .fetch_add(inputSamples[sampleIndex] * currentGain, std::memory_order::relaxed);
                 }
                 continue;
             }
@@ -161,14 +164,16 @@ inline void ParallelMbapSpatAlgorithm::processSource(const gris::AudioConfig & c
             // not targeting silence
             for (int sampleIndex{}; sampleIndex < numSamples; ++sampleIndex) {
                 currentGain = (currentGain - targetGain) * gainFactor + targetGain;
-                std::atomic_ref<float>(outputSamples[sampleIndex]).fetch_add(inputSamples[sampleIndex] * currentGain, std::memory_order::relaxed);
+                std::atomic_ref<float>(outputSamples[sampleIndex])
+                    .fetch_add(inputSamples[sampleIndex] * currentGain, std::memory_order::relaxed);
             }
         }
     }
 }
 
 std::unique_ptr<AbstractSpatAlgorithm> ParallelMbapSpatAlgorithm::make(SpeakerSetup const & speakerSetup,
-                                                                       std::vector<source_index_t> && theSourceIds, unsigned int numberOfThreads)
+                                                                       std::vector<source_index_t> && theSourceIds,
+                                                                       unsigned int numberOfThreads)
 {
     JUCE_ASSERT_MESSAGE_THREAD;
 

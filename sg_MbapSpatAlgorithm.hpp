@@ -54,7 +54,6 @@ struct MbapSourceData {
 //==============================================================================
 class MbapSpatAlgorithm : public AbstractSpatAlgorithm
 {
-
 public:
     MbapField mField{};
     StrongArray<source_index_t, MbapSourceData, MAX_NUM_SOURCES> mData{};
@@ -63,7 +62,7 @@ public:
     ~MbapSpatAlgorithm() override = default;
     SG_DELETE_COPY_AND_MOVE(MbapSpatAlgorithm)
     //==============================================================================
-    explicit MbapSpatAlgorithm(SpeakerSetup const & speakerSetup, std::vector<source_index_t>  sourceIds);
+    explicit MbapSpatAlgorithm(SpeakerSetup const & speakerSetup, std::vector<source_index_t> sourceIds);
     //==============================================================================
     void updateSpatData(source_index_t sourceIndex, SourceData const & sourceData) noexcept override;
     void process(AudioConfig const & config,
@@ -82,12 +81,11 @@ public:
 
 private:
     inline void processSource(const gris::AudioConfig & config,
-                       const gris::source_index_t & sourceId,
-                       const gris::SourcePeaks & sourcePeaks,
-                       gris::SourceAudioBuffer & sourcesBuffer,
-                       const gris::SpeakersAudioConfig & speakersAudioConfig,
-                       gris::SpeakerAudioBuffer & speakerBuffers);
-
+                              const gris::source_index_t & sourceId,
+                              const gris::SourcePeaks & sourcePeaks,
+                              gris::SourceAudioBuffer & sourcesBuffer,
+                              const gris::SpeakersAudioConfig & speakersAudioConfig,
+                              gris::SpeakerAudioBuffer & speakerBuffers);
 
     JUCE_LEAK_DETECTOR(MbapSpatAlgorithm)
 };

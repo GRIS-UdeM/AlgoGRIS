@@ -40,14 +40,20 @@ namespace gris
 {
 
 //==============================================================================
-class ParallelVbapSpatAlgorithm final : public ParallelAlgorithm, public VbapSpatAlgorithm
+/**
+ * Vbap spatialization algorithm parallelized with fork_union.
+ */
+class ParallelVbapSpatAlgorithm final
+    : public ParallelAlgorithm
+    , public VbapSpatAlgorithm
 {
-
 public:
     //==============================================================================
     ParallelVbapSpatAlgorithm() = delete;
     ~ParallelVbapSpatAlgorithm() override = default;
-    ParallelVbapSpatAlgorithm(SpeakersData const & speakers, std::vector<source_index_t> theSourceIds, unsigned int numberOfThreads);
+    ParallelVbapSpatAlgorithm(SpeakersData const & speakers,
+                              std::vector<source_index_t> theSourceIds,
+                              unsigned int numberOfThreads);
     /**
      * instanciate without numberOfThreads gets half the hardware thread. This is
      * a hack so that hybrid can instanciate without knowing the type...
@@ -62,8 +68,8 @@ public:
                  SourcePeaks const & sourcePeaks,
                  SpeakersAudioConfig const * altSpeakerConfig) override;
     //==============================================================================
-    static std::unique_ptr<AbstractSpatAlgorithm> make(SpeakerSetup const & speakerSetup,
-                                                       std::vector<source_index_t> theSourceIds, unsigned int numberOfThreads);
+    static std::unique_ptr<AbstractSpatAlgorithm>
+        make(SpeakerSetup const & speakerSetup, std::vector<source_index_t> theSourceIds, unsigned int numberOfThreads);
 
 private:
     void processSource(const gris::AudioConfig & config,

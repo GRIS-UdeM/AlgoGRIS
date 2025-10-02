@@ -35,8 +35,8 @@
 #include <memory>
 
 #if JUCE_WINDOWS
-// this disables an annoying warning about structure alignment (caused by fork_union's inclusion)
-#pragma warning(disable : 4324)
+    // this disables an annoying warning about structure alignment (caused by fork_union's inclusion)
+    #pragma warning(disable : 4324)
 #endif
 
 // Disable numa in fork_union, this breaks on the ubuntu 20.04 CI.
@@ -145,16 +145,16 @@ public:
                                                                      SourcesData const & sources,
                                                                      double sampleRate,
                                                                      int bufferSize,
-                                                                     bool useMulticoreDSP=false);
-
+                                                                     bool useMulticoreDSP = false);
 
 private:
     //==============================================================================
     JUCE_LEAK_DETECTOR(AbstractSpatAlgorithm)
 };
 
-class ParallelAlgorithm {
-  public:
+class ParallelAlgorithm
+{
+public:
     /**
      * Starts a threadpool and sets the valid bool if it works.
      * It is up to the implemeter of this class to check valid and
@@ -168,15 +168,15 @@ class ParallelAlgorithm {
     /**
      * set to true after successfuly spawning the threadpool
      */
-    bool isValid=false;
-  protected:
+    bool isValid = false;
+
+protected:
     /**
      * fork union threadpool.
      *
      * TODO: make this use a CPU instruction appropriate micro_yield.
      */
     ashvardanian::fork_union::basic_pool_t threadPool;
-
 };
 
 } // namespace gris

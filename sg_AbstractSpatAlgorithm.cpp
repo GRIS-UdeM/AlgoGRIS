@@ -132,22 +132,20 @@ std::unique_ptr<AbstractSpatAlgorithm> AbstractSpatAlgorithm::make(SpeakerSetup 
     case SpatMode::vbap:
         if (useMulticoreDSP) {
             return ParallelVbapSpatAlgorithm::make(speakerSetup, sources.getKeys(), hardwareConcurrency);
-        }
-        else {
+        } else {
             return VbapSpatAlgorithm::make(speakerSetup, sources.getKeys());
         }
     case SpatMode::mbap:
         if (useMulticoreDSP) {
             return ParallelMbapSpatAlgorithm::make(speakerSetup, sources.getKeys(), hardwareConcurrency);
-        }
-        else {
+        } else {
             return MbapSpatAlgorithm::make(speakerSetup, sources.getKeys());
         }
     case SpatMode::hybrid:
         if (useMulticoreDSP) {
-            return HybridSpatAlgorithm<ParallelMbapSpatAlgorithm, ParallelVbapSpatAlgorithm>::make(speakerSetup, sources.getKeys());
-        }
-        else {
+            return HybridSpatAlgorithm<ParallelMbapSpatAlgorithm, ParallelVbapSpatAlgorithm>::make(speakerSetup,
+                                                                                                   sources.getKeys());
+        } else {
             return HybridSpatAlgorithm<MbapSpatAlgorithm, VbapSpatAlgorithm>::make(speakerSetup, sources.getKeys());
         }
     case SpatMode::invalid:
@@ -158,7 +156,6 @@ std::unique_ptr<AbstractSpatAlgorithm> AbstractSpatAlgorithm::make(SpeakerSetup 
     return nullptr;
 }
 
-
 //==============================================================================
 ParallelAlgorithm::ParallelAlgorithm(unsigned int numberOfThreads)
 {
@@ -168,6 +165,5 @@ ParallelAlgorithm::ParallelAlgorithm(unsigned int numberOfThreads)
         jassertfalse;
     }
 }
-
 
 } // namespace gris

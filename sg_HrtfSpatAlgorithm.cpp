@@ -130,7 +130,9 @@ HrtfSpatAlgorithm::HrtfSpatAlgorithm(SpeakerSetup const & speakerSetup,
         mInnerAlgorithm = std::make_unique<MbapSpatAlgorithm>(*binauralSpeakerSetup, sources.getKeys());
         break;
     case SpatMode::hybrid:
-        mInnerAlgorithm = std::make_unique<HybridSpatAlgorithm<MbapSpatAlgorithm, VbapSpatAlgorithm>>(*binauralSpeakerSetup, sources.getKeys());
+        mInnerAlgorithm
+            = std::make_unique<HybridSpatAlgorithm<MbapSpatAlgorithm, VbapSpatAlgorithm>>(*binauralSpeakerSetup,
+                                                                                          sources.getKeys());
         break;
     case SpatMode::invalid:
         break;
@@ -190,12 +192,8 @@ void HrtfSpatAlgorithm::process(AudioConfig const & config,
     hrtfBuffer.silence();
 
     if (mInnerAlgorithm)
-        mInnerAlgorithm->process(config,
-                                 sourcesBuffer,
-                                 hrtfBuffer,
-                                 stereoBuffer,
-                                 sourcePeaks,
-                                 &mHrtfData.speakersAudioConfig);
+        mInnerAlgorithm
+            ->process(config, sourcesBuffer, hrtfBuffer, stereoBuffer, sourcePeaks, &mHrtfData.speakersAudioConfig);
 
     convolutionBuffer.clear();
 

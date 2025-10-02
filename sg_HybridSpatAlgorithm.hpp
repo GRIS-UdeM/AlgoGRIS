@@ -27,7 +27,7 @@ namespace gris
  *
  * The selection of the algorithm is done on a per-source basis.
  */
-template <typename MBAP, typename VBAP>
+template<typename MBAP, typename VBAP>
 class HybridSpatAlgorithm final : public AbstractSpatAlgorithm
 {
     std::unique_ptr<VBAP> mVbap{};
@@ -41,8 +41,8 @@ public:
     //==============================================================================
     /** Note: do not use this function directly. Use HybridSpatAlgorithm::make() instead. */
     explicit HybridSpatAlgorithm(SpeakerSetup const & speakerSetup, std::vector<source_index_t> && sourceIds)
-    : mVbap(std::make_unique<VBAP>(speakerSetup.speakers, sourceIds))
-    , mMbap(std::make_unique<MBAP>(speakerSetup, std::move(sourceIds)))
+        : mVbap(std::make_unique<VBAP>(speakerSetup.speakers, sourceIds))
+        , mMbap(std::make_unique<MBAP>(speakerSetup, std::move(sourceIds)))
     {
     }
     //==============================================================================
@@ -57,15 +57,15 @@ public:
 
         // Valid position: only send to the right algorithm
         switch (sourceData.hybridSpatMode) {
-            case SpatMode::vbap:
-                mVbap->updateSpatData(sourceIndex, sourceData);
-                return;
-            case SpatMode::mbap:
-                mMbap->updateSpatData(sourceIndex, sourceData);
-                return;
-            case SpatMode::hybrid:
-            case SpatMode::invalid:
-                break;
+        case SpatMode::vbap:
+            mVbap->updateSpatData(sourceIndex, sourceData);
+            return;
+        case SpatMode::mbap:
+            mMbap->updateSpatData(sourceIndex, sourceData);
+            return;
+        case SpatMode::hybrid:
+        case SpatMode::invalid:
+            break;
         }
         jassertfalse;
     }
@@ -81,12 +81,9 @@ public:
         mMbap->process(config, sourcesBuffer, speakersBuffer, stereoBuffer, sourcePeaks, altSpeakerConfig);
     }
 
-    juce::Array<Triplet> getTriplets() const noexcept
-    {
-        return mVbap->getTriplets();
-    }
+    juce::Array<Triplet> getTriplets() const noexcept { return mVbap->getTriplets(); }
 
-    bool hasTriplets() const noexcept { return true ;};
+    bool hasTriplets() const noexcept { return true; };
     [[nodiscard]] tl::optional<Error> getError() const noexcept
     {
         // It seems this always return nullopt...

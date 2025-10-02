@@ -87,7 +87,6 @@ private:
                        gris::SourceAudioBuffer & sourcesBuffer,
                        juce::AudioBuffer<float> & stereoBuffer);
 
-
     JUCE_LEAK_DETECTOR(StereoSpatAlgorithm)
 };
 

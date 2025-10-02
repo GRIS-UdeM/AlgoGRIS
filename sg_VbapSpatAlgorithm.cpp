@@ -120,7 +120,6 @@ void VbapSpatAlgorithm::process(AudioConfig const & config,
 
     for (auto const & source : config.sourcesAudioConfig)
         processSource(config, source.key, sourcePeaks, sourcesBuffer, speakersAudioConfig, speakersBuffer);
-
 }
 
 inline void VbapSpatAlgorithm::processSource(const gris::AudioConfig & config,

@@ -40,14 +40,20 @@ namespace gris
 {
 
 //==============================================================================
-class ParallelMbapSpatAlgorithm final : public ParallelAlgorithm, public MbapSpatAlgorithm
+/**
+ * Mbap spatialization algorithm parallelized with fork_union.
+ */
+class ParallelMbapSpatAlgorithm final
+    : public ParallelAlgorithm
+    , public MbapSpatAlgorithm
 {
-
 public:
     //==============================================================================
     ParallelMbapSpatAlgorithm() = delete;
     ~ParallelMbapSpatAlgorithm() override = default;
-    explicit ParallelMbapSpatAlgorithm(SpeakerSetup const & speakerSetup, std::vector<source_index_t> sourceIds, unsigned int numberOfThreads);
+    explicit ParallelMbapSpatAlgorithm(SpeakerSetup const & speakerSetup,
+                                       std::vector<source_index_t> sourceIds,
+                                       unsigned int numberOfThreads);
     /**
      * instanciate without numberOfThreads gets half the hardware thread. This is
      * a hack so that hybrid can instanciate without knowing the type...
@@ -62,15 +68,16 @@ public:
                  juce::AudioBuffer<float> & stereoBuffer,
                  SourcePeaks const & sourcesPeaks,
                  SpeakersAudioConfig const * altSpeakerConfig) override;
-    static std::unique_ptr<AbstractSpatAlgorithm> make(SpeakerSetup const & speakerSetup,
-                                                       std::vector<source_index_t> && sourceIds, unsigned int numberOfThreads);
+    static std::unique_ptr<AbstractSpatAlgorithm>
+        make(SpeakerSetup const & speakerSetup, std::vector<source_index_t> && sourceIds, unsigned int numberOfThreads);
+
 protected:
     inline void processSource(const gris::AudioConfig & config,
-                       const gris::source_index_t & sourceId,
-                       const gris::SourcePeaks & sourcePeaks,
-                       gris::SourceAudioBuffer & sourcesBuffer,
-                       const gris::SpeakersAudioConfig & speakersAudioConfig,
-                       gris::SpeakerAudioBuffer & speakerBuffers);
+                              const gris::source_index_t & sourceId,
+                              const gris::SourcePeaks & sourcePeaks,
+                              gris::SourceAudioBuffer & sourcesBuffer,
+                              const gris::SpeakersAudioConfig & speakersAudioConfig,
+                              gris::SpeakerAudioBuffer & speakerBuffers);
 
     std::vector<source_index_t> sourceIds;
 

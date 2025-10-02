@@ -230,11 +230,11 @@ void AudioBufferComparator::compareBuffers(const float * const curBuffer, const 
             jassertfalse;
             std::cout << "curBuffer:" << std::endl;
             for (int i = 0; i < savedBuffer.getNumSamples(); ++i)
-              std::cout << curBuffer[i] << std::endl;
+                std::cout << curBuffer[i] << std::endl;
 
             std::cout << "savedBuffer:" << std::endl;
             for (int i = 0; i < savedBuffer.getNumSamples(); ++i)
-              std::cout << savedBuffer.getSample(0, i) << std::endl;
+                std::cout << savedBuffer.getSample(0, i) << std::endl;
 
             std::cout << "done" << std::endl;
         }

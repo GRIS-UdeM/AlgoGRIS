@@ -50,7 +50,6 @@ using VbapSourcesData = StrongArray<source_index_t, VbapSourceData, MAX_NUM_SOUR
 //==============================================================================
 class VbapSpatAlgorithm : public AbstractSpatAlgorithm
 {
-
 public:
     std::unique_ptr<VbapData> mSetupData{};
     VbapSourcesData mData{};
@@ -80,7 +79,6 @@ private:
                        gris::SourceAudioBuffer & sourcesBuffer,
                        const gris::SpeakersAudioConfig & speakersAudioConfig,
                        SpeakerAudioBuffer & speakersBuffer);
-
 
     JUCE_LEAK_DETECTOR(VbapSpatAlgorithm)
 };

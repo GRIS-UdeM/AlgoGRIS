@@ -49,25 +49,26 @@ namespace gris
 
 //==============================================================================
 ParallelVbapSpatAlgorithm::ParallelVbapSpatAlgorithm(SpeakersData const & speakers,
-                                                     [[maybe_unused]] std::vector<source_index_t> srcIds, unsigned int numberOfThreads):
-  ParallelAlgorithm(numberOfThreads),
-  VbapSpatAlgorithm(speakers, srcIds),
-  sourceIds{srcIds}
+                                                     [[maybe_unused]] std::vector<source_index_t> srcIds,
+                                                     unsigned int numberOfThreads)
+    : ParallelAlgorithm(numberOfThreads)
+    , VbapSpatAlgorithm(speakers, srcIds)
+    , sourceIds{ srcIds }
 {
 }
 
-ParallelVbapSpatAlgorithm::ParallelVbapSpatAlgorithm(SpeakersData const & speakers, std::vector<source_index_t> srcIds):
-        ParallelVbapSpatAlgorithm(speakers, srcIds, std::thread::hardware_concurrency()/2)
+ParallelVbapSpatAlgorithm::ParallelVbapSpatAlgorithm(SpeakersData const & speakers, std::vector<source_index_t> srcIds)
+    : ParallelVbapSpatAlgorithm(speakers, srcIds, std::thread::hardware_concurrency() / 2)
 {
 }
 
 //==============================================================================
 void ParallelVbapSpatAlgorithm::process(AudioConfig const & config,
-                                SourceAudioBuffer & sourcesBuffer,
-                                SpeakerAudioBuffer & speakersBuffer,
-                                juce::AudioBuffer<float> & /*stereoBuffer*/,
-                                SourcePeaks const & sourcePeaks,
-                                SpeakersAudioConfig const * altSpeakerConfig) [[clang::nonblocking]]
+                                        SourceAudioBuffer & sourcesBuffer,
+                                        SpeakerAudioBuffer & speakersBuffer,
+                                        juce::AudioBuffer<float> & /*stereoBuffer*/,
+                                        SourcePeaks const & sourcePeaks,
+                                        SpeakersAudioConfig const * altSpeakerConfig) [[clang::nonblocking]]
 {
     ASSERT_AUDIO_THREAD;
 
@@ -80,23 +81,17 @@ void ParallelVbapSpatAlgorithm::process(AudioConfig const & config,
     threadPool.for_n(sourceIds.size(), [&](fu::prong_t prong) noexcept {
         jassert(threadPool.is_lock_free());
 
-        processSource(config,
-                      sourceIds[prong.task],
-                      sourcePeaks,
-                      sourcesBuffer,
-                      speakersAudioConfig,
-                      speakersBuffer);
+        processSource(config, sourceIds[prong.task], sourcePeaks, sourcesBuffer, speakersAudioConfig, speakersBuffer);
     });
     threadPool.sleep(1);
-
 }
 
 inline void ParallelVbapSpatAlgorithm::processSource(const gris::AudioConfig & config,
-                                             const gris::source_index_t & sourceId,
-                                             const gris::SourcePeaks & sourcePeaks,
-                                             gris::SourceAudioBuffer & sourcesBuffer,
-                                             const gris::SpeakersAudioConfig & speakersAudioConfig,
-                                             SpeakerAudioBuffer & speakerBuffers)
+                                                     const gris::source_index_t & sourceId,
+                                                     const gris::SourcePeaks & sourcePeaks,
+                                                     gris::SourceAudioBuffer & sourcesBuffer,
+                                                     const gris::SpeakersAudioConfig & speakersAudioConfig,
+                                                     SpeakerAudioBuffer & speakerBuffers)
 {
     auto const & source = config.sourcesAudioConfig[sourceId];
     if (source.isMuted || source.directOut || sourcePeaks[sourceId] < SMALL_GAIN) {
@@ -137,8 +132,8 @@ inline void ParallelVbapSpatAlgorithm::processSource(const gris::AudioConfig & c
             currentGain = targetGain;
             if (currentGain >= SMALL_GAIN) {
                 for (int sampleIndex{}; sampleIndex < numSamples; ++sampleIndex)
-                    std::atomic_ref<float>(outputSamples[sampleIndex]).fetch_add(inputSamples[sampleIndex] * currentGain, std::memory_order::relaxed);
-
+                    std::atomic_ref<float>(outputSamples[sampleIndex])
+                        .fetch_add(inputSamples[sampleIndex] * currentGain, std::memory_order::relaxed);
             }
             continue;
         }
@@ -148,7 +143,8 @@ inline void ParallelVbapSpatAlgorithm::processSource(const gris::AudioConfig & c
             // linear interpolation over buffer size
             for (int sampleIndex{}; sampleIndex < numSamples; ++sampleIndex) {
                 currentGain += gainSlope;
-                std::atomic_ref<float>(outputSamples[sampleIndex]).fetch_add(inputSamples[sampleIndex] * currentGain, std::memory_order::relaxed);
+                std::atomic_ref<float>(outputSamples[sampleIndex])
+                    .fetch_add(inputSamples[sampleIndex] * currentGain, std::memory_order::relaxed);
             }
         } else {
             // log interpolation with 1st order filter
@@ -156,8 +152,8 @@ inline void ParallelVbapSpatAlgorithm::processSource(const gris::AudioConfig & c
                 // targeting silence
                 for (int sampleIndex{}; sampleIndex < numSamples && currentGain >= SMALL_GAIN; ++sampleIndex) {
                     currentGain = targetGain + (currentGain - targetGain) * gainFactor;
-                    std::atomic_ref<float>(outputSamples[sampleIndex]).fetch_add(inputSamples[sampleIndex] * currentGain, std::memory_order::relaxed);
-
+                    std::atomic_ref<float>(outputSamples[sampleIndex])
+                        .fetch_add(inputSamples[sampleIndex] * currentGain, std::memory_order::relaxed);
                 }
                 continue;
             }
@@ -165,8 +161,8 @@ inline void ParallelVbapSpatAlgorithm::processSource(const gris::AudioConfig & c
             // not targeting silence
             for (int sampleIndex{}; sampleIndex < numSamples; ++sampleIndex) {
                 currentGain = targetGain + (currentGain - targetGain) * gainFactor;
-                std::atomic_ref<float>(outputSamples[sampleIndex]).fetch_add(inputSamples[sampleIndex] * currentGain, std::memory_order::relaxed);
-
+                std::atomic_ref<float>(outputSamples[sampleIndex])
+                    .fetch_add(inputSamples[sampleIndex] * currentGain, std::memory_order::relaxed);
             }
         }
     }
@@ -176,11 +172,13 @@ inline void ParallelVbapSpatAlgorithm::processSource(const gris::AudioConfig & c
 
 // This is an awkward copy paste of sg_VbapSpatAlgorithm's make. we should find a way
 // to deduplicate this (and a looooot of other spatialization algorithm code...)
-std::unique_ptr<AbstractSpatAlgorithm> ParallelVbapSpatAlgorithm::make(SpeakerSetup const & speakerSetup, std::vector<source_index_t> srcIds, unsigned int numberOfThreads)
+std::unique_ptr<AbstractSpatAlgorithm> ParallelVbapSpatAlgorithm::make(SpeakerSetup const & speakerSetup,
+                                                                       std::vector<source_index_t> srcIds,
+                                                                       unsigned int numberOfThreads)
 {
-
-    auto const getVbap
-            = [srcIds, &speakerSetup, &numberOfThreads]() { return std::make_unique<ParallelVbapSpatAlgorithm>(speakerSetup.speakers, srcIds, numberOfThreads); };
+    auto const getVbap = [srcIds, &speakerSetup, &numberOfThreads]() {
+        return std::make_unique<ParallelVbapSpatAlgorithm>(speakerSetup.speakers, srcIds, numberOfThreads);
+    };
 
     if (speakerSetup.numOfSpatializedSpeakers() < 3) {
         return std::make_unique<DummySpatAlgorithm>(Error::notEnoughDomeSpeakers);
@@ -227,7 +225,6 @@ std::unique_ptr<AbstractSpatAlgorithm> ParallelVbapSpatAlgorithm::make(SpeakerSe
         } else {
             return vbap;
         }
-
     }
 
     return std::make_unique<DummySpatAlgorithm>(Error::flatDomeSpeakersTooFarApart);
