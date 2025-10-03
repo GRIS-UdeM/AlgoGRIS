@@ -100,6 +100,7 @@ jobs:
                 -B build \
                 -DCMAKE_C_COMPILER_LAUNCHER=sccache \
                 -DCMAKE_CXX_COMPILER_LAUNCHER=sccache \
+                -DBUILD_TESTING=ON \
                 ${{ matrix.extra-flags }}
 
       - name: Build debug
@@ -110,7 +111,7 @@ jobs:
 
       - name: Test
         working-directory: build
-        run: ctest --verbose --output-on-failure
+        run: ctest -C Release --verbose --output-on-failure
 
       - name: Benchmark (ran on our local linux runner)
         if: matrix.name == 'Linux'
