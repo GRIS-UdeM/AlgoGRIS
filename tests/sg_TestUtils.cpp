@@ -215,7 +215,10 @@ void AudioBufferComparator::writeCachedBuffersToDisk(juce::StringRef testName,
     cachedBuffers.clear();
 }
 
-#define PRINT_BUFFERS 1
+/**
+ * used to print every sample in the buffer when there is a mismatch with the saved version.
+ */
+#define PRINT_BUFFERS 0
 
 void AudioBufferComparator::compareBuffers(const float * const curBuffer, const juce::AudioBuffer<float> & savedBuffer)
 {
@@ -228,15 +231,15 @@ void AudioBufferComparator::compareBuffers(const float * const curBuffer, const 
 #if PRINT_BUFFERS
         if (std::abs(curSample - savedSample) >= .001f) {
             jassertfalse;
-            std::cout << "curBuffer:" << std::endl;
+            DBG("curBuffer:");
             for (int i = 0; i < savedBuffer.getNumSamples(); ++i)
-                std::cout << curBuffer[i] << std::endl;
+                DBG(curBuffer[i]);
 
-            std::cout << "savedBuffer:" << std::endl;
+            DBG("savedBuffer:");
             for (int i = 0; i < savedBuffer.getNumSamples(); ++i)
-                std::cout << savedBuffer.getSample(0, i) << std::endl;
+                DBG(savedBuffer.getSample(0, i));
 
-            std::cout << "done" << std::endl;
+            DBG("done");
         }
 #endif
 
