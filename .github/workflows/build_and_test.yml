@@ -100,7 +100,6 @@ jobs:
                 -B build \
                 -DCMAKE_C_COMPILER_LAUNCHER=sccache \
                 -DCMAKE_CXX_COMPILER_LAUNCHER=sccache \
-                -DFORK_UNION_BUILD_TESTS=off \
                 ${{ matrix.extra-flags }}
 
       - name: Build debug
