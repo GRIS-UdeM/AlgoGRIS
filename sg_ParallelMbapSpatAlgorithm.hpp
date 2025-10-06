@@ -30,6 +30,7 @@
 #include "Data/sg_constants.hpp"
 #include "Implementations/sg_mbap.hpp"
 #include "sg_AbstractSpatAlgorithm.hpp"
+#include "sg_MbapSpatAlgorithm.hpp"
 #include "juce_audio_basics/juce_audio_basics.h"
 #include "juce_core/juce_core.h"
 #include "tl/optional.hpp"
@@ -37,49 +38,40 @@
 
 namespace gris
 {
-struct MbapSpatData {
-    SpeakersSpatGains gains{};
-    float mbapSourceDistance{};
-};
-
-using MbapSpatDataQueue = AtomicUpdater<MbapSpatData>;
-
-struct MbapSourceData {
-    MbapSpatDataQueue dataQueue{};
-    MbapSpatDataQueue::Token * currentData{};
-    MbapSourceAttenuationState attenuationState{};
-    SpeakersSpatGains lastGains{};
-};
 
 //==============================================================================
-class MbapSpatAlgorithm : public AbstractSpatAlgorithm
+/**
+ * Mbap spatialization algorithm parallelized with fork_union.
+ */
+class ParallelMbapSpatAlgorithm final
+    : public ParallelAlgorithm
+    , public MbapSpatAlgorithm
 {
 public:
-    MbapField mField{};
-    StrongArray<source_index_t, MbapSourceData, MAX_NUM_SOURCES> mData{};
     //==============================================================================
-    MbapSpatAlgorithm() = delete;
-    ~MbapSpatAlgorithm() override = default;
-    SG_DELETE_COPY_AND_MOVE(MbapSpatAlgorithm)
+    ParallelMbapSpatAlgorithm() = delete;
+    ~ParallelMbapSpatAlgorithm() override = default;
+    explicit ParallelMbapSpatAlgorithm(SpeakerSetup const & speakerSetup,
+                                       std::vector<source_index_t> sourceIds,
+                                       unsigned int numberOfThreads);
+    /**
+     * instanciate without numberOfThreads gets half the hardware thread. This is
+     * a hack so that hybrid can instanciate without knowing the type...
+     */
+    explicit ParallelMbapSpatAlgorithm(SpeakerSetup const & speakerSetup, std::vector<source_index_t> sourceIds);
+
+    SG_DELETE_COPY_AND_MOVE(ParallelMbapSpatAlgorithm)
     //==============================================================================
-    explicit MbapSpatAlgorithm(SpeakerSetup const & speakerSetup, std::vector<source_index_t> sourceIds);
-    //==============================================================================
-    void updateSpatData(source_index_t sourceIndex, SourceData const & sourceData) noexcept override;
     void process(AudioConfig const & config,
                  SourceAudioBuffer & sourceBuffer,
                  SpeakerAudioBuffer & speakersBuffer,
                  juce::AudioBuffer<float> & stereoBuffer,
                  SourcePeaks const & sourcesPeaks,
                  SpeakersAudioConfig const * altSpeakerConfig) override;
+    static std::unique_ptr<AbstractSpatAlgorithm>
+        make(SpeakerSetup const & speakerSetup, std::vector<source_index_t> && sourceIds, unsigned int numberOfThreads);
 
-    [[nodiscard]] juce::Array<Triplet> getTriplets() const noexcept override;
-    [[nodiscard]] bool hasTriplets() const noexcept override { return false; }
-    [[nodiscard]] tl::optional<Error> getError() const noexcept override { return tl::nullopt; }
-    //==============================================================================
-    static std::unique_ptr<AbstractSpatAlgorithm> make(SpeakerSetup const & speakerSetup,
-                                                       std::vector<source_index_t> && sourceIds);
-
-private:
+protected:
     inline void processSource(const gris::AudioConfig & config,
                               const gris::source_index_t & sourceId,
                               const gris::SourcePeaks & sourcePeaks,
@@ -87,6 +79,8 @@ private:
                               const gris::SpeakersAudioConfig & speakersAudioConfig,
                               gris::SpeakerAudioBuffer & speakerBuffers);
 
-    JUCE_LEAK_DETECTOR(MbapSpatAlgorithm)
+    std::vector<source_index_t> sourceIds;
+
+    JUCE_LEAK_DETECTOR(ParallelMbapSpatAlgorithm)
 };
 } // namespace gris

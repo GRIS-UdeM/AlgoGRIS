@@ -8,9 +8,6 @@ void initBuffers(const int bufferSize,
                  const size_t numSpeakers,
                  SourceAudioBuffer & sourceBuffer,
                  SpeakerAudioBuffer & speakerBuffer,
-#if SG_USE_FORK_UNION && (SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS || SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD)
-                 ForkUnionBuffer & forkUnionBuffer,
-#endif
                  juce::AudioBuffer<float> & stereoBuffer)
 {
     juce::Array<source_index_t> sourcesIndices;
@@ -24,30 +21,6 @@ void initBuffers(const int bufferSize,
         speakerIndices.add(output_patch_t{ i });
     speakerBuffer.init(speakerIndices);
     speakerBuffer.setNumSamples(bufferSize);
-
-#if SG_USE_FORK_UNION
-    #if SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS
-    forkUnionBuffer.resize(numSpeakers);
-    for (int i = 0; i < numSpeakers; ++i) {
-        forkUnionBuffer[i].clear();
-        for (int j = 0; j < bufferSize; ++j)
-            forkUnionBuffer[i].emplace_back(0.0f);
-    }
-    #elif SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD
-    // so we have a buffer for each hardware thread
-    auto const numThreads = std::thread::hardware_concurrency();
-    forkUnionBuffer.resize(numThreads);
-
-    for (auto & curThreadSpeakerBuffer : forkUnionBuffer) {
-        // then within each thread we need a buffer for each speaker
-        curThreadSpeakerBuffer.resize(numSpeakers);
-
-        // and each speaker buffer contains bufferSize samples
-        for (auto & curSpeakerBuffer : curThreadSpeakerBuffer)
-            curSpeakerBuffer.assign(bufferSize, 0.f);
-    }
-    #endif
-#endif
 
     stereoBuffer.setSize(2, bufferSize);
     stereoBuffer.clear();
@@ -242,6 +215,9 @@ void AudioBufferComparator::writeCachedBuffersToDisk(juce::StringRef testName,
     cachedBuffers.clear();
 }
 
+/**
+ * used to print every sample in the buffer when there is a mismatch with the saved version.
+ */
 #define PRINT_BUFFERS 0
 
 void AudioBufferComparator::compareBuffers(const float * const curBuffer, const juce::AudioBuffer<float> & savedBuffer)
@@ -264,7 +240,6 @@ void AudioBufferComparator::compareBuffers(const float * const curBuffer, const 
                 DBG(savedBuffer.getSample(0, i));
 
             DBG("done");
-            return;
         }
 #endif
 

@@ -18,9 +18,7 @@
 */
 
 #pragma once
-
-#include "sg_MbapSpatAlgorithm.hpp"
-#include "sg_VbapSpatAlgorithm.hpp"
+#include "sg_DummySpatAlgorithm.hpp"
 
 namespace gris
 {
@@ -29,10 +27,11 @@ namespace gris
  *
  * The selection of the algorithm is done on a per-source basis.
  */
+template<typename MBAP, typename VBAP>
 class HybridSpatAlgorithm final : public AbstractSpatAlgorithm
 {
-    std::unique_ptr<AbstractSpatAlgorithm> mVbap{};
-    std::unique_ptr<AbstractSpatAlgorithm> mMbap{};
+    std::unique_ptr<VBAP> mVbap{};
+    std::unique_ptr<MBAP> mMbap{};
 
 public:
     //==============================================================================
@@ -41,25 +40,65 @@ public:
     SG_DELETE_COPY_AND_MOVE(HybridSpatAlgorithm)
     //==============================================================================
     /** Note: do not use this function directly. Use HybridSpatAlgorithm::make() instead. */
-    explicit HybridSpatAlgorithm(SpeakerSetup const & speakerSetup, std::vector<source_index_t> && sourceIds);
+    explicit HybridSpatAlgorithm(SpeakerSetup const & speakerSetup, std::vector<source_index_t> && sourceIds)
+        : mVbap(std::make_unique<VBAP>(speakerSetup.speakers, sourceIds))
+        , mMbap(std::make_unique<MBAP>(speakerSetup, std::move(sourceIds)))
+    {
+    }
     //==============================================================================
-    void updateSpatData(source_index_t sourceIndex, SourceData const & sourceData) noexcept override;
+    void updateSpatData(source_index_t const sourceIndex, SourceData const & sourceData) noexcept
+    {
+        if (!sourceData.position.has_value()) {
+            // resetting a position should reset both algorithms
+            mVbap->updateSpatData(sourceIndex, sourceData);
+            mMbap->updateSpatData(sourceIndex, sourceData);
+            return;
+        }
+
+        // Valid position: only send to the right algorithm
+        switch (sourceData.hybridSpatMode) {
+        case SpatMode::vbap:
+            mVbap->updateSpatData(sourceIndex, sourceData);
+            return;
+        case SpatMode::mbap:
+            mMbap->updateSpatData(sourceIndex, sourceData);
+            return;
+        case SpatMode::hybrid:
+        case SpatMode::invalid:
+            break;
+        }
+        jassertfalse;
+    }
+
     void process(AudioConfig const & config,
                  SourceAudioBuffer & sourcesBuffer,
                  SpeakerAudioBuffer & speakersBuffer,
-#if SG_USE_FORK_UNION && (SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS || SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD)
-                 ForkUnionBuffer & forkUnionBuffer,
-#endif
                  juce::AudioBuffer<float> & stereoBuffer,
                  SourcePeaks const & sourcePeaks,
-                 SpeakersAudioConfig const * altSpeakerConfig) override;
-    [[nodiscard]] juce::Array<Triplet> getTriplets() const noexcept override;
-    [[nodiscard]] bool hasTriplets() const noexcept override;
-    [[nodiscard]] tl::optional<Error> getError() const noexcept override;
+                 SpeakersAudioConfig const * altSpeakerConfig) [[clang::nonblocking]]
+    {
+        mVbap->process(config, sourcesBuffer, speakersBuffer, stereoBuffer, sourcePeaks, altSpeakerConfig);
+        mMbap->process(config, sourcesBuffer, speakersBuffer, stereoBuffer, sourcePeaks, altSpeakerConfig);
+    }
+
+    juce::Array<Triplet> getTriplets() const noexcept { return mVbap->getTriplets(); }
+
+    bool hasTriplets() const noexcept { return true; };
+    [[nodiscard]] tl::optional<Error> getError() const noexcept
+    {
+        // It seems this always return nullopt...
+        return mVbap->getError().disjunction(mMbap->getError());
+    }
     //==============================================================================
     /** Instantiates an HybridSpatAlgorithm. Make sure to check getError() as this might fail. */
     static std::unique_ptr<AbstractSpatAlgorithm> make(SpeakerSetup const & speakerSetup,
-                                                       std::vector<source_index_t> && sourceIds);
+                                                       std::vector<source_index_t> && sourceIds)
+    {
+        if (speakerSetup.numOfSpatializedSpeakers() < 3) {
+            return std::make_unique<DummySpatAlgorithm>(Error::notEnoughDomeSpeakers);
+        }
+        return std::make_unique<HybridSpatAlgorithm>(speakerSetup, std::move(sourceIds));
+    }
 
 private:
     //==============================================================================

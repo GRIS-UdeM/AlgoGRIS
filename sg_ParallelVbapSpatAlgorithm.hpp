@@ -30,6 +30,7 @@
 #include "Data/sg_constants.hpp"
 #include "Implementations/sg_vbap.hpp"
 #include "sg_AbstractSpatAlgorithm.hpp"
+#include "sg_VbapSpatAlgorithm.hpp"
 #include "juce_audio_basics/juce_audio_basics.h"
 #include "juce_core/juce_core.h"
 #include "tl/optional.hpp"
@@ -37,40 +38,38 @@
 
 namespace gris
 {
-VbapType getVbapType(SpeakersData const & speakers);
-
-struct VbapSourceData {
-    AtomicUpdater<SpeakersSpatGains> spatDataQueue{};
-    AtomicUpdater<SpeakersSpatGains>::Token * currentSpatData{};
-    SpeakersSpatGains lastGains{};
-};
-
-using VbapSourcesData = StrongArray<source_index_t, VbapSourceData, MAX_NUM_SOURCES>;
 
 //==============================================================================
-class VbapSpatAlgorithm : public AbstractSpatAlgorithm
+/**
+ * Vbap spatialization algorithm parallelized with fork_union.
+ */
+class ParallelVbapSpatAlgorithm final
+    : public ParallelAlgorithm
+    , public VbapSpatAlgorithm
 {
 public:
-    std::unique_ptr<VbapData> mSetupData{};
-    VbapSourcesData mData{};
     //==============================================================================
-    explicit VbapSpatAlgorithm(SpeakersData const & speakers, std::vector<source_index_t> theSourceIds);
-    ~VbapSpatAlgorithm() override = default;
-    SG_DELETE_COPY_AND_MOVE(VbapSpatAlgorithm)
+    ParallelVbapSpatAlgorithm() = delete;
+    ~ParallelVbapSpatAlgorithm() override = default;
+    ParallelVbapSpatAlgorithm(SpeakersData const & speakers,
+                              std::vector<source_index_t> theSourceIds,
+                              unsigned int numberOfThreads);
+    /**
+     * instanciate without numberOfThreads gets half the hardware thread. This is
+     * a hack so that hybrid can instanciate without knowing the type...
+     */
+    ParallelVbapSpatAlgorithm(SpeakersData const & speakers, std::vector<source_index_t> sid);
+    // SG_DELETE_COPY_AND_MOVE(ParallelVbapSpatAlgorithm)
     //==============================================================================
-    void updateSpatData(source_index_t sourceIndex, SourceData const & sourceData) noexcept override;
     void process(AudioConfig const & config,
                  SourceAudioBuffer & sourcesBuffer,
                  SpeakerAudioBuffer & speakersBuffer,
                  juce::AudioBuffer<float> & stereoBuffer,
                  SourcePeaks const & sourcePeaks,
                  SpeakersAudioConfig const * altSpeakerConfig) override;
-    [[nodiscard]] juce::Array<Triplet> getTriplets() const noexcept override;
-    [[nodiscard]] bool hasTriplets() const noexcept override;
-    [[nodiscard]] tl::optional<Error> getError() const noexcept override { return tl::nullopt; }
     //==============================================================================
-    static std::unique_ptr<AbstractSpatAlgorithm> make(SpeakerSetup const & speakerSetup,
-                                                       std::vector<source_index_t> theSourceIds);
+    static std::unique_ptr<AbstractSpatAlgorithm>
+        make(SpeakerSetup const & speakerSetup, std::vector<source_index_t> theSourceIds, unsigned int numberOfThreads);
 
 private:
     void processSource(const gris::AudioConfig & config,
@@ -80,7 +79,9 @@ private:
                        const gris::SpeakersAudioConfig & speakersAudioConfig,
                        SpeakerAudioBuffer & speakersBuffer);
 
-    JUCE_LEAK_DETECTOR(VbapSpatAlgorithm)
+    std::vector<source_index_t> sourceIds;
+
+    JUCE_LEAK_DETECTOR(ParallelVbapSpatAlgorithm)
 };
 
 } // namespace gris

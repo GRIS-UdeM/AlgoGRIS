@@ -21,6 +21,8 @@
 #include "sg_HrtfSpatAlgorithm.hpp"
 #include "sg_HybridSpatAlgorithm.hpp"
 #include "sg_MbapSpatAlgorithm.hpp"
+#include "sg_ParallelMbapSpatAlgorithm.hpp"
+#include "sg_ParallelVbapSpatAlgorithm.hpp"
 #include "sg_PinkNoiseGenerator.hpp"
 #include "sg_StereoSpatAlgorithm.hpp"
 #include "sg_VbapSpatAlgorithm.hpp"
@@ -56,88 +58,7 @@ bool isProbablyAudioThread()
 //==============================================================================
 AbstractSpatAlgorithm::AbstractSpatAlgorithm()
 {
-#if SG_USE_FORK_UNION
-    // TODO FU: we need to handle this failure better
-    if (!threadPool.try_spawn(std::thread::hardware_concurrency())) {
-        std::fprintf(stderr, "Failed to fork the threads\n");
-        jassertfalse;
-    }
-#endif
 }
-
-#if SG_USE_FORK_UNION
-namespace fu = ashvardanian::fork_union;
-    #if SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS
-void AbstractSpatAlgorithm::silenceForkUnionBuffer(ForkUnionBuffer & forkUnionBuffer) noexcept
-{
-    fu::for_n(threadPool, forkUnionBuffer.size(), [&](std::size_t i) noexcept {
-        auto & individualSpeakerBuffer{ forkUnionBuffer[i] };
-        for (auto & wrapper : individualSpeakerBuffer)
-            wrapper._a.store(0.f, std::memory_order_relaxed);
-    });
-}
-
-void AbstractSpatAlgorithm::copyForkUnionBuffer(const gris::SpeakersAudioConfig & speakersAudioConfig,
-                                                gris::SourceAudioBuffer & sourcesBuffer,
-                                                gris::SpeakerAudioBuffer & speakersBuffer,
-                                                gris::ForkUnionBuffer & forkUnionBuffer)
-{
-    // Copy ForkUnionBuffer into speakersBuffer
-    size_t i = 0;
-    for (auto const & speaker : speakersAudioConfig) {
-        // skip silent speaker
-        if (speaker.value.isMuted || speaker.value.isDirectOutOnly || speaker.value.gain < SMALL_GAIN)
-            continue;
-
-        auto const numSamples{ sourcesBuffer.getNumSamples() };
-        auto * outputSamples{ speakersBuffer[speaker.key].getWritePointer(0) };
-        auto & inputSamples{ forkUnionBuffer[i++] };
-
-        for (int sampleIdx = 0; sampleIdx < numSamples; ++sampleIdx)
-            outputSamples[sampleIdx] = inputSamples[sampleIdx]._a;
-    }
-}
-    #elif SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD
-void AbstractSpatAlgorithm::silenceForkUnionBuffer(ForkUnionBuffer & forkUnionBuffer) noexcept
-{
-    fu::for_n(threadPool, forkUnionBuffer.size(), [&](fu::prong_t prong) noexcept {
-        // TODO FU: test on rasberry pi
-        jassert(threadPool.is_lock_free());
-
-        // TODO FU: if this were a boost multi_array we could clear it directly
-        // for each thread buffer
-        auto & individualThreadBuffer{ forkUnionBuffer[prong.task_index] };
-
-        // for each speaker buffer in the thread buffer
-        for (auto & speakerBuffer : individualThreadBuffer)
-            std::fill(speakerBuffer.begin(), speakerBuffer.end(), 0.f); // silence all speaker samples
-    });
-}
-
-void AbstractSpatAlgorithm::copyForkUnionBuffer(const gris::SpeakersAudioConfig & speakersAudioConfig,
-                                                gris::SourceAudioBuffer & sourcesBuffer,
-                                                gris::SpeakerAudioBuffer & speakersBuffer,
-                                                gris::ForkUnionBuffer & forkUnionBuffer)
-{
-    // Copy forkUnionBuffer into speakersBuffer
-    for (auto const & threadBuffers : forkUnionBuffer) {
-        size_t curSpeakerNumber = 0;
-        for (auto const & speaker : speakersAudioConfig) {
-            // skip silent speaker
-            if (speaker.value.isMuted || speaker.value.isDirectOutOnly || speaker.value.gain < SMALL_GAIN)
-                continue;
-
-            auto const numSamples{ sourcesBuffer.getNumSamples() };
-            auto * mainOutputSamples{ speakersBuffer[speaker.key].getWritePointer(0) };
-            auto & threadOutputSamples{ threadBuffers[curSpeakerNumber++] };
-
-            for (int sampleIdx = 0; sampleIdx < numSamples; ++sampleIdx)
-                mainOutputSamples[sampleIdx] += threadOutputSamples[sampleIdx];
-        }
-    }
-}
-    #endif
-#endif
 
 //==============================================================================
 void AbstractSpatAlgorithm::fixDirectOutsIntoPlace(SourcesData const & sources,
@@ -186,7 +107,9 @@ std::unique_ptr<AbstractSpatAlgorithm> AbstractSpatAlgorithm::make(SpeakerSetup 
                                                                    tl::optional<StereoMode> stereoMode,
                                                                    SourcesData const & sources,
                                                                    double const sampleRate,
-                                                                   int const bufferSize)
+                                                                   int const bufferSize,
+                                                                   // defaulted to false
+                                                                   bool const useMulticoreDSP)
 {
     JUCE_ASSERT_MESSAGE_THREAD;
 
@@ -204,13 +127,27 @@ std::unique_ptr<AbstractSpatAlgorithm> AbstractSpatAlgorithm::make(SpeakerSetup 
         jassertfalse;
     }
 
+    auto hardwareConcurrency = std::thread::hardware_concurrency();
     switch (projectSpatMode) {
     case SpatMode::vbap:
-        return VbapSpatAlgorithm::make(speakerSetup, sources.getKeys());
+        if (useMulticoreDSP) {
+            return ParallelVbapSpatAlgorithm::make(speakerSetup, sources.getKeys(), hardwareConcurrency);
+        } else {
+            return VbapSpatAlgorithm::make(speakerSetup, sources.getKeys());
+        }
     case SpatMode::mbap:
-        return MbapSpatAlgorithm::make(speakerSetup, sources.getKeys());
+        if (useMulticoreDSP) {
+            return ParallelMbapSpatAlgorithm::make(speakerSetup, sources.getKeys(), hardwareConcurrency);
+        } else {
+            return MbapSpatAlgorithm::make(speakerSetup, sources.getKeys());
+        }
     case SpatMode::hybrid:
-        return HybridSpatAlgorithm::make(speakerSetup, sources.getKeys());
+        if (useMulticoreDSP) {
+            return HybridSpatAlgorithm<ParallelMbapSpatAlgorithm, ParallelVbapSpatAlgorithm>::make(speakerSetup,
+                                                                                                   sources.getKeys());
+        } else {
+            return HybridSpatAlgorithm<MbapSpatAlgorithm, VbapSpatAlgorithm>::make(speakerSetup, sources.getKeys());
+        }
     case SpatMode::invalid:
         break;
     }
@@ -218,4 +155,15 @@ std::unique_ptr<AbstractSpatAlgorithm> AbstractSpatAlgorithm::make(SpeakerSetup 
     jassertfalse;
     return nullptr;
 }
+
+//==============================================================================
+ParallelAlgorithm::ParallelAlgorithm(unsigned int numberOfThreads)
+{
+    isValid = threadPool.try_spawn(numberOfThreads);
+    if (!isValid) {
+        std::fprintf(stderr, "Failed to spawn the threadpool\n");
+        jassertfalse;
+    }
+}
+
 } // namespace gris

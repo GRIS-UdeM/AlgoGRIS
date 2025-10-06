@@ -34,13 +34,19 @@
 #include <cstdint>
 #include <memory>
 
-#if SG_USE_FORK_UNION
-    #if JUCE_WINDOWS
-        // this disables an annoying warning about structure alignment
-        #pragma warning(disable : 4324)
-    #endif
-    #include <fork_union.hpp>
+#if JUCE_WINDOWS
+    // this disables an annoying warning about structure alignment (caused by fork_union's inclusion)
+    #pragma warning(disable : 4324)
 #endif
+
+// Disable numa in fork_union, this breaks on the ubuntu 20.04 CI.
+// This disables NUMA related optimisation on linux. I think if we ever
+// get big linux spatialization servers with multiple cpu sockets this might matter but otherwise
+// I don't think we lose anything by disabling this.
+#if !defined(FU_ENABLE_NUMA)
+    #define FU_ENABLE_NUMA 0
+#endif
+#include <fork_union.hpp>
 
 namespace gris
 {
@@ -78,21 +84,12 @@ public:
         notEnoughDomeSpeakers,
         notEnoughCubeSpeakers,
         flatDomeSpeakersTooFarApart,
+        failedToSpawnThreadpool
     };
     //==============================================================================
     AbstractSpatAlgorithm();
     virtual ~AbstractSpatAlgorithm() = default;
     SG_DELETE_COPY_AND_MOVE(AbstractSpatAlgorithm)
-
-#if SG_USE_FORK_UNION && (SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS || SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD)
-    void silenceForkUnionBuffer(ForkUnionBuffer & forkUnionBuffer) noexcept;
-
-    static void copyForkUnionBuffer(const gris::SpeakersAudioConfig & speakersAudioConfig,
-                                    gris::SourceAudioBuffer & sourcesBuffer,
-                                    gris::SpeakerAudioBuffer & speakersBuffer,
-                                    gris::ForkUnionBuffer & forkUnionBuffer);
-
-#endif
 
     //==============================================================================
     /** Assigns the position of sources in direct out mode to their assigned speakers' positions.
@@ -121,9 +118,6 @@ public:
     virtual void process(AudioConfig const & config,
                          SourceAudioBuffer & sourcesBuffer,
                          SpeakerAudioBuffer & speakersBuffer,
-#if SG_USE_FORK_UNION && (SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS || SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD)
-                         ForkUnionBuffer & forkUnionBuffer,
-#endif
                          juce::AudioBuffer<float> & stereoBuffer,
                          SourcePeaks const & sourcePeaks,
                          SpeakersAudioConfig const * altSpeakerConfig)
@@ -143,22 +137,46 @@ public:
      * @param sources the sources' data.
      * @param sampleRate the expected sample rate
      * @param bufferSize the expected buffer size in samples
+     * @param useMulticoreDSP use parallelized vbap and mbap. default false.
      */
     [[nodiscard]] static std::unique_ptr<AbstractSpatAlgorithm> make(SpeakerSetup const & speakerSetup,
                                                                      SpatMode const & projectSpatMode,
                                                                      tl::optional<StereoMode> stereoMode,
                                                                      SourcesData const & sources,
                                                                      double sampleRate,
-                                                                     int bufferSize);
-
-protected:
-#if SG_USE_FORK_UNION
-    ashvardanian::fork_union::thread_pool_t threadPool;
-#endif
+                                                                     int bufferSize,
+                                                                     bool useMulticoreDSP = false);
 
 private:
     //==============================================================================
     JUCE_LEAK_DETECTOR(AbstractSpatAlgorithm)
+};
+
+class ParallelAlgorithm
+{
+public:
+    /**
+     * Starts a threadpool and sets the valid bool if it works.
+     * It is up to the implemeter of this class to check valid and
+     * deal with the failure appropriately.
+     *
+     * Unless you spawn may algorithms that are going to be processed at the same time
+     * (like for the hybrid algorithm), you probably want std::thread::hardware_concurrency()
+     * number of threads or very close to this.
+     */
+    ParallelAlgorithm(unsigned int numberOfThreads);
+    /**
+     * set to true after successfuly spawning the threadpool
+     */
+    bool isValid = false;
+
+protected:
+    /**
+     * fork union threadpool.
+     *
+     * TODO: make this use a CPU instruction appropriate micro_yield.
+     */
+    ashvardanian::fork_union::basic_pool_t threadPool;
 };
 
 } // namespace gris
