@@ -34,6 +34,7 @@ namespace gris::tests
 auto constexpr static vbapTestName = "VBAP";
 auto constexpr static stereoTestName = "STEREO";
 auto constexpr static mbapTestName = "MBAP";
+auto constexpr static hybridTestName = "HYBRID";
 auto constexpr static hrtfTestName = "HRTF";
 
 #if USE_FIXED_NUM_LOOPS

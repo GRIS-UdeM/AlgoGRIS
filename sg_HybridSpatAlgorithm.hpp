@@ -26,6 +26,11 @@ namespace gris
 /** A spatialization algorithm that uses both Vbap (dome) and Mbap (cube).
  *
  * The selection of the algorithm is done on a per-source basis.
+ *
+ * Note: This class is templated to make it possible to use different implementation of
+ * the VBAP and MBAP spatialization. The use case right now is to use
+ * ParallelVbapSpatAlgorithm and ParallelMbapSpatAlgorithm but benchmarking has shown
+ * its not better than single threaded for the hybrid use-case.
  */
 template<typename MBAP, typename VBAP>
 class HybridSpatAlgorithm final : public AbstractSpatAlgorithm
@@ -77,8 +82,8 @@ public:
                  SourcePeaks const & sourcePeaks,
                  SpeakersAudioConfig const * altSpeakerConfig) [[clang::nonblocking]]
     {
-        mVbap->process(config, sourcesBuffer, speakersBuffer, stereoBuffer, sourcePeaks, altSpeakerConfig);
         mMbap->process(config, sourcesBuffer, speakersBuffer, stereoBuffer, sourcePeaks, altSpeakerConfig);
+        mVbap->process(config, sourcesBuffer, speakersBuffer, stereoBuffer, sourcePeaks, altSpeakerConfig);
     }
 
     juce::Array<Triplet> getTriplets() const noexcept { return mVbap->getTriplets(); }

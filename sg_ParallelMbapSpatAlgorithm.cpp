@@ -52,7 +52,7 @@ ParallelMbapSpatAlgorithm::ParallelMbapSpatAlgorithm(SpeakerSetup const & speake
 
 ParallelMbapSpatAlgorithm::ParallelMbapSpatAlgorithm(SpeakerSetup const & speakerSetup,
                                                      std::vector<source_index_t> srcIds)
-    : ParallelMbapSpatAlgorithm(speakerSetup, srcIds, std::thread::hardware_concurrency() / 2)
+    : ParallelMbapSpatAlgorithm(speakerSetup, srcIds, std::thread::hardware_concurrency())
 {
 }
 
@@ -71,12 +71,15 @@ void ParallelMbapSpatAlgorithm::process(AudioConfig const & config,
     namespace fu = ashvardanian::fork_union;
 
     jassert(sourceIds.size() > 0);
-
+#if THREAD_WAIT_METHOD == SPIN_SLEEP
+    SpinSleepWait::resetStates();
+#endif
     threadPool.for_n(sourceIds.size(), [&](fu::prong_t prong) noexcept {
         processSource(config, sourceIds[prong.task], sourcePeaks, sourcesBuffer, speakersAudioConfig, speakersBuffer);
     });
-    // sleep with 1us periodicity
+#if THREAD_WAIT_METHOD == SLEEP
     threadPool.sleep(1);
+#endif
 }
 
 inline void ParallelMbapSpatAlgorithm::processSource(const gris::AudioConfig & config,

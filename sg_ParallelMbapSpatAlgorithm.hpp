@@ -31,6 +31,7 @@
 #include "Implementations/sg_mbap.hpp"
 #include "sg_AbstractSpatAlgorithm.hpp"
 #include "sg_MbapSpatAlgorithm.hpp"
+#include "sg_ParallelSpatAlgorithm.hpp"
 #include "juce_audio_basics/juce_audio_basics.h"
 #include "juce_core/juce_core.h"
 #include "tl/optional.hpp"
@@ -56,7 +57,8 @@ public:
                                        unsigned int numberOfThreads);
     /**
      * instanciate without numberOfThreads gets half the hardware thread. This is
-     * a hack so that hybrid can instanciate without knowing the type...
+     * a hack so that hybrid can instanciate without knowing the type... Hybrid shouldn't use
+     * Parallel algorithm as it has been benchmarked to be slower than single thread anyways.
      */
     explicit ParallelMbapSpatAlgorithm(SpeakerSetup const & speakerSetup, std::vector<source_index_t> sourceIds);
 

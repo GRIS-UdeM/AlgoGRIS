@@ -58,7 +58,7 @@ ParallelVbapSpatAlgorithm::ParallelVbapSpatAlgorithm(SpeakersData const & speake
 }
 
 ParallelVbapSpatAlgorithm::ParallelVbapSpatAlgorithm(SpeakersData const & speakers, std::vector<source_index_t> srcIds)
-    : ParallelVbapSpatAlgorithm(speakers, srcIds, std::thread::hardware_concurrency() / 2)
+    : ParallelVbapSpatAlgorithm(speakers, srcIds, std::thread::hardware_concurrency())
 {
 }
 
@@ -77,13 +77,17 @@ void ParallelVbapSpatAlgorithm::process(AudioConfig const & config,
     namespace fu = ashvardanian::fork_union;
 
     jassert(sourceIds.size() > 0);
-
+#if THREAD_WAIT_METHOD == SPIN_SLEEP
+    SpinSleepWait::resetStates();
+#endif
     threadPool.for_n(sourceIds.size(), [&](fu::prong_t prong) noexcept {
         jassert(threadPool.is_lock_free());
 
         processSource(config, sourceIds[prong.task], sourcePeaks, sourcesBuffer, speakersAudioConfig, speakersBuffer);
     });
+#if THREAD_WAIT_METHOD == SLEEP
     threadPool.sleep(1);
+#endif
 }
 
 inline void ParallelVbapSpatAlgorithm::processSource(const gris::AudioConfig & config,
