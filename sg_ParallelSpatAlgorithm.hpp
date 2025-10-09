@@ -89,6 +89,12 @@ public:
     }
 
     /**
+     * This is the standard yield that will be called by fork_union outside of worker
+     * threads.
+     */
+    inline void operator()() const noexcept { cpuPause(); }
+
+    /**
      * This operator will be called by fork_union worker thread when they have nothing to do
      * @param idx : the index of the thread that called
      */
@@ -167,10 +173,9 @@ protected:
      */
 #if THREAD_WAIT_METHOD == SPIN_SLEEP
     ashvardanian::fork_union::basic_pool<std::allocator<std::thread>,
-                                         ashvardanian::fork_union::standard_yield_t,
+                                         SpinSleepWait,
                                          std::size_t,
-                                         ashvardanian::fork_union::default_alignment_k,
-                                         SpinSleepWait>
+                                         ashvardanian::fork_union::default_alignment_k>
         threadPool;
 #else
     ashvardanian::fork_union::basic_pool_t threadPool;
