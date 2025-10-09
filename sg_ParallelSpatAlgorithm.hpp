@@ -8,6 +8,7 @@
     #define FU_ENABLE_NUMA 0
 #endif
 #include <JuceHeader.h>
+#include "Data/sg_constants.hpp"
 #include <fork_union.hpp>
 #include <atomic>
 #include <thread>
@@ -81,21 +82,16 @@ private:
 
 public:
     /**
-     * Performance presets used to adjust the latency/cpu usage tradeoff.
-     */
-    enum class PerformancePreset : std::uint8_t { OPTIMIZE_CPU, OPTIMIZE_LATENCY };
-
-    /**
      *  The numbers 100 and 3000 were tested experimentally.
      *  3000 seems to give a pretty good average latency but uses +-30% of all cpus
      *  at all time on my laptop. 100 uses 5% cpu on my laptop (barely more than sleeping
      *  all the time) and still has performance improvement over sleeping all the time.
      */
-    static inline void setPerformancePreset(PerformancePreset preset)
+    static inline void setPerformancePreset(int preset)
     {
-        if (preset == PerformancePreset::OPTIMIZE_CPU) {
+        if (preset == OPTIMIZE_CPU_MULTICORE_PRESET) {
             numberOfPausesBeforeSleep = 100;
-        } else if (preset == PerformancePreset::OPTIMIZE_LATENCY) {
+        } else if (preset == OPTIMIZE_LATENCY_MULTICORE_PRESET) {
             numberOfPausesBeforeSleep = 3000;
         }
     }
