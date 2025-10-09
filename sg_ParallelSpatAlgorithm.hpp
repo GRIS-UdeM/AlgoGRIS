@@ -71,8 +71,35 @@ private:
      * this needs to be static which isn't idal.
      */
     static inline std::vector<AlignedInt> threadStates;
+    /**
+     * This governs how many time a given thread will cpuPause instead of sleeping before
+     * finally sleeping. Lower values means the threads go to sleep faster and tends to
+     * use less CPU when idle and higher values means the threads will sleep less often leading
+     * to better average latency.
+     */
+    static inline size_t numberOfPausesBeforeSleep = 100;
 
 public:
+    /**
+     * Performance presets used to adjust the latency/cpu usage tradeoff.
+     */
+    enum class PerformancePreset : std::uint8_t { OPTIMIZE_CPU, OPTIMIZE_LATENCY };
+
+    /**
+     *  The numbers 100 and 3000 were tested experimentally.
+     *  3000 seems to give a pretty good average latency but uses +-30% of all cpus
+     *  at all time on my laptop. 100 uses 5% cpu on my laptop (barely more than sleeping
+     *  all the time) and still has performance improvement over sleeping all the time.
+     */
+    static inline void setPerformancePreset(PerformancePreset preset)
+    {
+        if (preset == PerformancePreset::OPTIMIZE_CPU) {
+            numberOfPausesBeforeSleep = 100;
+        } else if (preset == PerformancePreset::OPTIMIZE_LATENCY) {
+            numberOfPausesBeforeSleep = 3000;
+        }
+    }
+
     static inline void allocateStateVector(size_t numElems)
     {
         // tries to increase the size of the vector
@@ -89,7 +116,7 @@ public:
     }
 
     /**
-     * This is the standard yield that will be called by fork_union outside of worker
+     * This is the standard cpu sleep that will be called by fork_union outside of worker
      * threads.
      */
     inline void operator()() const noexcept { cpuPause(); }
@@ -103,20 +130,19 @@ public:
         // nothing should ever decrease the size of the vector or the code after this
         // check is going to be crashing.
         if (idx > threadStates.size()) {
-            std::this_thread::yield();
+            // Falling into this branch probably means that allocateStateVector was not
+            // called yet or that it was not called with the right number of threads.
+            cpuPause();
             return;
         }
         int currentIndex = threadStates[idx].value;
-
-        // The numbers 15 and 3000 were taken from the original ossia score code
-        // Some other "tuning" may be possible to find a balance between cpu usage
-        // and performance.
-
+        // 15 was taken from the original ossia score code and empirically seems like
+        // a good value for the short pause.
         if (currentIndex < 15) {
             cpuPause();
             threadStates[idx].value += 1;
             return;
-        } else if (currentIndex < 3000) {
+        } else if (currentIndex < numberOfPausesBeforeSleep) {
             // repetition is needed here because otherwise the compiler can
             // allegedly optimize some of this out.
             cpuPause();
@@ -168,8 +194,6 @@ public:
 protected:
     /**
      * fork union threadpool.
-     *
-     * TODO: make this use a CPU instruction appropriate micro_yield.
      */
 #if THREAD_WAIT_METHOD == SPIN_SLEEP
     ashvardanian::fork_union::basic_pool<std::allocator<std::thread>,
