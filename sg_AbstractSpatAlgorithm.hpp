@@ -34,12 +34,9 @@
 #include <cstdint>
 #include <memory>
 
-#if SG_USE_FORK_UNION
-    #if JUCE_WINDOWS
-        // this disables an annoying warning about structure alignment
-        #pragma warning(disable : 4324)
-    #endif
-    #include <fork_union.hpp>
+#if JUCE_WINDOWS
+    // this disables an annoying warning about structure alignment (caused by fork_union's inclusion)
+    #pragma warning(disable : 4324)
 #endif
 
 namespace gris
@@ -78,21 +75,12 @@ public:
         notEnoughDomeSpeakers,
         notEnoughCubeSpeakers,
         flatDomeSpeakersTooFarApart,
+        failedToSpawnThreadpool
     };
     //==============================================================================
     AbstractSpatAlgorithm();
     virtual ~AbstractSpatAlgorithm() = default;
     SG_DELETE_COPY_AND_MOVE(AbstractSpatAlgorithm)
-
-#if SG_USE_FORK_UNION && (SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS || SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD)
-    void silenceForkUnionBuffer(ForkUnionBuffer & forkUnionBuffer) noexcept;
-
-    static void copyForkUnionBuffer(const gris::SpeakersAudioConfig & speakersAudioConfig,
-                                    gris::SourceAudioBuffer & sourcesBuffer,
-                                    gris::SpeakerAudioBuffer & speakersBuffer,
-                                    gris::ForkUnionBuffer & forkUnionBuffer);
-
-#endif
 
     //==============================================================================
     /** Assigns the position of sources in direct out mode to their assigned speakers' positions.
@@ -121,9 +109,6 @@ public:
     virtual void process(AudioConfig const & config,
                          SourceAudioBuffer & sourcesBuffer,
                          SpeakerAudioBuffer & speakersBuffer,
-#if SG_USE_FORK_UNION && (SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS || SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD)
-                         ForkUnionBuffer & forkUnionBuffer,
-#endif
                          juce::AudioBuffer<float> & stereoBuffer,
                          SourcePeaks const & sourcePeaks,
                          SpeakersAudioConfig const * altSpeakerConfig)
@@ -143,22 +128,18 @@ public:
      * @param sources the sources' data.
      * @param sampleRate the expected sample rate
      * @param bufferSize the expected buffer size in samples
+     * @param useMulticoreDSP use parallelized vbap and mbap. default false.
      */
     [[nodiscard]] static std::unique_ptr<AbstractSpatAlgorithm> make(SpeakerSetup const & speakerSetup,
                                                                      SpatMode const & projectSpatMode,
                                                                      tl::optional<StereoMode> stereoMode,
                                                                      SourcesData const & sources,
                                                                      double sampleRate,
-                                                                     int bufferSize);
-
-protected:
-#if SG_USE_FORK_UNION
-    ashvardanian::fork_union::thread_pool_t threadPool;
-#endif
+                                                                     int bufferSize,
+                                                                     bool useMulticoreDSP = false);
 
 private:
     //==============================================================================
     JUCE_LEAK_DETECTOR(AbstractSpatAlgorithm)
 };
-
 } // namespace gris

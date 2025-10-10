@@ -85,9 +85,6 @@ void StereoSpatAlgorithm::updateSpatData(source_index_t const sourceIndex, Sourc
 void StereoSpatAlgorithm::process(AudioConfig const & config,
                                   SourceAudioBuffer & sourcesBuffer,
                                   SpeakerAudioBuffer & speakersBuffer,
-#if SG_USE_FORK_UNION && (SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS || SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD)
-                                  ForkUnionBuffer & forkUnionBuffer,
-#endif
                                   juce::AudioBuffer<float> & stereoBuffer,
                                   SourcePeaks const & sourcePeaks,
                                   [[maybe_unused]] SpeakersAudioConfig const * altSpeakerConfig) [[clang::nonblocking]]
@@ -96,23 +93,10 @@ void StereoSpatAlgorithm::process(AudioConfig const & config,
     jassert(!altSpeakerConfig);
     jassert(stereoBuffer.getNumChannels() == 2);
 
-#if SG_USE_FORK_UNION && (SG_FU_METHOD == SG_FU_USE_ARRAY_OF_ATOMICS || SG_FU_METHOD == SG_FU_USE_BUFFER_PER_THREAD)
-    mInnerAlgorithm
-        ->process(config, sourcesBuffer, speakersBuffer, forkUnionBuffer, stereoBuffer, sourcePeaks, altSpeakerConfig);
-#else
     mInnerAlgorithm->process(config, sourcesBuffer, speakersBuffer, stereoBuffer, sourcePeaks, altSpeakerConfig);
-#endif
 
-#if SG_USE_FORK_UNION
-    jassert(sourceIds.size() > 0);
-
-    ashvardanian::fork_union::for_n(threadPool, sourceIds.size(), [&](std::size_t i) noexcept {
-        processSource(config, sourceIds[(int)i], sourcePeaks, sourcesBuffer, stereoBuffer);
-    });
-#else
     for (auto const & source : config.sourcesAudioConfig)
         processSource(config, source.key, sourcePeaks, sourcesBuffer, stereoBuffer);
-#endif
 
     // Apply gain compensation.
     auto const compensation{ std::pow(10.0f, (narrow<float>(config.sourcesAudioConfig.size()) - 1.0f) * -0.005f) };
@@ -161,12 +145,7 @@ inline void StereoSpatAlgorithm::processSource(const gris::AudioConfig & config,
             }
             for (int sampleIndex{}; sampleIndex < numSamples; ++sampleIndex) {
                 currentGain += gainSlope;
-                // TODO FU: SG_FU_METHOD == SG_FU_USE_ATOMIC_CAST and == SG_FU_USE_BUFFER_PER_THREAD
-#if SG_USE_FORK_UNION // && SG_FU_METHOD == SG_FU_USE_ATOMIC_CAST
-                std::atomic_ref<float>(outputSamples[sampleIndex]) += inputSamples[sampleIndex] * currentGain;
-#else
                 outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
-#endif
             }
         } else {
             // log interpolation with 1st order filter
@@ -177,12 +156,7 @@ inline void StereoSpatAlgorithm::processSource(const gris::AudioConfig & config,
                     // currentGain will no ever increase over this buffer
                     break;
                 }
-                // TODO FU: SG_FU_METHOD == SG_FU_USE_ATOMIC_CAST and == SG_FU_USE_BUFFER_PER_THREAD
-#if SG_USE_FORK_UNION //&& SG_FU_METHOD == SG_FU_USE_ATOMIC_CAST
-                std::atomic_ref<float>(outputSamples[sampleIndex]) += inputSamples[sampleIndex] * currentGain;
-#else
                 outputSamples[sampleIndex] += inputSamples[sampleIndex] * currentGain;
-#endif
             }
         }
     }
@@ -212,9 +186,6 @@ StereoSpatAlgorithm::StereoSpatAlgorithm(SpeakerSetup const & speakerSetup,
                                          SpatMode const & projectSpatMode,
                                          SourcesData const & sources,
                                          [[maybe_unused]] std::vector<source_index_t> && theSourceIds)
-#if SG_USE_FORK_UNION
-    : sourceIds{ theSourceIds }
-#endif
 {
     JUCE_ASSERT_MESSAGE_THREAD;
 
@@ -226,7 +197,8 @@ StereoSpatAlgorithm::StereoSpatAlgorithm(SpeakerSetup const & speakerSetup,
         mInnerAlgorithm = MbapSpatAlgorithm::make(speakerSetup, sources.getKeys());
         break;
     case SpatMode::hybrid:
-        mInnerAlgorithm = HybridSpatAlgorithm::make(speakerSetup, sources.getKeys());
+        mInnerAlgorithm
+            = HybridSpatAlgorithm<MbapSpatAlgorithm, VbapSpatAlgorithm>::make(speakerSetup, sources.getKeys());
         break;
     case SpatMode::invalid:
         break;
