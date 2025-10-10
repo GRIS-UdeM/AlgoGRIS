@@ -93,7 +93,7 @@ public:
         if (preset == OPTIMIZE_CPU_MULTICORE_PRESET) {
             numberOfPausesBeforeSleep = 100;
         } else if (preset == OPTIMIZE_LATENCY_MULTICORE_PRESET) {
-            numberOfPausesBeforeSleep = 3000;
+            numberOfPausesBeforeSleep = 10000;
         }
     }
 
