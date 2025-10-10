@@ -10,6 +10,7 @@
 #include <JuceHeader.h>
 #include "Data/sg_constants.hpp"
 #include <fork_union.hpp>
+#include <algorithm>
 #include <atomic>
 #include <thread>
 #include <vector>
@@ -154,13 +155,17 @@ public:
             threadStates[idx].value += 1;
             return;
         } else {
-            std::this_thread::sleep_for(std::chrono::microseconds(1));
+            constexpr std::array<std::chrono::microseconds, 3> threadSleepTimes
+                = { std::chrono::microseconds(10), std::chrono::microseconds(100), std::chrono::microseconds(500) };
+            auto sleepIdx = std::min(threadStates[idx].value - numberOfPausesBeforeSleep, threadSleepTimes.size() - 1);
+            std::this_thread::sleep_for(threadSleepTimes[sleepIdx]);
+            threadStates[idx].value += 1;
         }
     }
 };
 
 // compile the code with inconditional sleeps after the threadpool is done with its
-// current job
+// current jobhotspot linux thread sleep time
 #define SLEEP 0
 // compiles the code so that the threadpool busy waits and use 100% of a core between jobs.
 #define NO_SLEEP 1
