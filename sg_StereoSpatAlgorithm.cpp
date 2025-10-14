@@ -136,7 +136,7 @@ inline void StereoSpatAlgorithm::processSource(const gris::AudioConfig & config,
         auto & currentGain{ lastGains[speaker] };
         auto const & targetGain{ gains[speaker] };
         auto * outputSamples{ buffers[speaker] };
-        if (gainInterpolation == 0.0f) {
+        if (std::fpclassify(gainInterpolation) == FP_ZERO) {
             // linear interpolation over buffer size
             auto const gainSlope = (targetGain - currentGain) / narrow<float>(numSamples);
             if (targetGain < SMALL_GAIN && currentGain < SMALL_GAIN) {
