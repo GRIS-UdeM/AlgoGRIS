@@ -52,7 +52,7 @@ public:
                  SpeakerAudioBuffer & /*speakersBuffer*/,
                  juce::AudioBuffer<float> & /*stereoBuffer*/,
                  SourcePeaks const & /*sourcePeaks*/,
-                 SpeakersAudioConfig const * /*altSpeakerConfig*/) NONBLOCKING override
+                 SpeakersAudioConfig const * /*altSpeakerConfig*/) noexcept NONBLOCKING override
     {
     }
     [[nodiscard]] juce::Array<Triplet> getTriplets() const noexcept override { return juce::Array<Triplet>{}; }
