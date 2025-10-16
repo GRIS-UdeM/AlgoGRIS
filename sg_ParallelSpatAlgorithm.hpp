@@ -1,9 +1,7 @@
 #pragma once
 
-// Disable numa in fork_union, this breaks on the ubuntu 20.04 CI.
-// This disables NUMA related optimisation on linux. I think if we ever
-// get big linux spatialization servers with multiple cpu sockets this might matter but otherwise
-// I don't think we lose anything by disabling this.
+// Disable numa in fork_union
+// This disables NUMA related optimisation on linux
 #if !defined(FU_ENABLE_NUMA)
     #define FU_ENABLE_NUMA 0
 #endif
@@ -173,6 +171,13 @@ public:
 #define SPIN_SLEEP 2
 // SPIN_SLEEP seems to be the best compromise.
 #define THREAD_WAIT_METHOD SPIN_SLEEP
+
+// We want to suppress RTSAN if we ever sleep in the audio thread.
+// Sleeping is not real-time safe but its a trade off we made to make the algoirithms use
+// less than 100% of all cores at all times.
+#define SUPPRESS_RTSAN                                                                                                 \
+    (THREAD_WAIT_METHOD == SPIN_SLEEP || THREAD_WAIT_METHOD == SLEEP) && defined(__has_feature)                        \
+        && __has_feature(realtime_sanitizer)
 
 class ParallelAlgorithm
 {

@@ -17,7 +17,10 @@
  along with SpatGRIS.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "sg_ParallelMbapSpatAlgorithm.hpp"
+#if SUPPRESS_RTSAN
+    #include <sanitizer/rtsan_interface.h>
+#endif
+
 #include "Containers/sg_StaticMap.hpp"
 #include "Containers/sg_StrongArray.hpp"
 #include "Containers/sg_TaggedAudioBuffer.hpp"
@@ -29,6 +32,7 @@
 #include "Implementations/sg_mbap.hpp"
 #include "sg_AbstractSpatAlgorithm.hpp"
 #include "sg_DummySpatAlgorithm.hpp"
+#include "sg_ParallelMbapSpatAlgorithm.hpp"
 #include "juce_audio_basics/juce_audio_basics.h"
 #include "juce_core/juce_core.h"
 #include "juce_core/system/juce_PlatformDefs.h"
@@ -76,8 +80,7 @@ void ParallelMbapSpatAlgorithm::process(AudioConfig const & config,
 #endif
     // If we SLEEP or SPIN_SLEEP and we are using clang with the realtime sanitizer,
     // disable rtsan warnings. Sleeping is real-time unsafe.
-#if (THREAD_WAIT_METHOD == SPIN_SLEEP || THREAD_WAIT_METHOD == SLEEP) && defined(__has_feature)                        \
-    && __has_feature(realtime_sanitizer)
+#if SUPPRESS_RTSAN
     __rtsan::ScopedDisabler disableRealtimeWarnings;
 #endif
     threadPool.for_n(sourceIds.size(), [&](fu::prong_t prong) noexcept {
