@@ -80,6 +80,13 @@ void ParallelVbapSpatAlgorithm::process(AudioConfig const & config,
 #if THREAD_WAIT_METHOD == SPIN_SLEEP
     SpinSleepWait::resetStates();
 #endif
+
+    // If we SLEEP or SPIN_SLEEP and we are using clang with the realtime sanitizer,
+    // disable rtsan warnings. Sleeping is real-time unsafe.
+#if THREAD_WAIT_METHOD == SPIN_SLEEP                                                                                   \
+    || THREAD_WAIT_METHOD == SLEEP && defined(__has_feature) && __has_feature(realtime_sanitizer)
+    __rtsan::ScopedDisabler disableRealtimeWarnings;
+#endif
     threadPool.for_n(sourceIds.size(), [&](fu::prong_t prong) noexcept {
         jassert(threadPool.is_lock_free());
 
