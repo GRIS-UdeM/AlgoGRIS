@@ -55,8 +55,8 @@ public:
     {
         if (!sourceData.position.has_value()) {
             // resetting a position should reset both algorithms
-            mVbap->updateSpatData(sourceIndex, sourceData);
             mMbap->updateSpatData(sourceIndex, sourceData);
+            mVbap->updateSpatData(sourceIndex, sourceData);
             return;
         }
 
