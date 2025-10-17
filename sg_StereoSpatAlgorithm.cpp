@@ -87,7 +87,7 @@ void StereoSpatAlgorithm::process(AudioConfig const & config,
                                   SpeakerAudioBuffer & speakersBuffer,
                                   juce::AudioBuffer<float> & stereoBuffer,
                                   SourcePeaks const & sourcePeaks,
-                                  [[maybe_unused]] SpeakersAudioConfig const * altSpeakerConfig) NONBLOCKING
+                                  [[maybe_unused]] SpeakersAudioConfig const * altSpeakerConfig) noexcept NONBLOCKING
 {
     ASSERT_AUDIO_THREAD;
     jassert(!altSpeakerConfig);

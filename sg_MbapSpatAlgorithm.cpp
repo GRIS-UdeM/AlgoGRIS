@@ -103,7 +103,7 @@ void MbapSpatAlgorithm::process(AudioConfig const & config,
                                 SpeakerAudioBuffer & speakersBuffer,
                                 [[maybe_unused]] juce::AudioBuffer<float> & stereoBuffer,
                                 SourcePeaks const & sourcePeaks,
-                                SpeakersAudioConfig const * altSpeakerConfig) NONBLOCKING
+                                SpeakersAudioConfig const * altSpeakerConfig) noexcept NONBLOCKING
 {
     ASSERT_AUDIO_THREAD;
 
