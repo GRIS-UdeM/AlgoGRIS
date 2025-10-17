@@ -17,7 +17,7 @@
  along with SpatGRIS.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#if SUPPRESS_RTSAN
+#if UNSAFE_SLEEP && defined(__has_feature) && __has_feature(realtime_sanitizer)
     #include <sanitizer/rtsan_interface.h>
 #endif
 
@@ -80,7 +80,7 @@ void ParallelMbapSpatAlgorithm::process(AudioConfig const & config,
 #endif
     // If we SLEEP or SPIN_SLEEP and we are using clang with the realtime sanitizer,
     // disable rtsan warnings. Sleeping is real-time unsafe.
-#if SUPPRESS_RTSAN
+#if UNSAFE_SLEEP && defined(__has_feature) && __has_feature(realtime_sanitizer)
     __rtsan::ScopedDisabler disableRealtimeWarnings;
 #endif
     threadPool.for_n(sourceIds.size(), [&](fu::prong_t prong) noexcept {

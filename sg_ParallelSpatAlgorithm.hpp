@@ -175,9 +175,9 @@ public:
 // We want to suppress RTSAN if we ever sleep in the audio thread.
 // Sleeping is not real-time safe but its a trade off we made to make the algoirithms use
 // less than 100% of all cores at all times.
-#define SUPPRESS_RTSAN                                                                                                 \
-    (THREAD_WAIT_METHOD == SPIN_SLEEP || THREAD_WAIT_METHOD == SLEEP) && defined(__has_feature)                        \
-        && __has_feature(realtime_sanitizer)
+// clang doesn't let us use "defined" in a define used in a #if so we must put the rest of the
+// expression direction in the #if.
+#define UNSAFE_SLEEP (THREAD_WAIT_METHOD == SPIN_SLEEP || THREAD_WAIT_METHOD == SLEEP)
 
 class ParallelAlgorithm
 {

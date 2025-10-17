@@ -17,7 +17,7 @@
  along with SpatGRIS.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#if SUPPRESS_RTSAN
+#if UNSAFE_SLEEP && defined(__has_feature) && __has_feature(realtime_sanitizer)
     #include <sanitizer/rtsan_interface.h>
 #endif
 
@@ -84,8 +84,7 @@ void ParallelVbapSpatAlgorithm::process(AudioConfig const & config,
 #if THREAD_WAIT_METHOD == SPIN_SLEEP
     SpinSleepWait::resetStates();
 #endif
-
-#if SUPPRESS_RTSAN
+#if UNSAFE_SLEEP && defined(__has_feature) && __has_feature(realtime_sanitizer)
     __rtsan::ScopedDisabler disableRealtimeWarnings;
 #endif
     threadPool.for_n(sourceIds.size(), [&](fu::prong_t prong) noexcept {
