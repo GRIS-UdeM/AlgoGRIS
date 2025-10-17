@@ -52,6 +52,21 @@ struct AlignedInt {
     #define cpuPause()
 #endif
 
+// reference : https://meghprkh.github.io/blog/posts/c++-force-inline/
+#if defined(__clang__)
+    #define FORCE_INLINE [[gnu::always_inline]] [[gnu::gnu_inline]] extern inline
+
+#elif defined(__GNUC__)
+    #define FORCE_INLINE [[gnu::always_inline]] inline
+
+#elif defined(_MSC_VER)
+    #pragma warning(error : 4714)
+    #define FORCE_INLINE __forceinline
+
+#else
+    #error Unsupported compiler
+#endif
+
 /**
  * Struct that tracks how many time each of the fork_union worker thread has waited between job
  * and which busy waits an increasing amount of time before starting to put the thread to sleep.
@@ -115,13 +130,13 @@ public:
      * This is the standard cpu sleep that will be called by fork_union outside of worker
      * threads.
      */
-    inline void operator()() const noexcept { cpuPause(); }
+    FORCE_INLINE void operator()() const noexcept { cpuPause(); }
 
     /**
      * This operator will be called by fork_union worker thread when they have nothing to do
      * @param idx : the index of the thread that called
      */
-    inline void operator()(size_t idx) const noexcept
+    FORCE_INLINE void operator()(size_t idx) const noexcept
     {
         // nothing should ever decrease the size of the vector or the code after this
         // check is going to be crashing.
