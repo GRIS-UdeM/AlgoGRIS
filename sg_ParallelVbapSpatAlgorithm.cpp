@@ -17,10 +17,11 @@
  along with SpatGRIS.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "sg_ParallelVbapSpatAlgorithm.hpp"
+// needs to be included after ParallelMbapSpatAlgorithm or UNSAFE_SLEEP won't be defined yet.
 #if UNSAFE_SLEEP && defined(__has_feature) && __has_feature(realtime_sanitizer)
     #include <sanitizer/rtsan_interface.h>
 #endif
-
 #include "Containers/sg_StaticMap.hpp"
 #include "Containers/sg_StrongArray.hpp"
 #include "Containers/sg_TaggedAudioBuffer.hpp"
@@ -35,7 +36,6 @@
 #include "Implementations/sg_vbap.hpp"
 #include "sg_AbstractSpatAlgorithm.hpp"
 #include "sg_DummySpatAlgorithm.hpp"
-#include "sg_ParallelVbapSpatAlgorithm.hpp"
 #include "juce_audio_basics/juce_audio_basics.h"
 #include "juce_core/juce_core.h"
 #include "juce_core/system/juce_PlatformDefs.h"
