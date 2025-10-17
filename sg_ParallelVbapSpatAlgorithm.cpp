@@ -21,7 +21,7 @@
 // needs to be included after ParallelMbapSpatAlgorithm or UNSAFE_SLEEP won't be defined yet.
 // some compiler seem to choke on the non-nested version of this.
 #if UNSAFE_SLEEP && defined(__has_feature)
-    #if defined __has_feature(realtime_sanitizer)
+    #if __has_feature(realtime_sanitizer)
         #include <sanitizer/rtsan_interface.h>
     #endif
 #endif
@@ -89,7 +89,7 @@ void ParallelVbapSpatAlgorithm::process(AudioConfig const & config,
     SpinSleepWait::resetStates();
 #endif
 #if UNSAFE_SLEEP && defined(__has_feature)
-    #if defined __has_feature(realtime_sanitizer)
+    #if __has_feature(realtime_sanitizer)
     __rtsan::ScopedDisabler disableRealtimeWarnings;
     #endif
 #endif
