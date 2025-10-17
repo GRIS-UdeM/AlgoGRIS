@@ -19,9 +19,13 @@
 
 #include "sg_ParallelVbapSpatAlgorithm.hpp"
 // needs to be included after ParallelMbapSpatAlgorithm or UNSAFE_SLEEP won't be defined yet.
-#if UNSAFE_SLEEP && defined(__has_feature) && __has_feature(realtime_sanitizer)
-    #include <sanitizer/rtsan_interface.h>
+// some compiler seem to choke on the non-nested version of this.
+#if UNSAFE_SLEEP && defined(__has_feature)
+    #if defined __has_feature(realtime_sanitizer)
+        #include <sanitizer/rtsan_interface.h>
+    #endif
 #endif
+
 #include "Containers/sg_StaticMap.hpp"
 #include "Containers/sg_StrongArray.hpp"
 #include "Containers/sg_TaggedAudioBuffer.hpp"
@@ -84,8 +88,10 @@ void ParallelVbapSpatAlgorithm::process(AudioConfig const & config,
 #if THREAD_WAIT_METHOD == SPIN_SLEEP
     SpinSleepWait::resetStates();
 #endif
-#if UNSAFE_SLEEP && defined(__has_feature) && __has_feature(realtime_sanitizer)
+#if UNSAFE_SLEEP && defined(__has_feature)
+    #if defined __has_feature(realtime_sanitizer)
     __rtsan::ScopedDisabler disableRealtimeWarnings;
+    #endif
 #endif
     threadPool.for_n(sourceIds.size(), [&](fu::prong_t prong) noexcept {
         jassert(threadPool.is_lock_free());
