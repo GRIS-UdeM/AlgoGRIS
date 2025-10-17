@@ -72,7 +72,7 @@ void ParallelVbapSpatAlgorithm::process(AudioConfig const & config,
                                         SpeakerAudioBuffer & speakersBuffer,
                                         juce::AudioBuffer<float> & /*stereoBuffer*/,
                                         SourcePeaks const & sourcePeaks,
-                                        SpeakersAudioConfig const * altSpeakerConfig) [[clang::nonblocking]]
+                                        SpeakersAudioConfig const * altSpeakerConfig) noexcept NONBLOCKING
 {
     ASSERT_AUDIO_THREAD;
 

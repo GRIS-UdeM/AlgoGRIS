@@ -70,7 +70,7 @@ public:
                  SpeakerAudioBuffer & speakersBuffer,
                  juce::AudioBuffer<float> & stereoBuffer,
                  SourcePeaks const & sourcesPeaks,
-                 SpeakersAudioConfig const * altSpeakerConfig) override;
+                 SpeakersAudioConfig const * altSpeakerConfig) noexcept override;
 
     [[nodiscard]] juce::Array<Triplet> getTriplets() const noexcept override;
     [[nodiscard]] bool hasTriplets() const noexcept override { return false; }
