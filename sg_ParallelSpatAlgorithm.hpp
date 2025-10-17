@@ -54,7 +54,7 @@ struct AlignedInt {
 
 // reference : https://meghprkh.github.io/blog/posts/c++-force-inline/
 #if defined(__clang__)
-    #define FORCE_INLINE [[gnu::always_inline]] [[gnu::gnu_inline]] inline
+    #define FORCE_INLINE [[gnu::always_inline]] [[gnu::gnu_inline]] extern inline
 
 #elif defined(__GNUC__)
     #define FORCE_INLINE [[gnu::always_inline]] inline
