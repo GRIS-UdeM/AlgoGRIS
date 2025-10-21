@@ -87,7 +87,7 @@ void StereoSpatAlgorithm::process(AudioConfig const & config,
                                   SpeakerAudioBuffer & speakersBuffer,
                                   juce::AudioBuffer<float> & stereoBuffer,
                                   SourcePeaks const & sourcePeaks,
-                                  [[maybe_unused]] SpeakersAudioConfig const * altSpeakerConfig) noexcept NONBLOCKING
+                                  [[maybe_unused]] SpeakersAudioConfig const * altSpeakerConfig) [[clang::nonblocking]]
 {
     ASSERT_AUDIO_THREAD;
     jassert(!altSpeakerConfig);
@@ -136,7 +136,7 @@ inline void StereoSpatAlgorithm::processSource(const gris::AudioConfig & config,
         auto & currentGain{ lastGains[speaker] };
         auto const & targetGain{ gains[speaker] };
         auto * outputSamples{ buffers[speaker] };
-        if (std::fpclassify(gainInterpolation) == FP_ZERO) {
+        if (gainInterpolation == 0.0f) {
             // linear interpolation over buffer size
             auto const gainSlope = (targetGain - currentGain) / narrow<float>(numSamples);
             if (targetGain < SMALL_GAIN && currentGain < SMALL_GAIN) {

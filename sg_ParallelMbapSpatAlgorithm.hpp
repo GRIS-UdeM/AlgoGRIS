@@ -69,7 +69,7 @@ public:
                  SpeakerAudioBuffer & speakersBuffer,
                  juce::AudioBuffer<float> & stereoBuffer,
                  SourcePeaks const & sourcesPeaks,
-                 SpeakersAudioConfig const * altSpeakerConfig) noexcept override;
+                 SpeakersAudioConfig const * altSpeakerConfig) override;
     static std::unique_ptr<AbstractSpatAlgorithm>
         make(SpeakerSetup const & speakerSetup, std::vector<source_index_t> && sourceIds, unsigned int numberOfThreads);
 

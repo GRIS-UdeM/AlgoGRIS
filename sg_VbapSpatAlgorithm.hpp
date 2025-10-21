@@ -64,7 +64,7 @@ public:
                  SpeakerAudioBuffer & speakersBuffer,
                  juce::AudioBuffer<float> & stereoBuffer,
                  SourcePeaks const & sourcePeaks,
-                 SpeakersAudioConfig const * altSpeakerConfig) noexcept override;
+                 SpeakersAudioConfig const * altSpeakerConfig) override;
     [[nodiscard]] juce::Array<Triplet> getTriplets() const noexcept override;
     [[nodiscard]] bool hasTriplets() const noexcept override;
     [[nodiscard]] tl::optional<Error> getError() const noexcept override { return tl::nullopt; }

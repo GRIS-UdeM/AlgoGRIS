@@ -51,7 +51,7 @@ public:
     {
     }
     //==============================================================================
-    void updateSpatData(source_index_t const sourceIndex, SourceData const & sourceData) noexcept override
+    void updateSpatData(source_index_t const sourceIndex, SourceData const & sourceData) noexcept
     {
         if (!sourceData.position.has_value()) {
             // resetting a position should reset both algorithms
@@ -80,16 +80,16 @@ public:
                  SpeakerAudioBuffer & speakersBuffer,
                  juce::AudioBuffer<float> & stereoBuffer,
                  SourcePeaks const & sourcePeaks,
-                 SpeakersAudioConfig const * altSpeakerConfig) noexcept override
+                 SpeakersAudioConfig const * altSpeakerConfig) [[clang::nonblocking]]
     {
         mMbap->process(config, sourcesBuffer, speakersBuffer, stereoBuffer, sourcePeaks, altSpeakerConfig);
         mVbap->process(config, sourcesBuffer, speakersBuffer, stereoBuffer, sourcePeaks, altSpeakerConfig);
     }
 
-    juce::Array<Triplet> getTriplets() const noexcept override { return mVbap->getTriplets(); }
+    juce::Array<Triplet> getTriplets() const noexcept { return mVbap->getTriplets(); }
 
-    bool hasTriplets() const noexcept override { return true; };
-    [[nodiscard]] tl::optional<Error> getError() const noexcept override
+    bool hasTriplets() const noexcept { return true; };
+    [[nodiscard]] tl::optional<Error> getError() const noexcept
     {
         // It seems this always return nullopt...
         return mVbap->getError().disjunction(mMbap->getError());

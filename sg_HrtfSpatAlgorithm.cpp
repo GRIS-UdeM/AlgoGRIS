@@ -179,7 +179,7 @@ void HrtfSpatAlgorithm::process(AudioConfig const & config,
                                 SpeakerAudioBuffer & speakersBuffer,
                                 juce::AudioBuffer<float> & stereoBuffer,
                                 SourcePeaks const & sourcePeaks,
-                                [[maybe_unused]] SpeakersAudioConfig const * altSpeakerConfig) noexcept NONBLOCKING
+                                [[maybe_unused]] SpeakersAudioConfig const * altSpeakerConfig) [[clang::nonblocking]]
 {
     ASSERT_AUDIO_THREAD;
     jassert(!altSpeakerConfig);
@@ -230,12 +230,12 @@ inline void HrtfSpatAlgorithm::processSpeaker(int speakerIndex,
     convolutionBuffer.copyFrom(1, 0, hrtfBuffer[speakerId], 0, 0, numSamples);
     juce::dsp::AudioBlock<float> block{ convolutionBuffer };
     juce::dsp::ProcessContextReplacing<float> const context{ block };
-    mConvolutions[static_cast<size_t>(speakerIndex)].process(context);
+    mConvolutions[speakerIndex].process(context);
 
     static constexpr std::array<bool, 16> REVERSE{ true, false, false, false, false, true, true, true,
                                                    true, false, false, false, true,  true, true, false };
 
-    if (!REVERSE[static_cast<size_t>(speakerIndex)]) {
+    if (!REVERSE[speakerIndex]) {
         stereoBuffer.addFrom(0, 0, convolutionBuffer, 0, 0, numSamples);
         stereoBuffer.addFrom(1, 0, convolutionBuffer, 1, 0, numSamples);
     } else {

@@ -68,7 +68,7 @@ void ParallelMbapSpatAlgorithm::process(AudioConfig const & config,
                                         SpeakerAudioBuffer & speakersBuffer,
                                         [[maybe_unused]] juce::AudioBuffer<float> & stereoBuffer,
                                         SourcePeaks const & sourcePeaks,
-                                        SpeakersAudioConfig const * altSpeakerConfig) noexcept NONBLOCKING
+                                        SpeakersAudioConfig const * altSpeakerConfig) [[clang::nonblocking]]
 {
     ASSERT_AUDIO_THREAD;
 
