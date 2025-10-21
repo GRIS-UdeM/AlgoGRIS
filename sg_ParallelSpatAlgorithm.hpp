@@ -7,7 +7,6 @@
 #endif
 #include <JuceHeader.h>
 #include "Data/sg_constants.hpp"
-#include <cmath>
 #include <fork_union.hpp>
 #include <algorithm>
 #include <atomic>
@@ -78,7 +77,7 @@ private:
      * use less CPU when idle and higher values means the threads will sleep less often leading
      * to better average latency.
      */
-    static inline std::atomic<size_t> numberOfPausesBeforeSleep = 100;
+    static inline size_t numberOfPausesBeforeSleep = 100;
 
 public:
     /**
@@ -98,16 +97,16 @@ public:
 
     static inline void allocateStateVector(size_t numElems)
     {
-        // tries to increase the size of the vector. This function should never
-        // reduce the size of the vector; we would need to have a lock to do that.
-        threadStates.resize(std::max(threadStates.size(), numElems));
+        // tries to increase the size of the vector
+        while (threadStates.size() < numElems) {
+            threadStates.push_back({});
+        }
         resetStates();
     }
     static inline void resetStates()
     {
         for (size_t i = 0; i < threadStates.size(); i++) {
-            std::atomic_ref<int> val{ threadStates[i].value };
-            val = 0;
+            threadStates[i].value = 0;
         }
     }
 
@@ -131,12 +130,12 @@ public:
             cpuPause();
             return;
         }
-        std::atomic_ref<int> currentIndex{ threadStates[idx].value };
+        int currentIndex = threadStates[idx].value;
         // 15 was taken from the original ossia score code and empirically seems like
         // a good value for the short pause.
         if (currentIndex < 15) {
             cpuPause();
-            currentIndex += 1;
+            threadStates[idx].value += 1;
             return;
         } else if (currentIndex < numberOfPausesBeforeSleep) {
             // repetition is needed here because otherwise the compiler can
@@ -151,14 +150,14 @@ public:
             cpuPause();
             cpuPause();
             cpuPause();
-            currentIndex += 1;
+            threadStates[idx].value += 1;
             return;
         } else {
             constexpr std::array<std::chrono::microseconds, 3> threadSleepTimes
                 = { std::chrono::microseconds(10), std::chrono::microseconds(100), std::chrono::microseconds(500) };
-            auto sleepIdx = std::min(currentIndex - numberOfPausesBeforeSleep, threadSleepTimes.size() - 1);
+            auto sleepIdx = std::min(threadStates[idx].value - numberOfPausesBeforeSleep, threadSleepTimes.size() - 1);
             std::this_thread::sleep_for(threadSleepTimes[sleepIdx]);
-            currentIndex += 1;
+            threadStates[idx].value += 1;
         }
     }
 };
