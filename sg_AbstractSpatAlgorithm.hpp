@@ -34,6 +34,12 @@
 #include <cstdint>
 #include <memory>
 
+#if __has_cpp_attribute(clang::nonblocking)
+    #define NONBLOCKING [[clang::nonblocking]]
+#else
+    #define NONBLOCKING
+#endif
+
 #if JUCE_WINDOWS
     // this disables an annoying warning about structure alignment (caused by fork_union's inclusion)
     #pragma warning(disable : 4324)

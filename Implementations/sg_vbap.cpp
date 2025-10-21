@@ -420,7 +420,6 @@ static void generateTuplets(std::array<Position, MAX_NUM_SPEAKERS> & speakers,
     sortSpeakers2d(speakers, sortedSpeakers, numSpeakers);
 
     /* Adjacent loudspeakers are the loudspeaker pairs to be used. */
-    int amount{};
     float inverseMatrix[MAX_NUM_SPEAKERS][4]{};
     for (std::size_t i{}; i < (numSpeakers - 1); ++i) {
         if (speakers[sortedSpeakers[i + 1]].getPolar().azimuth - speakers[sortedSpeakers[i]].getPolar().azimuth
@@ -430,7 +429,6 @@ static void generateTuplets(std::array<Position, MAX_NUM_SPEAKERS> & speakers,
                                        inverseMatrix[i])
                 != 0) {
                 exist[i] = 1;
-                amount++;
             }
         }
     }

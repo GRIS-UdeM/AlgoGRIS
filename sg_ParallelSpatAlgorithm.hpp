@@ -1,14 +1,13 @@
 #pragma once
 
-// Disable numa in fork_union, this breaks on the ubuntu 20.04 CI.
-// This disables NUMA related optimisation on linux. I think if we ever
-// get big linux spatialization servers with multiple cpu sockets this might matter but otherwise
-// I don't think we lose anything by disabling this.
+// Disable numa in fork_union
+// This disables NUMA related optimisation on linux
 #if !defined(FU_ENABLE_NUMA)
     #define FU_ENABLE_NUMA 0
 #endif
 #include <JuceHeader.h>
 #include "Data/sg_constants.hpp"
+#include <cmath>
 #include <fork_union.hpp>
 #include <algorithm>
 #include <atomic>
@@ -79,7 +78,7 @@ private:
      * use less CPU when idle and higher values means the threads will sleep less often leading
      * to better average latency.
      */
-    static inline size_t numberOfPausesBeforeSleep = 100;
+    static inline std::atomic<size_t> numberOfPausesBeforeSleep = 100;
 
 public:
     /**
@@ -99,16 +98,16 @@ public:
 
     static inline void allocateStateVector(size_t numElems)
     {
-        // tries to increase the size of the vector
-        while (threadStates.size() < numElems) {
-            threadStates.push_back({});
-        }
+        // tries to increase the size of the vector. This function should never
+        // reduce the size of the vector; we would need to have a lock to do that.
+        threadStates.resize(std::max(threadStates.size(), numElems));
         resetStates();
     }
     static inline void resetStates()
     {
         for (size_t i = 0; i < threadStates.size(); i++) {
-            threadStates[i].value = 0;
+            std::atomic_ref<int> val{ threadStates[i].value };
+            val = 0;
         }
     }
 
@@ -132,12 +131,12 @@ public:
             cpuPause();
             return;
         }
-        int currentIndex = threadStates[idx].value;
+        std::atomic_ref<int> currentIndex{ threadStates[idx].value };
         // 15 was taken from the original ossia score code and empirically seems like
         // a good value for the short pause.
         if (currentIndex < 15) {
             cpuPause();
-            threadStates[idx].value += 1;
+            currentIndex += 1;
             return;
         } else if (currentIndex < numberOfPausesBeforeSleep) {
             // repetition is needed here because otherwise the compiler can
@@ -152,14 +151,14 @@ public:
             cpuPause();
             cpuPause();
             cpuPause();
-            threadStates[idx].value += 1;
+            currentIndex += 1;
             return;
         } else {
             constexpr std::array<std::chrono::microseconds, 3> threadSleepTimes
                 = { std::chrono::microseconds(10), std::chrono::microseconds(100), std::chrono::microseconds(500) };
-            auto sleepIdx = std::min(threadStates[idx].value - numberOfPausesBeforeSleep, threadSleepTimes.size() - 1);
+            auto sleepIdx = std::min(currentIndex - numberOfPausesBeforeSleep, threadSleepTimes.size() - 1);
             std::this_thread::sleep_for(threadSleepTimes[sleepIdx]);
-            threadStates[idx].value += 1;
+            currentIndex += 1;
         }
     }
 };
@@ -173,6 +172,13 @@ public:
 #define SPIN_SLEEP 2
 // SPIN_SLEEP seems to be the best compromise.
 #define THREAD_WAIT_METHOD SPIN_SLEEP
+
+// We want to suppress RTSAN if we ever sleep in the audio thread.
+// Sleeping is not real-time safe but its a trade off we made to make the algoirithms use
+// less than 100% of all cores at all times.
+// clang doesn't let us use "defined" in a define used in a #if so we must put the rest of the
+// expression direction in the #if.
+#define UNSAFE_SLEEP (THREAD_WAIT_METHOD == SPIN_SLEEP || THREAD_WAIT_METHOD == SLEEP)
 
 class ParallelAlgorithm
 {
