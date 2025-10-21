@@ -18,6 +18,12 @@
 */
 
 #include "sg_ParallelMbapSpatAlgorithm.hpp"
+// needs to be included after ParallelMbapSpatAlgorithm or UNSAFE_SLEEP won't be defined yet.
+#if UNSAFE_SLEEP && defined(__has_feature)
+    #if __has_feature(realtime_sanitizer)
+        #include <sanitizer/rtsan_interface.h>
+    #endif
+#endif
 #include "Containers/sg_StaticMap.hpp"
 #include "Containers/sg_StrongArray.hpp"
 #include "Containers/sg_TaggedAudioBuffer.hpp"
@@ -62,7 +68,7 @@ void ParallelMbapSpatAlgorithm::process(AudioConfig const & config,
                                         SpeakerAudioBuffer & speakersBuffer,
                                         [[maybe_unused]] juce::AudioBuffer<float> & stereoBuffer,
                                         SourcePeaks const & sourcePeaks,
-                                        SpeakersAudioConfig const * altSpeakerConfig) [[clang::nonblocking]]
+                                        SpeakersAudioConfig const * altSpeakerConfig) noexcept NONBLOCKING
 {
     ASSERT_AUDIO_THREAD;
 
@@ -73,6 +79,13 @@ void ParallelMbapSpatAlgorithm::process(AudioConfig const & config,
     jassert(sourceIds.size() > 0);
 #if THREAD_WAIT_METHOD == SPIN_SLEEP
     SpinSleepWait::resetStates();
+#endif
+    // If we SLEEP or SPIN_SLEEP and we are using clang with the realtime sanitizer,
+    // disable rtsan warnings. Sleeping is real-time unsafe.
+#if UNSAFE_SLEEP && defined(__has_feature)
+    #if __has_feature(realtime_sanitizer)
+    __rtsan::ScopedDisabler disableRealtimeWarnings;
+    #endif
 #endif
     threadPool.for_n(sourceIds.size(), [&](fu::prong_t prong) noexcept {
         processSource(config, sourceIds[prong.task], sourcePeaks, sourcesBuffer, speakersAudioConfig, speakersBuffer);
