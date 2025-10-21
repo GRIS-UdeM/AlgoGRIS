@@ -1,7 +1,9 @@
 #pragma once
 
-// Disable numa in fork_union
-// This disables NUMA related optimisation on linux
+// Disable numa in fork_union, this breaks on the ubuntu 20.04 CI.
+// This disables NUMA related optimisation on linux. I think if we ever
+// get big linux spatialization servers with multiple cpu sockets this might matter but otherwise
+// I don't think we lose anything by disabling this.
 #if !defined(FU_ENABLE_NUMA)
     #define FU_ENABLE_NUMA 0
 #endif
@@ -171,13 +173,6 @@ public:
 #define SPIN_SLEEP 2
 // SPIN_SLEEP seems to be the best compromise.
 #define THREAD_WAIT_METHOD SPIN_SLEEP
-
-// We want to suppress RTSAN if we ever sleep in the audio thread.
-// Sleeping is not real-time safe but its a trade off we made to make the algoirithms use
-// less than 100% of all cores at all times.
-// clang doesn't let us use "defined" in a define used in a #if so we must put the rest of the
-// expression direction in the #if.
-#define UNSAFE_SLEEP (THREAD_WAIT_METHOD == SPIN_SLEEP || THREAD_WAIT_METHOD == SLEEP)
 
 class ParallelAlgorithm
 {
