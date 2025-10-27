@@ -35,9 +35,9 @@ jobs:
       fail-fast: false # show all errors for each platform (vs. cancel jobs on error)
       matrix:
         include:
-          - name: Linux (Benchmarks)
-            os: [ benchmarks ]
-            extra-flags: -G"Ninja Multi-Config" -DCMAKE_C_FLAGS="-fsanitize=address -fsanitize=undefined"  -DCMAKE_CXX_FLAGS="-fsanitize=address -fsanitize=undefined"
+          # - name: Linux (Benchmarks)
+          #   os: [ benchmarks ]
+          #   extra-flags: -G"Ninja Multi-Config" -DCMAKE_C_FLAGS="-fsanitize=address -fsanitize=undefined"  -DCMAKE_CXX_FLAGS="-fsanitize=address -fsanitize=undefined"
           - name: Linux (GCC)
             os: ubuntu-latest
             extra-flags: -DCMAKE_C_COMPILER=gcc-14 -DCMAKE_CXX_COMPILER=g++-14 -G"Ninja Multi-Config" -DCMAKE_C_FLAGS="-fsanitize=address -fsanitize=undefined"  -DCMAKE_CXX_FLAGS="-fsanitize=address -fsanitize=undefined"
@@ -126,7 +126,7 @@ jobs:
           echo "================================"
 
       - name: Commit benchmark results to benchmarks branch (only for Linux for now)
-        if: matrix.name == 'Linux'
+        if: matrix.name == 'Linux (Benchmarks)'
         run: |
           # Set up git account
           git config --global user.email "ci-bot@example.com"
