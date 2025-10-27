@@ -216,8 +216,10 @@ static void benchmarkUsingProjectData(gris::SpatGrisData & data,
     // process the audio
     BENCHMARK("processing loop")
     {
-        for (int i = 0; i < 10; ++i) {
+        for (int i = 0; i < 6; ++i) {
             algo->process(*config, sourceBuffer, speakerBuffer, stereoBuffer, sourcePeaks, nullptr);
+            // make the sources move
+            incrementAllSourcesAzimuth(algo.get(), data, TWO_PI / bufferSize);
         }
     };
 #endif
