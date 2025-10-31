@@ -22,7 +22,7 @@ namespace gris
  * different threads access adjacent values.
  */
 struct AlignedInt {
-    alignas(ashvardanian::fork_union::default_alignment_k) int value = 0;
+    alignas(ashvardanian::fork_union::default_alignment_k) int64_t value = 0;
 };
 
 /**
@@ -106,7 +106,7 @@ public:
     static inline void resetStates()
     {
         for (size_t i = 0; i < threadStates.size(); i++) {
-            std::atomic_ref<int> val{ threadStates[i].value };
+            std::atomic_ref<int64_t> val{ threadStates[i].value };
             val = 0;
         }
     }
@@ -131,7 +131,7 @@ public:
             cpuPause();
             return;
         }
-        std::atomic_ref<int> currentIndex{ threadStates[idx].value };
+        std::atomic_ref<int64_t> currentIndex{ threadStates[idx].value };
         // 15 was taken from the original ossia score code and empirically seems like
         // a good value for the short pause.
         if (currentIndex < 15) {
@@ -156,7 +156,8 @@ public:
         } else {
             constexpr std::array<std::chrono::microseconds, 3> threadSleepTimes
                 = { std::chrono::microseconds(10), std::chrono::microseconds(100), std::chrono::microseconds(500) };
-            auto sleepIdx = std::min(currentIndex - numberOfPausesBeforeSleep, threadSleepTimes.size() - 1);
+            auto sleepIdx
+                = std::min(static_cast<size_t>(currentIndex - numberOfPausesBeforeSleep), threadSleepTimes.size() - 1);
             std::this_thread::sleep_for(threadSleepTimes[sleepIdx]);
             currentIndex += 1;
         }
