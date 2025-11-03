@@ -174,44 +174,42 @@ static void computeGains(MbapField const & field, SourceData const & source, flo
 
     jassert(field.speakerPositions.size() == field.amplitudeMatrix.size());
 
+    auto const finalElevSpanExponent{ ((sourceElevationSpan - EXPONENT_MIN_IN) * (EXPONENT_MAX_OUT - EXPONENT_MIN_OUT)
+                                       / (EXPONENT_MAX_IN - EXPONENT_MIN_IN))
+                                      + EXPONENT_MIN_OUT };
+
+    auto const finalAzimuthSpanExponent{ ((sourceAzimuthSpan - EXPONENT_MIN_IN) * (EXPONENT_MAX_OUT - EXPONENT_MIN_OUT)
+                                          / (EXPONENT_MAX_IN - EXPONENT_MIN_IN))
+                                         + EXPONENT_MIN_OUT };
+
     for (size_t i{}; i < static_cast<size_t>(field.speakerPositions.size()); ++i) {
-        distFromSource = std::sqrt(
-            std::pow(field.speakerPositions[i].getCartesian().x - source.position->getCartesian().x, 2.0f)
-            + std::pow(field.speakerPositions[i].getCartesian().y - source.position->getCartesian().y, 2.0f)
-            + std::pow(field.speakerPositions[i].getCartesian().z - source.position->getCartesian().z, 2.0f));
-
-        distXYPlane = std::sqrt(
-            std::pow(field.speakerPositions[i].getCartesian().x - source.position->getCartesian().x, 2.0f)
-            + std::pow(field.speakerPositions[i].getCartesian().y - source.position->getCartesian().y, 2.0f));
-
+        auto squaredDistX = field.speakerPositions[i].getCartesian().x - source.position->getCartesian().x;
+        squaredDistX *= squaredDistX;
+        auto squaredDistY = field.speakerPositions[i].getCartesian().y - source.position->getCartesian().y;
+        squaredDistY *= squaredDistY;
         distZ = std::abs(field.speakerPositions[i].getCartesian().z - source.position->getCartesian().z);
+        auto const squaredDistZ = distZ * distZ;
+
+        distFromSource = std::sqrt(squaredDistX + squaredDistY + squaredDistZ);
+
+        distXYPlane = std::sqrt(squaredDistX + squaredDistY);
 
         auto const gain{ trilinearInterpolation(field.amplitudeMatrix[i], x, y, z) };
 
-        auto const gainNoElevSpan{ std::pow(gain, field.fieldExponent) };
-        auto const gainFullElevSpan{ std::pow(std::pow(gain, distXYPlane), field.fieldExponent) };
+        auto const gainNoSpan{ std::pow(gain, field.fieldExponent) };
+        auto const gainFullElevSpan{ std::pow(gain, field.fieldExponent * distXYPlane) };
 
-        auto const gainNoAzimuthSpan{ std::pow(gain, field.fieldExponent) };
-        auto const gainFullAzimuthSpan{ std::pow(std::pow(gain, distZ), field.fieldExponent) };
+        auto const gainFullAzimuthSpan{ std::pow(gain, field.fieldExponent * distZ) };
 
         auto const azimuthElevationGain{ std::pow(gain, field.fieldExponent * sumAziElevSpans * distFromSource) };
 
-        auto const finalElevSpanExponent{ ((sourceElevationSpan - EXPONENT_MIN_IN)
-                                           * (EXPONENT_MAX_OUT - EXPONENT_MIN_OUT)
-                                           / (EXPONENT_MAX_IN - EXPONENT_MIN_IN))
-                                          + EXPONENT_MIN_OUT };
-        auto const finalAzimuthSpanExponent{ ((sourceAzimuthSpan - EXPONENT_MIN_IN)
-                                              * (EXPONENT_MAX_OUT - EXPONENT_MIN_OUT)
-                                              / (EXPONENT_MAX_IN - EXPONENT_MIN_IN))
-                                             + EXPONENT_MIN_OUT };
-
-        const float finalElevationGain{ (gainFullElevSpan - gainNoElevSpan)
+        const float finalElevationGain{ (gainFullElevSpan - gainNoSpan)
                                             * std::pow(sourceElevationSpan, finalElevSpanExponent * distFromSource)
-                                        + gainNoElevSpan };
+                                        + gainNoSpan };
 
-        const float finalAzimuthGain{ (gainFullAzimuthSpan - gainNoAzimuthSpan)
+        const float finalAzimuthGain{ (gainFullAzimuthSpan - gainNoSpan)
                                           * std::pow(sourceAzimuthSpan, finalAzimuthSpanExponent * distFromSource)
-                                      + gainNoAzimuthSpan };
+                                      + gainNoSpan };
 
         gains[i] = sumAziElevSpans * finalAzimuthGain + sumAziElevSpans * finalElevationGain + azimuthElevationGain;
     }
