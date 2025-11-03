@@ -142,6 +142,9 @@ std::unique_ptr<AbstractSpatAlgorithm> AbstractSpatAlgorithm::make(SpeakerSetup 
             return MbapSpatAlgorithm::make(speakerSetup, sources.getKeys());
         }
     case SpatMode::hybrid:
+        // Parallel Hybrid mode is much worse than regular hybrid mode.
+        // I'm keeping the possibility to instanciate it for benchmark and testing purposes
+        // but you should not use this.
         if (useMulticoreDSP) {
             return HybridSpatAlgorithm<ParallelMbapSpatAlgorithm, ParallelVbapSpatAlgorithm>::make(speakerSetup,
                                                                                                    sources.getKeys());
@@ -154,16 +157,6 @@ std::unique_ptr<AbstractSpatAlgorithm> AbstractSpatAlgorithm::make(SpeakerSetup 
 
     jassertfalse;
     return nullptr;
-}
-
-//==============================================================================
-ParallelAlgorithm::ParallelAlgorithm(unsigned int numberOfThreads)
-{
-    isValid = threadPool.try_spawn(numberOfThreads);
-    if (!isValid) {
-        std::fprintf(stderr, "Failed to spawn the threadpool\n");
-        jassertfalse;
-    }
 }
 
 } // namespace gris

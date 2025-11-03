@@ -319,16 +319,6 @@ TEST_CASE("Spatialization tests", "[spat]")
              tl::nullopt,
              true);
 
-    spatTest(stereoTestName,
-             stereoTestName,
-             "default_preset.xml",
-             "STEREO_SPEAKER_SETUP.xml",
-             "default_preset_256.xml",
-             "STEREO_SPEAKER_SETUP.xml",
-             SpatMode::vbap,
-             StereoMode::stereo,
-             false);
-
     spatTest(mbapTestName,
              mbapTestName,
              "default_project18(8X2-Subs2).xml",
@@ -349,6 +339,26 @@ TEST_CASE("Spatialization tests", "[spat]")
              tl::nullopt,
              true);
 
+    spatTest(hybridTestName,
+             hybridTestName,
+             "default_project18(8X2-Subs2).xml",
+             "default_speaker_setup.xml",
+             "hybrid_256.xml",
+             "default_speaker_setup.xml",
+             SpatMode::hybrid,
+             tl::nullopt,
+             false);
+
+    spatTest("parallel hybrid",
+             hybridTestName,
+             "default_project18(8X2-Subs2).xml",
+             "default_speaker_setup.xml",
+             "hybrid_256.xml",
+             "default_speaker_setup.xml",
+             SpatMode::hybrid,
+             tl::nullopt,
+             true);
+
     spatTest(hrtfTestName,
              hrtfTestName,
              "default_preset.xml",
@@ -357,5 +367,15 @@ TEST_CASE("Spatialization tests", "[spat]")
              "BINAURAL_SPEAKER_SETUP.xml",
              SpatMode::vbap,
              StereoMode::hrtf,
+             false);
+
+    spatTest(stereoTestName,
+             stereoTestName,
+             "default_preset.xml",
+             "STEREO_SPEAKER_SETUP.xml",
+             "default_preset_256.xml",
+             "STEREO_SPEAKER_SETUP.xml",
+             SpatMode::vbap,
+             StereoMode::stereo,
              false);
 }
