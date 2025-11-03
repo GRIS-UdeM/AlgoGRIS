@@ -39,6 +39,8 @@ add_library(AlgoGRIS
     sg_HybridSpatAlgorithm.hpp
     sg_MbapSpatAlgorithm.cpp
     sg_MbapSpatAlgorithm.hpp
+    sg_ParallelSpatAlgorithm.cpp
+    sg_ParallelSpatAlgorithm.hpp
     sg_ParallelMbapSpatAlgorithm.cpp
     sg_ParallelMbapSpatAlgorithm.hpp
     sg_ParallelVbapSpatAlgorithm.cpp
