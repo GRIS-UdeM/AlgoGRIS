@@ -21,9 +21,7 @@
  * Matrix-Based Amplitude Panning framework.
  *
  * MBAP (Matrix-Based Amplitude Panning) is a framework
- * to do 3-D sound spatialization. It uses a pre-computed
- * gain matrix to perform the spatialization of the sources very
- * efficiently.
+ * to do 3-D sound spatialization.
  *
  * author : Gaël Lane Lépine, 2022
  * based on lbap from Olivier Belanger
@@ -44,9 +42,15 @@ namespace gris
 {
 struct SpeakerData;
 
-static auto constexpr MBAP_MATRIX_SIZE = 64;
-using matrix_t
-    = std::array<std::array<std::array<float, MBAP_MATRIX_SIZE + 1>, MBAP_MATRIX_SIZE + 1>, MBAP_MATRIX_SIZE + 1>;
+// This used to be the size of a precomputed matrix. Now that we use a linear
+// lookup table, this is kept as a constant to keep gain factors equivalent to what they
+// used to be.
+static auto constexpr MBAP_SIZE_CONSTANT = 64;
+// Size of the distance -> gain factor table. 256 is enough to get < 0.01% error.
+auto constexpr lookup_size = 256;
+// Maximum distance a source can get from a speaker considering we clamp each position to MBAP_SIZE_CONSTANT -1
+static constexpr float MAX_DISTANCE = std::ceil(std::sqrt(
+    std::pow(MBAP_SIZE_CONSTANT, 2.0f) + std::pow(MBAP_SIZE_CONSTANT, 2.0f) + std::pow(MBAP_SIZE_CONSTANT, 2.0f)));
 
 struct MbapSpeaker {
     Position position{};
@@ -57,8 +61,10 @@ struct MbapSpeaker {
 struct MbapField {
     std::vector<output_patch_t> outputOrder; /**< Physical output order. */
     float fieldExponent;                     /**< Speaker gain exponent speakers. */
-    std::vector<matrix_t> amplitudeMatrix;   /**< Arrays of amplitude values [spk][x][y][z]. */
     std::vector<Position> speakerPositions;  /**< Array of speakers. */
+    // lookup table of the gain factor indexed by distance.
+    // minimum distance is 0 and max is MAX_DISTANCE.
+    std::array<float, lookup_size> distanceLookupTable;
     //==============================================================================
     [[nodiscard]] size_t getNumSpeakers() const;
     void reset();
