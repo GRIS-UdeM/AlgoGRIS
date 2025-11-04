@@ -2,9 +2,7 @@
  * Matrix-Based Amplitude Panning framework.
  *
  * MBAP (Matrix-Based Amplitude Panning) is a framework
- * to do 3-D sound spatialization. It uses a pre-computed
- * gain matrix to perform the spatialization of the sources very
- * efficiently.
+ * to do 3-D sound spatialization.
  *
  * author : Gaël Lane Lépine, 2022
  * based on lbap from Olivier Belanger
