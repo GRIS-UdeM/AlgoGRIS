@@ -47,10 +47,14 @@ struct SpeakerData;
 // used to be.
 static auto constexpr MBAP_SIZE_CONSTANT = 64;
 // Size of the distance -> gain factor table. 256 is enough to get < 0.01% error.
-auto constexpr lookup_size = 256;
+auto constexpr LOOKUP_SIZE = 256;
 // Maximum distance a source can get from a speaker considering we clamp each position to MBAP_SIZE_CONSTANT -1
-static constexpr float MAX_DISTANCE = std::ceil(std::sqrt(
+static const float MAX_DISTANCE = std::ceil(std::sqrt(
     std::pow(MBAP_SIZE_CONSTANT, 2.0f) + std::pow(MBAP_SIZE_CONSTANT, 2.0f) + std::pow(MBAP_SIZE_CONSTANT, 2.0f)));
+
+static auto const DISTANCE_INCREMENT = MAX_DISTANCE / static_cast<float>(LOOKUP_SIZE);
+
+static const float db_root_power_ratio = std::pow(10.0f, 1.0f / 20);
 
 struct MbapSpeaker {
     Position position{};
@@ -64,7 +68,7 @@ struct MbapField {
     std::vector<Position> speakerPositions;  /**< Array of speakers. */
     // lookup table of the gain factor indexed by distance.
     // minimum distance is 0 and max is MAX_DISTANCE.
-    std::array<float, lookup_size> distanceLookupTable;
+    std::array<float, LOOKUP_SIZE> distanceLookupTable;
     //==============================================================================
     [[nodiscard]] size_t getNumSpeakers() const;
     void reset();

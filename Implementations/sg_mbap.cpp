@@ -62,8 +62,6 @@ float linearInterpolation(const MbapField & field,
                           float const speaker_z)
 {
     static constexpr auto H_SIZE = MBAP_SIZE_CONSTANT / 2.0f;
-    auto constexpr root_power_constant = std::pow(10.0f, 1.0f / 20);
-    auto constexpr distance_increment = MAX_DISTANCE / static_cast<float>(lookup_size);
 
     auto sk_x = speaker_x * (H_SIZE) + H_SIZE;
     auto sk_y = speaker_y * (H_SIZE) + H_SIZE;
@@ -72,7 +70,7 @@ float linearInterpolation(const MbapField & field,
     auto dist = std::sqrt(std::pow(source_x - sk_x, 2.0f) + std::pow(source_y - sk_y, 2.0f)
                           + std::pow(source_z - sk_z, 2.0f));
 
-    auto table_idx = dist / distance_increment;
+    auto table_idx = dist / DISTANCE_INCREMENT;
     auto table_idx_floor = static_cast<int>(table_idx);
     auto table_idx_ceil = table_idx_floor + 1;
     auto fractional_part = table_idx - static_cast<float>(table_idx_floor);
@@ -114,10 +112,8 @@ static void computeLookup(MbapField & field)
     // This is the max value that is going to ever be looked up in this table so we need to generate the table for
     // entries from 0.0 to MAX_DISTANCE.
 
-    constexpr float db_root_power_ratio = std::pow(10.0f, 1.0f / 20);
-
-    for (int i = 0; i < lookup_size; i++) {
-        float dist_val = i * (MAX_DISTANCE / static_cast<float>(lookup_size));
+    for (int i = 0; i < LOOKUP_SIZE; i++) {
+        float dist_val = i * (MAX_DISTANCE / static_cast<float>(LOOKUP_SIZE));
 
         dist_val = std::pow(db_root_power_ratio, dist_val);
 
