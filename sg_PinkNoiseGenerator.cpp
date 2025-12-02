@@ -40,10 +40,18 @@ std::uniform_real_distribution<float> dist(-1.f, 1.f);
 namespace gris
 {
 //==============================================================================
-void fillWithPinkNoise(float * const * samples, int const numSamples, int const numChannels, float const gain)
+void fillWithPinkNoise(float * const * samples,
+                       int const numSamples,
+                       int const numChannels,
+                       float const gain,
+                       bool isPulsing,
+                       PulsedNoiseParams & params)
 {
     static constexpr dbfs_t CORRECTION_DB{ -18.2f };
     static auto const CORRECTION{ CORRECTION_DB.toGain() };
+
+    if (isPulsing)
+        params.elapsedTime += static_cast<float>(numSamples) / params.sampleRate;
 
     for (int sampleIndex{}; sampleIndex < numSamples; ++sampleIndex) {
         auto const rnd{ dist(gen) };
@@ -60,6 +68,25 @@ void fillWithPinkNoise(float * const * samples, int const numSamples, int const 
 
         for (int channelIndex{}; channelIndex < numChannels; channelIndex++) {
             samples[channelIndex][sampleIndex] += sampleValue;
+
+            if (isPulsing) {
+                if (params.elapsedTime < params.silenceDuration) {
+                    // silence
+                    samples[channelIndex][sampleIndex] = 0.0f;
+                } else {
+                    samples[channelIndex][sampleIndex]
+                        *= juce::Decibels::gainToDecibels(params.currentPhase) * CORRECTION;
+                }
+
+                params.currentPhase += params.phaseIncrement;
+
+                if (params.currentPhase >= 1.0f) {
+                    params.currentPhase -= 1.0f;
+                    if (params.elapsedTime >= params.silenceDuration) {
+                        params.elapsedTime = 0.0f;
+                    }
+                }
+            }
         }
     }
 }

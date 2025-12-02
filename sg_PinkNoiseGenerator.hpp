@@ -21,7 +21,20 @@
 
 namespace gris
 {
+struct PulsedNoiseParams {
+    double sampleRate{};
+    float currentPhase{ 0.0f };
+    float phaseIncrement{};
+    float sawFrequency{ 0.02f };
+    float silenceDuration{ 1.0f };
+    float elapsedTime{ 0.0f };
+};
 /** A simple function that fills multiple audio buffers with pink noise. */
-void fillWithPinkNoise(float * const * samples, int numSamples, int numChannels, float gain);
+void fillWithPinkNoise(float * const * samples,
+                       int numSamples,
+                       int numChannels,
+                       float gain,
+                       bool isPulsing,
+                       PulsedNoiseParams & params);
 
 } // namespace gris
