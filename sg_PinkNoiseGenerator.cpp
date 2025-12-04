@@ -51,7 +51,7 @@ void fillWithPinkNoise(float * const * samples,
     static auto const CORRECTION{ CORRECTION_DB.toGain() };
 
     if (isPulsing)
-        params.elapsedTime += static_cast<float>(numSamples) / params.sampleRate;
+        params.elapsedTime += static_cast<float>(numSamples) / static_cast<float>(params.sampleRate);
 
     for (int sampleIndex{}; sampleIndex < numSamples; ++sampleIndex) {
         auto const rnd{ dist(gen) };
