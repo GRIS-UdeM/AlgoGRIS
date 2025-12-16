@@ -95,7 +95,11 @@ HrtfSpatAlgorithm::HrtfSpatAlgorithm(SpeakerSetup const & speakerSetup,
     static auto const FILES = GET_HRTF_IR_FILES();
 
     // Init inner spat algorithm
-    auto const hrtfSpeakerSetupFile{ getHrtfDirectory().getSiblingFile("tests/util/BINAURAL_SPEAKER_SETUP.xml") };
+    auto hrtfSpeakerSetupFile{ getHrtfDirectory().getSiblingFile("tests/util/BINAURAL_SPEAKER_SETUP.xml") };
+    if (!hrtfSpeakerSetupFile.existsAsFile()) {
+        // this means SG is executed outside of the IDE or test environment (Release build)
+        hrtfSpeakerSetupFile = SG_RESOURCES_DIR.getChildFile("default_preset/BINAURAL_SPEAKER_SETUP.xml");
+    }
     if (!hrtfSpeakerSetupFile.existsAsFile()) {
         jassertfalse;
         return;
