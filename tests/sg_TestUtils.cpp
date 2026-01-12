@@ -32,9 +32,15 @@ void fillSourceBuffersWithNoise(const size_t numSources,
                                 SourcePeaks & sourcePeaks)
 {
     sourceBuffer.silence();
+    PulsedNoiseParams pulseNoiseParams;
     for (int i = 1; i <= numSources; ++i) {
         auto const sourceIndex{ source_index_t{ i } };
-        fillWithPinkNoise(sourceBuffer[sourceIndex].getArrayOfWritePointers(), bufferSize, 1, .5f);
+        fillWithPinkNoise(sourceBuffer[sourceIndex].getArrayOfWritePointers(),
+                          bufferSize,
+                          1,
+                          .5f,
+                          false,
+                          pulseNoiseParams);
         sourcePeaks[sourceIndex] = sourceBuffer[sourceIndex].getMagnitude(0, bufferSize);
     }
 }
