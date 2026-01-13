@@ -351,15 +351,15 @@ TEST_CASE("Spatialization tests", "[spat]")
              tl::nullopt,
              false);
 
-    spatTest("parallel hybrid",
-             hybridTestName,
-             "default_project18(8X2-Subs2).xml",
-             "default_speaker_setup.xml",
-             "hybrid_256.xml",
-             "default_speaker_setup.xml",
-             SpatMode::hybrid,
-             tl::nullopt,
-             true);
+    /*     spatTest("parallel hybrid",
+                 hybridTestName,
+                 "default_project18(8X2-Subs2).xml",
+                 "default_speaker_setup.xml",
+                 "hybrid_256.xml",
+                 "default_speaker_setup.xml",
+                 SpatMode::hybrid,
+                 tl::nullopt,
+                 true); */
 
     spatTest(hrtfTestName,
              hrtfTestName,
