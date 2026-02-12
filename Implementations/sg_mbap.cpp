@@ -2,9 +2,7 @@
  * Matrix-Based Amplitude Panning framework.
  *
  * MBAP (Matrix-Based Amplitude Panning) is a framework
- * to do 3-D sound spatialization. It uses a pre-computed
- * gain matrix to perform the spatialization of the sources very
- * efficiently.
+ * to do 3-D sound spatialization.
  *
  * author : Gaël Lane Lépine, 2022
  * based on lbap from Olivier Belanger
@@ -52,31 +50,34 @@ namespace gris
 {
 namespace
 {
-//==============================================================================
-/* Trilinear interpolation to retrieve the value at position (x, y, z) in a 3D matrix. */
-static float trilinearInterpolation(matrix_t const & matrix, float const x, float const y, float const z)
-{
-    jassert(x >= 0.0f && y >= 0.0f && z >= 0.0f);
-    auto const xi = static_cast<std::size_t>(x);
-    auto const yi = static_cast<std::size_t>(y);
-    auto const zi = static_cast<std::size_t>(z);
-    auto const xf = narrow<float>(x) - narrow<float>(xi);
-    auto const yf = narrow<float>(y) - narrow<float>(yi);
-    auto const zf = narrow<float>(z) - narrow<float>(zi);
-    auto const v1 = matrix[xi][yi][zi];
-    auto const v2 = matrix[xi + 1][yi][zi];
-    auto const v3 = matrix[xi][yi + 1][zi];
-    auto const v4 = matrix[xi + 1][yi + 1][zi];
-    auto const v5 = matrix[xi][yi][zi + 1];
-    auto const v6 = matrix[xi + 1][yi][zi + 1];
-    auto const v7 = matrix[xi][yi + 1][zi + 1];
-    auto const v8 = matrix[xi + 1][yi + 1][zi + 1];
 
-    // from
-    // https://www.scratchapixel.com/code.php?id=56&origin=/lessons/mathematics-physics-for-computer-graphics/interpolation
-    return (1 - xf) * (1 - yf) * (1 - zf) * v1 + xf * (1 - yf) * (1 - zf) * v2 + (1 - xf) * yf * (1 - zf) * v3
-           + xf * yf * (1 - zf) * v4 + (1 - xf) * (1 - yf) * zf * v5 + xf * (1 - yf) * zf * v6 + (1 - xf) * yf * zf * v7
-           + xf * yf * zf * v8;
+float linearInterpolation(const MbapField & field,
+                          float const source_x,
+                          float const source_y,
+                          float const source_z,
+                          float const speaker_x,
+                          float const speaker_y,
+                          float const speaker_z)
+{
+    static constexpr auto H_SIZE = MBAP_SIZE_CONSTANT / 2.0f;
+    std::cout << "linearly interpolate" << "\n";
+
+    auto sk_x = speaker_x * (H_SIZE) + H_SIZE;
+    auto sk_y = speaker_y * (H_SIZE) + H_SIZE;
+    auto sk_z = speaker_z * (H_SIZE) + H_SIZE;
+
+    double dist
+        = std::sqrt(std::pow(source_x - sk_x, 2.0) + std::pow(source_y - sk_y, 2.0) + std::pow(source_z - sk_z, 2.0));
+
+    dist = std::clamp(dist, 0.0, MAX_DISTANCE);
+
+    auto table_idx = dist / DISTANCE_INCREMENT;
+    auto table_idx_floor = static_cast<int>(table_idx);
+    auto table_idx_ceil = static_cast<int>(std::ceil(table_idx_floor));
+    auto fractional_part = table_idx - static_cast<float>(table_idx_floor);
+    auto val1 = field.distanceLookupTable[table_idx_floor];
+    auto val2 = field.distanceLookupTable[table_idx_ceil];
+    return val1 + fractional_part * (val2 - val1);
 }
 
 //==============================================================================
@@ -98,39 +99,26 @@ static MbapField initField(std::vector<Position> speakers)
 {
     MbapField field{};
 
-    field.amplitudeMatrix.reserve(speakers.size());
-    static constexpr matrix_t EMPTY_MATRIX{};
-    std::fill_n(std::back_inserter(field.amplitudeMatrix), speakers.size(), EMPTY_MATRIX);
     field.speakerPositions = std::move(speakers);
 
     return field;
 }
 
-//==============================================================================
-/* Pre-compute the 3 dimensional matrix of amplitude for the speakers. */
-static void computeMatrix(MbapField & field)
+/**
+ * instead of computing one matrix for every speaker, just compute a lookup table of all the domain of possible value
+ * and linear interpolate over that instead.
+ */
+static void computeLookup(MbapField & field)
 {
-    static auto constexpr H_SIZE = MBAP_MATRIX_SIZE / 2;
+    // This is the max value that is going to ever be looked up in this table so we need to generate the table for
+    // entries from 0.0 to MAX_DISTANCE.
 
-    for (size_t i{}; i < field.speakerPositions.size(); ++i) {
-        auto const px = field.speakerPositions[i].getCartesian().x * H_SIZE + H_SIZE;
-        auto const py = field.speakerPositions[i].getCartesian().y * H_SIZE + H_SIZE;
-        auto const pz = field.speakerPositions[i].getCartesian().z * H_SIZE + H_SIZE;
+    for (int i = 0; i < LOOKUP_SIZE; i++) {
+        float dist_val = i * (MAX_DISTANCE / static_cast<float>(LOOKUP_SIZE));
 
-        for (size_t x{}; x < MBAP_MATRIX_SIZE; ++x) {
-            for (size_t y{}; y < MBAP_MATRIX_SIZE; ++y) {
-                for (size_t z{}; z < MBAP_MATRIX_SIZE; ++z) {
-                    auto dist = std::sqrt(std::pow(narrow<float>(x) - px, 2.0f) + std::pow(narrow<float>(y) - py, 2.0f)
-                                          + std::pow(narrow<float>(z) - pz, 2.0f));
+        dist_val = std::pow(db_root_power_ratio, dist_val);
 
-                    dist = std::pow(std::pow(10.0f, 1.0f / 20), dist);          // root-power ratio
-                    field.amplitudeMatrix[i][x][y][z] = 1.0f / std::sqrt(dist); // inverse square law
-                }
-                field.amplitudeMatrix[i][x][y][MBAP_MATRIX_SIZE] = field.amplitudeMatrix[i][x][y][0];
-            }
-            field.amplitudeMatrix[i][x][MBAP_MATRIX_SIZE] = field.amplitudeMatrix[i][x][0];
-        }
-        field.amplitudeMatrix[i][MBAP_MATRIX_SIZE] = field.amplitudeMatrix[i][0];
+        field.distanceLookupTable[i] = 1.0f / std::sqrt(dist_val);
     }
 }
 
@@ -139,7 +127,7 @@ static void computeMatrix(MbapField & field)
 static MbapField createField(std::vector<Position> speakers)
 {
     auto result{ initField(std::move(speakers)) };
-    computeMatrix(result);
+    computeLookup(result);
     return result;
 }
 
@@ -147,8 +135,8 @@ static MbapField createField(std::vector<Position> speakers)
 /* Compute the gain of field of speakers, for the given position, and store the result in the `gains` array.*/
 static void computeGains(MbapField const & field, SourceData const & source, float * gains)
 {
-    static constexpr auto H_SIZE = MBAP_MATRIX_SIZE / 2.0f;
-    static constexpr auto SIZE_MINUS_ONE = MBAP_MATRIX_SIZE - 1.0f;
+    static constexpr auto H_SIZE = MBAP_SIZE_CONSTANT / 2.0f;
+    static constexpr auto SIZE_MINUS_ONE = MBAP_SIZE_CONSTANT - 1.0f;
 
     auto constexpr EXPONENT_MIN_IN{ 0.0f };
     auto constexpr EXPONENT_MAX_IN{ 1.0f };
@@ -172,8 +160,6 @@ static void computeGains(MbapField const & field, SourceData const & source, flo
     float distXYPlane{};
     float distZ{};
 
-    jassert(field.speakerPositions.size() == field.amplitudeMatrix.size());
-
     auto const finalElevSpanExponent{ ((sourceElevationSpan - EXPONENT_MIN_IN) * (EXPONENT_MAX_OUT - EXPONENT_MIN_OUT)
                                        / (EXPONENT_MAX_IN - EXPONENT_MIN_IN))
                                       + EXPONENT_MIN_OUT };
@@ -194,7 +180,13 @@ static void computeGains(MbapField const & field, SourceData const & source, flo
 
         distXYPlane = std::sqrt(squaredDistX + squaredDistY);
 
-        auto const gain{ trilinearInterpolation(field.amplitudeMatrix[i], x, y, z) };
+        auto const gain{ linearInterpolation(field,
+                                             x,
+                                             y,
+                                             z,
+                                             field.speakerPositions[i].getCartesian().x,
+                                             field.speakerPositions[i].getCartesian().y,
+                                             field.speakerPositions[i].getCartesian().z) };
 
         auto const gainNoSpan{ std::pow(gain, field.fieldExponent) };
         auto const gainFullElevSpan{ std::pow(gain, field.fieldExponent * distXYPlane) };
@@ -241,7 +233,6 @@ size_t MbapField::getNumSpeakers() const
 void MbapField::reset()
 {
     outputOrder.clear();
-    amplitudeMatrix.clear();
 }
 
 //==============================================================================
