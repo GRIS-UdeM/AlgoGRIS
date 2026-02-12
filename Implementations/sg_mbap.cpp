@@ -60,7 +60,6 @@ float linearInterpolation(const MbapField & field,
                           float const speaker_z)
 {
     static constexpr auto H_SIZE = MBAP_SIZE_CONSTANT / 2.0f;
-    std::cout << "linearly interpolate" << "\n";
 
     auto sk_x = speaker_x * (H_SIZE) + H_SIZE;
     auto sk_y = speaker_y * (H_SIZE) + H_SIZE;
