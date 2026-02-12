@@ -1,18 +1,14 @@
 /*
  This file is part of SpatGRIS.
-
  Developers: Gaël Lane Lépine, Samuel Béland, Olivier Bélanger, Nicolas Masson
-
  SpatGRIS is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
  the Free Software Foundation, either version 3 of the License, or
  (at your option) any later version.
-
  SpatGRIS is distributed in the hope that it will be useful,
  but WITHOUT ANY WARRANTY; without even the implied warranty of
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  GNU General Public License for more details.
-
  You should have received a copy of the GNU General Public License
  along with SpatGRIS.  If not, see <http://www.gnu.org/licenses/>.
 */
@@ -21,9 +17,7 @@
  * Matrix-Based Amplitude Panning framework.
  *
  * MBAP (Matrix-Based Amplitude Panning) is a framework
- * to do 3-D sound spatialization. It uses a pre-computed
- * gain matrix to perform the spatialization of the sources very
- * efficiently.
+ * to do 3-D sound spatialization.
  *
  * author : Gaël Lane Lépine, 2022
  * based on lbap from Olivier Belanger
@@ -44,9 +38,20 @@ namespace gris
 {
 struct SpeakerData;
 
-static auto constexpr MBAP_MATRIX_SIZE = 64;
-using matrix_t
-    = std::array<std::array<std::array<float, MBAP_MATRIX_SIZE + 1>, MBAP_MATRIX_SIZE + 1>, MBAP_MATRIX_SIZE + 1>;
+// This used to be the size of a precomputed matrix. Now that we use a linear
+// lookup table, this is kept as a constant to keep gain factors equivalent to what they
+// used to be.
+static auto constexpr MBAP_SIZE_CONSTANT = 64;
+// Size of the distance -> gain factor table. 256 is enough to get < 0.01% error.
+auto constexpr LOOKUP_SIZE = 256;
+// Maximum distance a source can get from a speaker considering we clamp each position to MBAP_SIZE_CONSTANT -1
+static const double MAX_DISTANCE = std::ceil(std::sqrt(
+    std::pow(MBAP_SIZE_CONSTANT, 2.0) + std::pow(MBAP_SIZE_CONSTANT, 2.0) + std::pow(MBAP_SIZE_CONSTANT, 2.0)));
+
+// We need this to be a double to avoir precision problems.
+static double const DISTANCE_INCREMENT = MAX_DISTANCE / static_cast<float>(LOOKUP_SIZE - 1);
+
+static const float db_root_power_ratio = std::pow(10.0f, 1.0f / 20);
 
 struct MbapSpeaker {
     Position position{};
@@ -57,8 +62,10 @@ struct MbapSpeaker {
 struct MbapField {
     std::vector<output_patch_t> outputOrder; /**< Physical output order. */
     float fieldExponent;                     /**< Speaker gain exponent speakers. */
-    std::vector<matrix_t> amplitudeMatrix;   /**< Arrays of amplitude values [spk][x][y][z]. */
     std::vector<Position> speakerPositions;  /**< Array of speakers. */
+    // lookup table of the gain factor indexed by distance.
+    // minimum distance is 0 and max is MAX_DISTANCE.
+    std::array<float, LOOKUP_SIZE> distanceLookupTable;
     //==============================================================================
     [[nodiscard]] size_t getNumSpeakers() const;
     void reset();
