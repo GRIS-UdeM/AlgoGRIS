@@ -108,6 +108,7 @@ std::unique_ptr<AbstractSpatAlgorithm> AbstractSpatAlgorithm::make(SpeakerSetup 
                                                                    SourcesData const & sources,
                                                                    double const sampleRate,
                                                                    int const bufferSize,
+                                                                   BinauralSettings & binauralSettings,
                                                                    // defaulted to false
                                                                    bool const useMulticoreDSP)
 {
@@ -116,7 +117,12 @@ std::unique_ptr<AbstractSpatAlgorithm> AbstractSpatAlgorithm::make(SpeakerSetup 
     if (stereoMode) {
         switch (*stereoMode) {
         case StereoMode::hrtf:
-            return HrtfSpatAlgorithm::make(speakerSetup, projectSpatMode, sources, sampleRate, bufferSize);
+            return HrtfSpatAlgorithm::make(speakerSetup,
+                                           projectSpatMode,
+                                           sources,
+                                           sampleRate,
+                                           bufferSize,
+                                           binauralSettings);
         case StereoMode::stereo:
             return StereoSpatAlgorithm::make(speakerSetup, projectSpatMode, sources, sources.getKeys());
 #ifdef USE_DOPPLER

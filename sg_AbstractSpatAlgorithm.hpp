@@ -134,6 +134,7 @@ public:
      * @param sources the sources' data.
      * @param sampleRate the expected sample rate
      * @param bufferSize the expected buffer size in samples
+     * @param binauralSettings the SOFA file and other options for binaural rendering
      * @param useMulticoreDSP use parallelized vbap and mbap. default false.
      */
     [[nodiscard]] static std::unique_ptr<AbstractSpatAlgorithm> make(SpeakerSetup const & speakerSetup,
@@ -142,6 +143,7 @@ public:
                                                                      SourcesData const & sources,
                                                                      double sampleRate,
                                                                      int bufferSize,
+                                                                     BinauralSettings & binauralSettings,
                                                                      bool useMulticoreDSP = false);
 
 private:

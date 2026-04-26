@@ -50,92 +50,41 @@ HrtfSpatAlgorithm::HrtfSpatAlgorithm(SpeakerSetup const & speakerSetup,
                                      SpatMode const & projectSpatMode,
                                      SourcesData const & sources,
                                      double const sampleRate,
-                                     int const bufferSize)
+                                     int const bufferSize,
+                                     BinauralSettings & binauralSettings)
+    : mSpeakerSetup(speakerSetup)
+    , mBufferSize(bufferSize)
+    , mSofaFile(binauralSettings.lastSofaFile)
+    , mNOrder(binauralSettings.ambisonicOrder)
+    , mBinauralLowCpuMode(binauralSettings.lowCpuMode)
 {
     JUCE_ASSERT_MESSAGE_THREAD;
 
-    static auto const hrtfDir{ getHrtfDirectory() };
-    if (!hrtfDir.exists()) {
-        jassertfalse;
-        return;
-    }
-    static auto const HRTF_FOLDER_0{ hrtfDir.getChildFile("elev0") };
-    static auto const HRTF_FOLDER_40{ hrtfDir.getChildFile("elev40") };
-    static auto const HRTF_FOLDER_80{ hrtfDir.getChildFile("elev80") };
-
-    static juce::StringArray const NAMES{ "H0e025a.wav",  "H0e020a.wav",  "H0e065a.wav",  "H0e110a.wav",
-                                          "H0e155a.wav",  "H0e160a.wav",  "H0e115a.wav",  "H0e070a.wav",
-                                          "H40e032a.wav", "H40e026a.wav", "H40e084a.wav", "H40e148a.wav",
-                                          "H40e154a.wav", "H40e090a.wav", "H80e090a.wav", "H80e090a.wav" };
-
-    static auto const GET_HRTF_IR_FILE = [](int const speaker) {
-        jassert(juce::isPositiveAndBelow(speaker, NAMES.size()));
-
-        auto const & name{ NAMES[speaker] };
-        if (speaker < 8) {
-            return HRTF_FOLDER_0.getChildFile(name);
-        }
-
-        if (speaker < 14) {
-            return HRTF_FOLDER_40.getChildFile(name);
-        }
-
-        return HRTF_FOLDER_80.getChildFile(name);
+    auto const displayError = [&](juce::String const & error) {
+        juce::AlertWindow::showMessageBoxAsync(juce::MessageBoxIconType::WarningIcon,
+                                               "Unable to process binaural stereo reduction.",
+                                               error,
+                                               "OK",
+                                               nullptr,
+                                               nullptr);
     };
 
-    static auto const GET_HRTF_IR_FILES = []() {
-        juce::Array<juce::File> files{};
-        for (int i{}; i < NAMES.size(); ++i) {
-            files.add(GET_HRTF_IR_FILE(i));
-        }
+    mAmbisonicData.speakersAudioConfig = speakerSetup.toAudioConfig(sampleRate);
+    auto ambSpeakers = speakerSetup.ordering;
+    ambSpeakers.sort();
+    mAmbisonicData.speakersBuffer.init(ambSpeakers);
 
-        return files;
-    };
-
-    static auto const FILES = GET_HRTF_IR_FILES();
-
-    // Init inner spat algorithm
-    auto hrtfSpeakerSetupFile{ getHrtfDirectory().getSiblingFile("tests/util/BINAURAL_SPEAKER_SETUP.xml") };
-    if (!hrtfSpeakerSetupFile.existsAsFile()) {
-        // this means SG is executed outside of the IDE or test environment (Release build)
-        hrtfSpeakerSetupFile = SG_RESOURCES_DIR.getChildFile("default_preset/BINAURAL_SPEAKER_SETUP.xml");
-    }
-    if (!hrtfSpeakerSetupFile.existsAsFile()) {
-        jassertfalse;
-        return;
-    }
-
-    auto const binauralXml{ juce::XmlDocument{ hrtfSpeakerSetupFile }.getDocumentElement() };
-    if (!binauralXml) {
-        jassertfalse;
-        return;
-    }
-
-    auto const binauralSpeakerSetup{ SpeakerSetup::fromXml(*binauralXml) };
-    if (!binauralSpeakerSetup) {
-        jassertfalse;
-        return;
-    }
-
-    mHrtfData.speakersAudioConfig
-        = binauralSpeakerSetup->toAudioConfig(44100.0); // TODO: find a way to update this number!
-    auto speakers = binauralSpeakerSetup->ordering;
-
-    speakers.sort();
-    mHrtfData.speakersBuffer.init(speakers);
-
-    auto const & binauralSpeakerData{ binauralSpeakerSetup->speakers };
-
+    auto const & binauralSpeakerData{ speakerSetup.speakers };
     switch (projectSpatMode) {
     case SpatMode::vbap:
         mInnerAlgorithm = std::make_unique<VbapSpatAlgorithm>(binauralSpeakerData, sources.getKeys());
         break;
     case SpatMode::mbap:
-        mInnerAlgorithm = std::make_unique<MbapSpatAlgorithm>(*binauralSpeakerSetup, sources.getKeys());
+        mInnerAlgorithm = std::make_unique<MbapSpatAlgorithm>(speakerSetup, sources.getKeys());
         break;
     case SpatMode::hybrid:
         mInnerAlgorithm
-            = std::make_unique<HybridSpatAlgorithm<MbapSpatAlgorithm, VbapSpatAlgorithm>>(*binauralSpeakerSetup,
+            = std::make_unique<HybridSpatAlgorithm<MbapSpatAlgorithm, VbapSpatAlgorithm>>(speakerSetup,
                                                                                           sources.getKeys());
         break;
     case SpatMode::invalid:
@@ -144,24 +93,37 @@ HrtfSpatAlgorithm::HrtfSpatAlgorithm(SpeakerSetup const & speakerSetup,
 
     jassert(mInnerAlgorithm);
 
-    // load IRs
-    for (int i{}; i < 16; ++i) {
-        mConvolutions[narrow<std::size_t>(i)].loadImpulseResponse(FILES[i],
-                                                                  juce::dsp::Convolution::Stereo::yes,
-                                                                  juce::dsp::Convolution::Trim::no,
-                                                                  0,
-                                                                  juce::dsp::Convolution::Normalise::no);
-    }
-
-    juce::dsp::ProcessSpec const spec{ sampleRate, narrow<juce::uint32>(bufferSize), 2 };
-    for (auto & convolution : mConvolutions) {
-        convolution.prepare(spec);
-        convolution.reset();
-    }
-
-    convolutionBuffer.setSize(2, bufferSize);
-
     fixDirectOutsIntoPlace(sources, speakerSetup, projectSpatMode);
+
+    mBFormatMain.Configure(mNOrder, true, bufferSize);
+    mBFormatMain.Reset();
+    // fadeTimeMilliSec of 0ms is OK because the speakers do not move and movement of source sound
+    // is handled in the InnerAlgorithm process.
+    auto encoderWorks{ mAmbEncoder.Configure(mNOrder, true, sampleRate, 0) };
+    jassert(encoderWorks);
+    mPosition.azimuth = 0;
+    mPosition.elevation = 0;
+    mPosition.distance = 1.f;
+    mAmbEncoder.SetPosition(mPosition);
+    mAmbEncoder.Reset();
+    unsigned int tailLength = 0;
+    // lowCpuMode : true means symmetric head (half left calculation + inverted phase for right
+    // false means full calculation
+    mAmbBinauralDecoderConfigured = mAmbDecoderBinaural.Configure(mNOrder,
+                                                                  true,
+                                                                  sampleRate,
+                                                                  bufferSize,
+                                                                  tailLength,
+                                                                  mSofaFile.getFullPathName().toStdString(),
+                                                                  mBinauralLowCpuMode);
+
+    if (!mAmbBinauralDecoderConfigured) {
+        if (mSofaFile.getFullPathName().compare("") == 0) {
+            displayError("No SOFA file loaded.\nGo to File and Open SOFA file.");
+        } else {
+            displayError("Something is wrong with the selected file.\nPlease choose a valid SOFA file.");
+        }
+    }
 }
 
 //==============================================================================
@@ -186,66 +148,46 @@ void HrtfSpatAlgorithm::process(AudioConfig const & config,
                                 [[maybe_unused]] SpeakersAudioConfig const * altSpeakerConfig) noexcept NONBLOCKING
 {
     ASSERT_AUDIO_THREAD;
+
+    if (!mAmbBinauralDecoderConfigured) {
+        return;
+    }
+
     jassert(!altSpeakerConfig);
     jassert(stereoBuffer.getNumChannels() == 2);
 
     speakersBuffer.silence();
 
-    auto & hrtfBuffer{ mHrtfData.speakersBuffer };
-    jassert(hrtfBuffer.size() == 16);
-    hrtfBuffer.silence();
+    auto & ambBuffer{ mAmbisonicData.speakersBuffer };
+    ambBuffer.silence();
+    mBFormatMain.Reset();
 
     if (mInnerAlgorithm)
+        // we could use nullptr instead of mAmbisonicData.speakersAudioConfig here
         mInnerAlgorithm
-            ->process(config, sourcesBuffer, hrtfBuffer, stereoBuffer, sourcePeaks, &mHrtfData.speakersAudioConfig);
+            ->process(config, sourcesBuffer, ambBuffer, stereoBuffer, sourcePeaks, &mAmbisonicData.speakersAudioConfig);
 
-    convolutionBuffer.clear();
+    for (auto const & speaker : mSpeakerSetup.speakers) {
+        // compute azimuth rotation 90 degrees counterclockwise
+        float azi = speaker.value->position.getPolar().azimuth.getAsRadians() - (PI.get() / 2);
+        while (azi <= -PI.get())
+            azi += TWO_PI.get();
+        while (azi > PI.get())
+            azi -= TWO_PI.get();
 
-    int i = 0;
-    for (auto const & speaker : mHrtfData.speakersAudioConfig) {
-        processSpeaker(i++, speaker.key, sourcesBuffer, stereoBuffer);
+        mPosition.azimuth = azi;
+        mPosition.elevation = speaker.value->position.getPolar().elevation.getAsRadians();
+        mPosition.distance = speaker.value->position.getPolar().length;
+        mAmbEncoder.SetPosition(mPosition);
+
+        gris::output_patch_t speakerId{ speaker.key };
+        mAmbEncoder.ProcessAccumul(ambBuffer[speakerId].getWritePointer(0),
+                                   sourcesBuffer.getNumSamples(),
+                                   &mBFormatMain);
     }
-}
-
-//==============================================================================
-inline void HrtfSpatAlgorithm::processSpeaker(int speakerIndex,
-                                              const gris::output_patch_t & speakerId,
-                                              gris::SourceAudioBuffer & sourcesBuffer,
-                                              juce::AudioBuffer<float> & stereoBuffer)
-{
-    auto const numSamples{ sourcesBuffer.getNumSamples() };
-    auto & hrtfBuffer{ mHrtfData.speakersBuffer };
-    auto const magnitude{ hrtfBuffer[speakerId].getMagnitude(0, numSamples) };
-    auto & hadSoundLastBlock{ mHrtfData.hadSoundLastBlock[speakerId] };
-
-    // We can skip the speaker if the gain is small enough, but we have to perform one last block so that the
-    // convolution's inner state stays coherent.
-    if (magnitude <= SMALL_GAIN) {
-        if (!hadSoundLastBlock) {
-            return;
-        }
-        hadSoundLastBlock = false;
-    } else {
-        hadSoundLastBlock = true;
-    }
-
-    jassert(convolutionBuffer.getNumSamples() == numSamples);
-    convolutionBuffer.copyFrom(0, 0, hrtfBuffer[speakerId], 0, 0, numSamples);
-    convolutionBuffer.copyFrom(1, 0, hrtfBuffer[speakerId], 0, 0, numSamples);
-    juce::dsp::AudioBlock<float> block{ convolutionBuffer };
-    juce::dsp::ProcessContextReplacing<float> const context{ block };
-    mConvolutions[static_cast<size_t>(speakerIndex)].process(context);
-
-    static constexpr std::array<bool, 16> REVERSE{ true, false, false, false, false, true, true, true,
-                                                   true, false, false, false, true,  true, true, false };
-
-    if (!REVERSE[static_cast<size_t>(speakerIndex)]) {
-        stereoBuffer.addFrom(0, 0, convolutionBuffer, 0, 0, numSamples);
-        stereoBuffer.addFrom(1, 0, convolutionBuffer, 1, 0, numSamples);
-    } else {
-        stereoBuffer.addFrom(0, 0, convolutionBuffer, 1, 0, numSamples);
-        stereoBuffer.addFrom(1, 0, convolutionBuffer, 0, 0, numSamples);
-    }
+    mAmbDecoderBinaural.Process(&mBFormatMain,
+                                const_cast<float **>(stereoBuffer.getArrayOfWritePointers()),
+                                mBufferSize);
 }
 
 //==============================================================================
@@ -261,10 +203,16 @@ std::unique_ptr<AbstractSpatAlgorithm> HrtfSpatAlgorithm::make(SpeakerSetup cons
                                                                SpatMode const & projectSpatMode,
                                                                SourcesData const & sources,
                                                                double const sampleRate,
-                                                               int const bufferSize)
+                                                               int const bufferSize,
+                                                               BinauralSettings & binauralSettings)
 {
     JUCE_ASSERT_MESSAGE_THREAD;
-    return std::make_unique<HrtfSpatAlgorithm>(speakerSetup, projectSpatMode, sources, sampleRate, bufferSize);
+    return std::make_unique<HrtfSpatAlgorithm>(speakerSetup,
+                                               projectSpatMode,
+                                               sources,
+                                               sampleRate,
+                                               bufferSize,
+                                               binauralSettings);
 }
 
 } // namespace gris

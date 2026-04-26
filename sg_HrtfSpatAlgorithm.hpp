@@ -36,6 +36,7 @@
 #include <tl/optional.hpp>
 #include <array>
 #include <memory>
+#include "spatialaudio/Ambisonics.h"
 
 namespace gris
 {
@@ -44,7 +45,6 @@ namespace gris
 struct HrtfData {
     SpeakersAudioConfig speakersAudioConfig{};
     SpeakerAudioBuffer speakersBuffer{};
-    StrongArray<output_patch_t, bool, MAX_NUM_SPEAKERS> hadSoundLastBlock{};
 };
 
 //==============================================================================
@@ -56,8 +56,18 @@ struct HrtfData {
 class HrtfSpatAlgorithm final : public AbstractSpatAlgorithm
 {
     std::unique_ptr<AbstractSpatAlgorithm> mInnerAlgorithm{};
-    HrtfData mHrtfData{};
-    std::array<juce::dsp::Convolution, 16> mConvolutions{};
+    HrtfData mAmbisonicData{};
+    const SpeakerSetup & mSpeakerSetup;
+    int mBufferSize;
+
+    spaudio::BFormat mBFormatMain;
+    spaudio::AmbisonicEncoder mAmbEncoder;
+    spaudio::AmbisonicBinauralizer mAmbDecoderBinaural;
+    spaudio::PolarPosition<float> mPosition;
+    juce::File mSofaFile{};
+    const unsigned int mNOrder{ 3 };
+    bool mBinauralLowCpuMode{};
+    bool mAmbBinauralDecoderConfigured{};
 
 public:
     //==============================================================================
@@ -66,7 +76,8 @@ public:
                       SpatMode const & projectSpatMode,
                       SourcesData const & sources,
                       double sampleRate,
-                      int bufferSize);
+                      int bufferSize,
+                      BinauralSettings & binauralSettings);
     //==============================================================================
     HrtfSpatAlgorithm() = delete;
     ~HrtfSpatAlgorithm() override = default;
@@ -88,16 +99,11 @@ public:
                                                        SpatMode const & projectSpatMode,
                                                        SourcesData const & sources,
                                                        double sampleRate,
-                                                       int bufferSize);
+                                                       int bufferSize,
+                                                       BinauralSettings & binauralSettings);
 
 private:
     //==============================================================================
-    void processSpeaker(int speakerIndex,
-                        const gris::output_patch_t & speakerId,
-                        gris::SourceAudioBuffer & sourcesBuffer,
-                        juce::AudioBuffer<float> & stereoBuffer);
-
-    juce::AudioBuffer<float> convolutionBuffer;
 
     JUCE_LEAK_DETECTOR(HrtfSpatAlgorithm)
 };
