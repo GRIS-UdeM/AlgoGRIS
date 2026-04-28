@@ -4,3 +4,9 @@
 [submodule "submodules/fork_union"]
 	path = submodules/fork_union
 	url = https://github.com/ashvardanian/fork_union.git
+[submodule "submodules/libmysofa"]
+	path = submodules/libmysofa
+	url = https://github.com/hoene/libmysofa.git
+[submodule "submodules/libspatialaudio"]
+	path = submodules/libspatialaudio
+	url = https://github.com/videolan/libspatialaudio.git
