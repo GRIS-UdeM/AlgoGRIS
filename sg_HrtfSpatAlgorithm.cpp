@@ -99,7 +99,7 @@ HrtfSpatAlgorithm::HrtfSpatAlgorithm(SpeakerSetup const & speakerSetup,
     mBFormatMain.Reset();
     // fadeTimeMilliSec of 0ms is OK because the speakers do not move and movement of source sound
     // is handled in the InnerAlgorithm process.
-    auto encoderWorks{ mAmbEncoder.Configure(mNOrder, true, sampleRate, 0) };
+    [[maybe_unused]] auto encoderWorks{ mAmbEncoder.Configure(mNOrder, true, sampleRate, 0) };
     jassert(encoderWorks);
     mPosition.azimuth = 0;
     mPosition.elevation = 0;
