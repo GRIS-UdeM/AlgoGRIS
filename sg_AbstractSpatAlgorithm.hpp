@@ -117,8 +117,7 @@ public:
                          SpeakerAudioBuffer & speakersBuffer,
                          juce::AudioBuffer<float> & stereoBuffer,
                          SourcePeaks const & sourcePeaks,
-                         SpeakersAudioConfig const * altSpeakerConfig)
-        = 0;
+                         SpeakersAudioConfig const * altSpeakerConfig) = 0;
     /** @return the speaker triplets. Only works with VBAP-type algorithms. */
     [[nodiscard]] virtual juce::Array<Triplet> getTriplets() const noexcept = 0;
     /** @return true if the current algorithm uses VBAP internally. */
