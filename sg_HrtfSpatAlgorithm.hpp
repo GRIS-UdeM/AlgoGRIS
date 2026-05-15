@@ -61,13 +61,20 @@ class HrtfSpatAlgorithm final : public AbstractSpatAlgorithm
     int mBufferSize;
 
     spaudio::BFormat mBFormatMain;
-    spaudio::AmbisonicEncoder mAmbEncoder;
+    spaudio::AmbisonicEncoderDist mAmbEncoder;
     spaudio::AmbisonicBinauralizer mAmbDecoderBinaural;
     spaudio::PolarPosition<float> mPosition;
     juce::File mSofaFile{};
     const unsigned int mNOrder{ 3 };
     bool mBinauralLowCpuMode{};
     bool mAmbBinauralDecoderConfigured{};
+
+    bool mHRTFGainCalibrated{};
+    std::optional<AudioConfig> mAudioConfig{};
+    SourceAudioBuffer mCalibrationSourceBuffer;
+    juce::AudioBuffer<float> mStereoCalibrationBuffer;
+    std::atomic<bool> mDoCalibrate{ false };
+//    std::atomic<float> mCalibratedGain{ 1.0f };
 
 public:
     //==============================================================================

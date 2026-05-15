@@ -99,7 +99,7 @@ HrtfSpatAlgorithm::HrtfSpatAlgorithm(SpeakerSetup const & speakerSetup,
     mBFormatMain.Reset();
     // fadeTimeMilliSec of 0ms is OK because the speakers do not move and movement of source sound
     // is handled in the InnerAlgorithm process.
-    [[maybe_unused]] auto encoderWorks{ mAmbEncoder.Configure(mNOrder, true, sampleRate, 0) };
+    [[maybe_unused]] auto encoderWorks{ mAmbEncoder.Configure(mNOrder, true, sampleRate) };
     jassert(encoderWorks);
     mPosition.azimuth = 0;
     mPosition.elevation = 0;
@@ -179,6 +179,8 @@ void HrtfSpatAlgorithm::process(AudioConfig const & config,
         mPosition.elevation = speaker.value->position.getPolar().elevation.getAsRadians();
         mPosition.distance = speaker.value->position.getPolar().length;
         mAmbEncoder.SetPosition(mPosition);
+        mAmbEncoder.Reset();
+        mAmbEncoder.Refresh();
 
         gris::output_patch_t speakerId{ speaker.key };
         mAmbEncoder.ProcessAccumul(ambBuffer[speakerId].getWritePointer(0),
