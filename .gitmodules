@@ -10,3 +10,6 @@
 [submodule "submodules/libspatialaudio"]
 	path = submodules/libspatialaudio
 	url = https://github.com/videolan/libspatialaudio.git
+[submodule "submodules/Spatial_Audio_Framework"]
+	path = submodules/Spatial_Audio_Framework
+	url = https://github.com/leomccormack/Spatial_Audio_Framework.git
