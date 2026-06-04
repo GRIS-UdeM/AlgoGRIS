@@ -36,45 +36,133 @@
 #include <tl/optional.hpp>
 #include <array>
 #include <memory>
-#include "spatialaudio/Ambisonics.h"
+// #include "binauraliser_nf.h"
+// #include "saf.h"
+// #include "saf_externals.h"
+// #include "spatialaudio/Ambisonics.h"
+// avoiding macro collisions in libspatialaudio and Spatial_Audio_Framework
+#if defined(_MSC_VER) || defined(__clang__) || defined(__GNUC__)
+    #pragma push_macro("RAD2DEG")
+    #pragma push_macro("DEG2RAD")
+    #include "binauraliser_nf.h"
+    #pragma pop_macro("DEG2RAD")
+    #pragma pop_macro("RAD2DEG")
+
+    #pragma push_macro("RAD2DEG")
+    #pragma push_macro("DEG2RAD")
+    #include "saf.h"
+    #pragma pop_macro("DEG2RAD")
+    #pragma pop_macro("RAD2DEG")
+
+    #pragma push_macro("RAD2DEG")
+    #pragma push_macro("DEG2RAD")
+    #include "saf_externals.h"
+    #pragma pop_macro("DEG2RAD")
+    #pragma pop_macro("RAD2DEG")
+
+    #pragma push_macro("RAD2DEG")
+    #pragma push_macro("DEG2RAD")
+    #include "spatialaudio/Ambisonics.h"
+    #pragma pop_macro("DEG2RAD")
+    #pragma pop_macro("RAD2DEG")
+#else
+    #include "binauraliser_nf.h"
+    #undef RAD2DEG
+    #undef DEG2RAD
+
+    #include "saf.h"
+    #undef RAD2DEG
+    #undef DEG2RAD
+
+    #include "saf_externals.h"
+    #undef RAD2DEG
+    #undef DEG2RAD
+
+    #include "spatialaudio/Ambisonics.h"
+    #undef RAD2DEG
+    #undef DEG2RAD
+#endif
 
 namespace gris
 {
 //==============================================================================
-/**  */
-struct HrtfData {
+constexpr auto SAF_MAX_NUM_CHANNELS = MAX_NUM_CHANNELS;
+//==============================================================================
+struct HrtfData { // No need ??? !!!
     SpeakersAudioConfig speakersAudioConfig{};
     SpeakerAudioBuffer speakersBuffer{};
 };
-
 //==============================================================================
 /** A head-related-transfer-function based stereo reduction algorithm.
  *
- * This uses internally the juce::dsp::Convolution class, which could probably run faster if we were to use Intel's IPP
- * library (but that would not work on Apple silicon).
+ * This uses either libspatialaudio or Spatial_Audio_Framework internally to process SOFA files, converting
+ * the audio output from SpatGRIS's spatialization algorithms into binaural
+ * https://github.com/videolan/libspatialaudio
+ * https://github.com/leomccormack/Spatial_Audio_Framework
  */
-class HrtfSpatAlgorithm final : public AbstractSpatAlgorithm
+class HrtfSpatAlgorithm final
+    : public AbstractSpatAlgorithm
+    , juce::Timer
 {
     std::unique_ptr<AbstractSpatAlgorithm> mInnerAlgorithm{};
-    HrtfData mAmbisonicData{};
+    HrtfData mHRTFData{};
     const SpeakerSetup & mSpeakerSetup;
     int mBufferSize;
+    double mSampleRate;
+    juce::File mSofaFile{};
 
+    // Spatial_Audio_Framework
+    juce::Atomic<bool> mSAFConfigureNeeded{ true };
+    int mSAFReconfigureAttempts{};
+    BinauralRenderer mBinauralRenderer;
+
+    bool mUseDefaultHRIRs{};
+    bool mEnableHRIRsDiffuseEQ{};
+    int mNumSpksToConvert{ 0 };
+    int mNumSpksForFirstSafHBin{ 0 };
+    int mNumSpksForSecondSafHBin{ 0 };
+    bool mUseSecondSafHBin{};
+
+    // binauraliser handles. Each of them can process up to 128 channels
+    void * mSafFirstHBin;
+    void * mSafSecondHBin;
+
+    int mFrameSize{ 0 };
+    int mNumOutputs{ 2 };
+    int mHostBlockSize{ 0 };
+    bool mUsingLowDelay{ false };
+
+    StaticVector<output_patch_t, MAX_NUM_SPEAKERS> mActiveChannels;
+    std::vector<float *> mPFrameData;
+    std::vector<float *> mPFrameSecData;
+
+    int mFirstInPos = 0;
+    int mFirstOutPos = 0;
+    int mFirstAvailableOut = 0;
+    int mSecondInPos = 0;
+    int mSecondOutPos = 0;
+    int mSecondAvailableOut = 0;
+
+    std::vector<float> mFirstInBuffers;
+    std::vector<float> mFirstOutBuffers;
+    std::vector<float *> mFirstInBuffersPtrs;
+    std::vector<float *> mFirstOutBuffersPtrs;
+    std::vector<float> mSecondInBuffers;
+    std::vector<float> mSecondOutBuffers;
+    std::vector<float *> mSecondInBuffersPtrs;
+    std::vector<float *> mSecondOutBuffersPtrs;
+
+    juce::AudioBuffer<float> mFirstStereoBuffer;
+    juce::AudioBuffer<float> mSecondStereoBuffer;
+
+    // libspatialaudio
     spaudio::BFormat mBFormatMain;
     spaudio::AmbisonicEncoderDist mAmbEncoder;
     spaudio::AmbisonicBinauralizer mAmbDecoderBinaural;
     spaudio::PolarPosition<float> mPosition;
-    juce::File mSofaFile{};
     const unsigned int mNOrder{ 3 };
     bool mBinauralLowCpuMode{};
     bool mAmbBinauralDecoderConfigured{};
-
-    bool mHRTFGainCalibrated{};
-    std::optional<AudioConfig> mAudioConfig{};
-    SourceAudioBuffer mCalibrationSourceBuffer;
-    juce::AudioBuffer<float> mStereoCalibrationBuffer;
-    std::atomic<bool> mDoCalibrate{ false };
-//    std::atomic<float> mCalibratedGain{ 1.0f };
 
 public:
     //==============================================================================
@@ -87,7 +175,7 @@ public:
                       BinauralSettings & binauralSettings);
     //==============================================================================
     HrtfSpatAlgorithm() = delete;
-    ~HrtfSpatAlgorithm() override = default;
+    ~HrtfSpatAlgorithm() override;
     SG_DELETE_COPY_AND_MOVE(HrtfSpatAlgorithm)
     //==============================================================================
     void updateSpatData(source_index_t sourceIndex, SourceData const & sourceData) noexcept override;
@@ -98,7 +186,7 @@ public:
                  SourcePeaks const & sourcePeaks,
                  SpeakersAudioConfig const * altSpeakerConfig) noexcept override;
     [[nodiscard]] juce::Array<Triplet> getTriplets() const noexcept override;
-    [[nodiscard]] bool hasTriplets() const noexcept override { return false; }
+    [[nodiscard]] bool hasTriplets() const noexcept override { return mInnerAlgorithm->hasTriplets(); }
     [[nodiscard]] tl::optional<Error> getError() const noexcept override { return tl::nullopt; }
     //==============================================================================
     /** Instantiates an HRTF algorithm. This should never fail. */
@@ -111,7 +199,13 @@ public:
 
 private:
     //==============================================================================
+    void showErrorMessage(juce::String & error);
+    void configureSAF();
+    void reconfigureSAF();
+    void configureLibspatialaudio();
+    void timerCallback() override;
 
+    //==============================================================================
     JUCE_LEAK_DETECTOR(HrtfSpatAlgorithm)
 };
 
