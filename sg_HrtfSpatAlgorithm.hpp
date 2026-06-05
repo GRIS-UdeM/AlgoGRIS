@@ -88,11 +88,6 @@ namespace gris
 //==============================================================================
 constexpr auto SAF_MAX_NUM_CHANNELS = MAX_NUM_CHANNELS;
 //==============================================================================
-struct HrtfData { // No need ??? !!!
-    SpeakersAudioConfig speakersAudioConfig{};
-    SpeakerAudioBuffer speakersBuffer{};
-};
-//==============================================================================
 /** A head-related-transfer-function based stereo reduction algorithm.
  *
  * This uses either libspatialaudio or Spatial_Audio_Framework internally to process SOFA files, converting
@@ -105,7 +100,6 @@ class HrtfSpatAlgorithm final
     , juce::Timer
 {
     std::unique_ptr<AbstractSpatAlgorithm> mInnerAlgorithm{};
-    HrtfData mHRTFData{};
     const SpeakerSetup & mSpeakerSetup;
     int mBufferSize;
     double mSampleRate;

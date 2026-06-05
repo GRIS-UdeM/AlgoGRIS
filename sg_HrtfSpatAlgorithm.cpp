@@ -83,12 +83,6 @@ HrtfSpatAlgorithm::HrtfSpatAlgorithm(SpeakerSetup const & speakerSetup,
 
     fixDirectOutsIntoPlace(sources, speakerSetup, projectSpatMode);
 
-    mHRTFData.speakersAudioConfig = speakerSetup.toAudioConfig(sampleRate);
-    auto hrtfSpeakers = speakerSetup.ordering;
-    hrtfSpeakers.sort();
-    mHRTFData.speakersBuffer.init(hrtfSpeakers);
-    mHRTFData.speakersBuffer.setNumSamples(mBufferSize);
-
     if (mBinauralRenderer == BinauralRenderer::saf) {
         configureSAF();
     } else {
@@ -136,16 +130,8 @@ void HrtfSpatAlgorithm::process(AudioConfig const & config,
 
     speakersBuffer.silence();
 
-    auto & hrtfBuffer{ mHRTFData.speakersBuffer };
-    hrtfBuffer.silence();
-
     if (mInnerAlgorithm)
-        mInnerAlgorithm->process(config,
-                                 sourcesBuffer,
-                                 /*hrtfBuffer*/ speakersBuffer,
-                                 stereoBuffer,
-                                 sourcePeaks,
-                                 /*&mHRTFData.speakersAudioConfig*/ altSpeakerConfig);
+        mInnerAlgorithm->process(config, sourcesBuffer, speakersBuffer, stereoBuffer, sourcePeaks, altSpeakerConfig);
 
     if (mBinauralRenderer == BinauralRenderer::saf) {
         if (!mSAFConfigureNeeded.get() && binauraliser_getCodecStatus(mSafFirstHBin) == CODEC_STATUS_INITIALISED
@@ -153,12 +139,12 @@ void HrtfSpatAlgorithm::process(AudioConfig const & config,
             mFirstStereoBuffer.clear();
             mSecondStereoBuffer.clear();
 
-            const int numSamples = /*hrtfBuffer*/ speakersBuffer.getNumSamples();
+            const int numSamples = speakersBuffer.getNumSamples();
             jassert(numSamples == sourcesBuffer.getNumSamples());
 
             if (mUsingLowDelay) {
                 const int numFrames = numSamples / mFrameSize;
-                auto bufferPtrs = /*hrtfBuffer*/ speakersBuffer.getArrayOfWritePointers(mActiveChannels);
+                auto bufferPtrs = speakersBuffer.getArrayOfWritePointers(mActiveChannels);
                 float * const * bufferData = bufferPtrs.data();
                 float * firstStereoL = mFirstStereoBuffer.getWritePointer(0);
                 float * firstStereoR = mFirstStereoBuffer.getWritePointer(1);
@@ -197,12 +183,12 @@ void HrtfSpatAlgorithm::process(AudioConfig const & config,
                         }
                     }
                 } else {
-                    /*hrtfBuffer*/ speakersBuffer.silence();
+                    speakersBuffer.silence();
                     jassertfalse;
                 }
             } else {
                 // using FIFO buffering
-                auto inHostVec = /*hrtfBuffer*/ speakersBuffer.getArrayOfWritePointers(mActiveChannels);
+                auto inHostVec = speakersBuffer.getArrayOfWritePointers(mActiveChannels);
                 const float * const * inHost = inHostVec.data();
                 float * const * firstOutHost = mFirstStereoBuffer.getArrayOfWritePointers();
                 float * const * secondOutHost
@@ -303,7 +289,7 @@ void HrtfSpatAlgorithm::process(AudioConfig const & config,
             mAmbEncoder.Refresh();
 
             gris::output_patch_t speakerId{ speaker.key };
-            mAmbEncoder.ProcessAccumul(/*hrtfBuffer*/ speakersBuffer[speakerId].getWritePointer(0),
+            mAmbEncoder.ProcessAccumul(speakersBuffer[speakerId].getWritePointer(0),
                                        sourcesBuffer.getNumSamples(),
                                        &mBFormatMain);
         }
