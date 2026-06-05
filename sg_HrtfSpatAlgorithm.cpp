@@ -265,6 +265,8 @@ void HrtfSpatAlgorithm::process(AudioConfig const & config,
                 stereoBuffer.clear();
                 mSAFConfigureNeeded.set(true);
             }
+            // Apply a gain reduction of -6dB
+            stereoBuffer.applyGain(0.5f);
         }
     } else {
         // libspatialaudio
