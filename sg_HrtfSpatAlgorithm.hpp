@@ -36,52 +36,9 @@
 #include <tl/optional.hpp>
 #include <array>
 #include <memory>
-// #include "binauraliser_nf.h"
-// #include "saf.h"
-// #include "saf_externals.h"
-// #include "spatialaudio/Ambisonics.h"
-// avoiding macro collisions in libspatialaudio and Spatial_Audio_Framework
-#if defined(_MSC_VER) || defined(__clang__) || defined(__GNUC__)
-    #pragma push_macro("RAD2DEG")
-    #pragma push_macro("DEG2RAD")
-    #include "binauraliser_nf.h"
-    #pragma pop_macro("DEG2RAD")
-    #pragma pop_macro("RAD2DEG")
-
-    #pragma push_macro("RAD2DEG")
-    #pragma push_macro("DEG2RAD")
-    #include "saf.h"
-    #pragma pop_macro("DEG2RAD")
-    #pragma pop_macro("RAD2DEG")
-
-    #pragma push_macro("RAD2DEG")
-    #pragma push_macro("DEG2RAD")
-    #include "saf_externals.h"
-    #pragma pop_macro("DEG2RAD")
-    #pragma pop_macro("RAD2DEG")
-
-    #pragma push_macro("RAD2DEG")
-    #pragma push_macro("DEG2RAD")
-    #include "spatialaudio/Ambisonics.h"
-    #pragma pop_macro("DEG2RAD")
-    #pragma pop_macro("RAD2DEG")
-#else
-    #include "binauraliser_nf.h"
-    #undef RAD2DEG
-    #undef DEG2RAD
-
-    #include "saf.h"
-    #undef RAD2DEG
-    #undef DEG2RAD
-
-    #include "saf_externals.h"
-    #undef RAD2DEG
-    #undef DEG2RAD
-
-    #include "spatialaudio/Ambisonics.h"
-    #undef RAD2DEG
-    #undef DEG2RAD
-#endif
+#include "binauraliser_nf.h"
+#include "saf.h"
+#include "saf_externals.h"
 
 namespace gris
 {
@@ -108,7 +65,6 @@ class HrtfSpatAlgorithm final
     // Spatial_Audio_Framework
     juce::Atomic<bool> mSAFConfigureNeeded{ true };
     int mSAFReconfigureAttempts{};
-    BinauralRenderer mBinauralRenderer;
 
     bool mUseDefaultHRIRs{};
     bool mEnableHRIRsDiffuseEQ{};
@@ -149,15 +105,6 @@ class HrtfSpatAlgorithm final
     juce::AudioBuffer<float> mFirstStereoBuffer;
     juce::AudioBuffer<float> mSecondStereoBuffer;
 
-    // libspatialaudio
-    spaudio::BFormat mBFormatMain;
-    spaudio::AmbisonicEncoderDist mAmbEncoder;
-    spaudio::AmbisonicBinauralizer mAmbDecoderBinaural;
-    spaudio::PolarPosition<float> mPosition;
-    const unsigned int mNOrder{ 3 };
-    bool mBinauralLowCpuMode{};
-    bool mAmbBinauralDecoderConfigured{};
-
 public:
     //==============================================================================
     /** Note: You should never use this function directly. Use HrtfSpatAlgorithm::make() instead. */
@@ -196,7 +143,6 @@ private:
     void showErrorMessage(juce::String & error);
     void configureSAF();
     void reconfigureSAF();
-    void configureLibspatialaudio();
     void timerCallback() override;
 
     //==============================================================================

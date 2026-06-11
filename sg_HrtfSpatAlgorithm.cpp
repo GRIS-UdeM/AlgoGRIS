@@ -56,11 +56,8 @@ HrtfSpatAlgorithm::HrtfSpatAlgorithm(SpeakerSetup const & speakerSetup,
     , mBufferSize(bufferSize)
     , mSampleRate(sampleRate)
     , mSofaFile(binauralSettings.lastSofaFile)
-    , mBinauralRenderer(binauralSettings.renderer)
     , mUseDefaultHRIRs(binauralSettings.useDefaultHRIRs)
     , mEnableHRIRsDiffuseEQ(binauralSettings.enableHRIRsDiffuseEQ)
-    , mNOrder(binauralSettings.ambisonicOrder)
-    , mBinauralLowCpuMode(binauralSettings.lowCpuMode)
 {
     JUCE_ASSERT_MESSAGE_THREAD;
 
@@ -83,22 +80,16 @@ HrtfSpatAlgorithm::HrtfSpatAlgorithm(SpeakerSetup const & speakerSetup,
 
     fixDirectOutsIntoPlace(sources, speakerSetup, projectSpatMode);
 
-    if (mBinauralRenderer == BinauralRenderer::saf) {
-        configureSAF();
-    } else {
-        configureLibspatialaudio();
-    }
+    configureSAF();
 }
 
 //==============================================================================
 HrtfSpatAlgorithm::~HrtfSpatAlgorithm()
 {
-    if (mBinauralRenderer == BinauralRenderer::saf) {
-        stopTimer();
-        binauraliserNF_destroy(&mSafFirstHBin);
-        if (mUseSecondSafHBin) {
-            binauraliserNF_destroy(&mSafSecondHBin);
-        }
+    stopTimer();
+    binauraliserNF_destroy(&mSafFirstHBin);
+    if (mUseSecondSafHBin) {
+        binauraliserNF_destroy(&mSafSecondHBin);
     }
 }
 
@@ -133,171 +124,138 @@ void HrtfSpatAlgorithm::process(AudioConfig const & config,
     if (mInnerAlgorithm)
         mInnerAlgorithm->process(config, sourcesBuffer, speakersBuffer, stereoBuffer, sourcePeaks, altSpeakerConfig);
 
-    if (mBinauralRenderer == BinauralRenderer::saf) {
-        if (!mSAFConfigureNeeded.get() && binauraliser_getCodecStatus(mSafFirstHBin) == CODEC_STATUS_INITIALISED
-            && (mUseSecondSafHBin ? binauraliser_getCodecStatus(mSafSecondHBin) == CODEC_STATUS_INITIALISED : true)) {
-            mFirstStereoBuffer.clear();
-            mSecondStereoBuffer.clear();
+    if (!mSAFConfigureNeeded.get() && binauraliser_getCodecStatus(mSafFirstHBin) == CODEC_STATUS_INITIALISED
+        && (mUseSecondSafHBin ? binauraliser_getCodecStatus(mSafSecondHBin) == CODEC_STATUS_INITIALISED : true)) {
+        mFirstStereoBuffer.clear();
+        mSecondStereoBuffer.clear();
 
-            const int numSamples = speakersBuffer.getNumSamples();
-            jassert(numSamples == sourcesBuffer.getNumSamples());
+        const int numSamples = speakersBuffer.getNumSamples();
+        jassert(numSamples == sourcesBuffer.getNumSamples());
 
-            if (mUsingLowDelay) {
-                const int numFrames = numSamples / mFrameSize;
-                auto bufferPtrs = speakersBuffer.getArrayOfWritePointers(mActiveChannels);
-                float * const * bufferData = bufferPtrs.data();
-                float * firstStereoL = mFirstStereoBuffer.getWritePointer(0);
-                float * firstStereoR = mFirstStereoBuffer.getWritePointer(1);
-                float * secondStereoL = nullptr;
-                float * secondStereoR = nullptr;
+        if (mUsingLowDelay) {
+            const int numFrames = numSamples / mFrameSize;
+            auto bufferPtrs = speakersBuffer.getArrayOfWritePointers(mActiveChannels);
+            float * const * bufferData = bufferPtrs.data();
+            float * firstStereoL = mFirstStereoBuffer.getWritePointer(0);
+            float * firstStereoR = mFirstStereoBuffer.getWritePointer(1);
+            float * secondStereoL = nullptr;
+            float * secondStereoR = nullptr;
 
-                if (mUseSecondSafHBin) {
-                    secondStereoL = mSecondStereoBuffer.getWritePointer(0);
-                    secondStereoR = mSecondStereoBuffer.getWritePointer(1);
-                }
+            if (mUseSecondSafHBin) {
+                secondStereoL = mSecondStereoBuffer.getWritePointer(0);
+                secondStereoR = mSecondStereoBuffer.getWritePointer(1);
+            }
 
-                if (numSamples % mFrameSize == 0) {
-                    for (int frame = 0; frame < numFrames; ++frame) {
-                        const int frameOffset = frame * mFrameSize;
-                        for (int ch{}; ch < mNumSpksForFirstSafHBin; ++ch) {
-                            mPFrameData[ch] = bufferData[ch] + frameOffset;
+            if (numSamples % mFrameSize == 0) {
+                for (int frame = 0; frame < numFrames; ++frame) {
+                    const int frameOffset = frame * mFrameSize;
+                    for (int ch{}; ch < mNumSpksForFirstSafHBin; ++ch) {
+                        mPFrameData[ch] = bufferData[ch] + frameOffset;
+                    }
+                    float * firstOutPtrs[2] = { firstStereoL + frameOffset, firstStereoR + frameOffset };
+                    binauraliserNF_process(mSafFirstHBin,
+                                           mPFrameData.data(),
+                                           firstOutPtrs,
+                                           mNumSpksForFirstSafHBin,
+                                           mNumOutputs,
+                                           mFrameSize);
+                    if (mUseSecondSafHBin) {
+                        for (int ch{}; ch < mNumSpksForSecondSafHBin; ++ch) {
+                            mPFrameSecData[ch] = bufferData[ch + mNumSpksForFirstSafHBin] + frameOffset;
                         }
-                        float * firstOutPtrs[2] = { firstStereoL + frameOffset, firstStereoR + frameOffset };
-                        binauraliserNF_process(mSafFirstHBin,
-                                               mPFrameData.data(),
-                                               firstOutPtrs,
-                                               mNumSpksForFirstSafHBin,
+                        float * secondOutPtrs[2] = { secondStereoL + frameOffset, secondStereoR + frameOffset };
+                        binauraliserNF_process(mSafSecondHBin,
+                                               mPFrameSecData.data(),
+                                               secondOutPtrs,
+                                               mNumSpksForSecondSafHBin,
                                                mNumOutputs,
                                                mFrameSize);
-                        if (mUseSecondSafHBin) {
-                            for (int ch{}; ch < mNumSpksForSecondSafHBin; ++ch) {
-                                mPFrameSecData[ch] = bufferData[ch + mNumSpksForFirstSafHBin] + frameOffset;
-                            }
-                            float * secondOutPtrs[2] = { secondStereoL + frameOffset, secondStereoR + frameOffset };
-                            binauraliserNF_process(mSafSecondHBin,
-                                                   mPFrameSecData.data(),
-                                                   secondOutPtrs,
-                                                   mNumSpksForSecondSafHBin,
-                                                   mNumOutputs,
-                                                   mFrameSize);
-                        }
                     }
-                } else {
-                    speakersBuffer.silence();
-                    jassertfalse;
                 }
             } else {
-                // using FIFO buffering
-                auto inHostVec = speakersBuffer.getArrayOfWritePointers(mActiveChannels);
-                const float * const * inHost = inHostVec.data();
-                float * const * firstOutHost = mFirstStereoBuffer.getArrayOfWritePointers();
-                float * const * secondOutHost
-                    = mUseSecondSafHBin ? mSecondStereoBuffer.getArrayOfWritePointers() : nullptr;
+                speakersBuffer.silence();
+                jassertfalse;
+            }
+        } else {
+            // using FIFO buffering
+            auto inHostVec = speakersBuffer.getArrayOfWritePointers(mActiveChannels);
+            const float * const * inHost = inHostVec.data();
+            float * const * firstOutHost = mFirstStereoBuffer.getArrayOfWritePointers();
+            float * const * secondOutHost = mUseSecondSafHBin ? mSecondStereoBuffer.getArrayOfWritePointers() : nullptr;
 
-                for (int n = 0; n < numSamples; ++n) {
-                    for (int ch = 0; ch < mNumSpksForFirstSafHBin; ++ch)
-                        mFirstInBuffersPtrs[ch][mFirstInPos] = inHost[ch][n];
-                    ++mFirstInPos;
+            for (int n = 0; n < numSamples; ++n) {
+                for (int ch = 0; ch < mNumSpksForFirstSafHBin; ++ch)
+                    mFirstInBuffersPtrs[ch][mFirstInPos] = inHost[ch][n];
+                ++mFirstInPos;
 
-                    if (mFirstInPos == mFrameSize) {
-                        binauraliserNF_process(mSafFirstHBin,
-                                               mFirstInBuffersPtrs.data(),
-                                               mFirstOutBuffersPtrs.data(),
-                                               mNumSpksForFirstSafHBin,
+                if (mFirstInPos == mFrameSize) {
+                    binauraliserNF_process(mSafFirstHBin,
+                                           mFirstInBuffersPtrs.data(),
+                                           mFirstOutBuffersPtrs.data(),
+                                           mNumSpksForFirstSafHBin,
+                                           mNumOutputs,
+                                           mFrameSize);
+                    mFirstInPos = 0;
+                    mFirstOutPos = 0;
+                    mFirstAvailableOut = mFrameSize;
+                }
+
+                if (mFirstAvailableOut > 0) {
+                    for (int ch = 0; ch < mNumOutputs; ++ch) {
+                        firstOutHost[ch][n] = mFirstOutBuffersPtrs[ch][mFirstOutPos];
+                    }
+                    ++mFirstOutPos;
+                    --mFirstAvailableOut;
+                } else {
+                    for (int ch = 0; ch < mNumOutputs; ++ch)
+                        firstOutHost[ch][n] = 0.0f;
+                }
+
+                if (mUseSecondSafHBin) {
+                    for (int ch = 0; ch < mNumSpksForSecondSafHBin; ++ch)
+                        mSecondInBuffersPtrs[ch][mSecondInPos] = inHost[ch + mNumSpksForFirstSafHBin][n];
+                    ++mSecondInPos;
+
+                    if (mSecondInPos == mFrameSize) {
+                        binauraliserNF_process(mSafSecondHBin,
+                                               mSecondInBuffersPtrs.data(),
+                                               mSecondOutBuffersPtrs.data(),
+                                               mNumSpksForSecondSafHBin,
                                                mNumOutputs,
                                                mFrameSize);
-                        mFirstInPos = 0;
-                        mFirstOutPos = 0;
-                        mFirstAvailableOut = mFrameSize;
+                        mSecondInPos = 0;
+                        mSecondOutPos = 0;
+                        mSecondAvailableOut = mFrameSize;
                     }
 
-                    if (mFirstAvailableOut > 0) {
-                        for (int ch = 0; ch < mNumOutputs; ++ch) {
-                            firstOutHost[ch][n] = mFirstOutBuffersPtrs[ch][mFirstOutPos];
-                        }
-                        ++mFirstOutPos;
-                        --mFirstAvailableOut;
+                    if (mSecondAvailableOut > 0) {
+                        for (int ch = 0; ch < mNumOutputs; ++ch)
+                            secondOutHost[ch][n] = mSecondOutBuffersPtrs[ch][mSecondOutPos];
+                        ++mSecondOutPos;
+                        --mSecondAvailableOut;
                     } else {
                         for (int ch = 0; ch < mNumOutputs; ++ch)
-                            firstOutHost[ch][n] = 0.0f;
-                    }
-
-                    if (mUseSecondSafHBin) {
-                        for (int ch = 0; ch < mNumSpksForSecondSafHBin; ++ch)
-                            mSecondInBuffersPtrs[ch][mSecondInPos] = inHost[ch + mNumSpksForFirstSafHBin][n];
-                        ++mSecondInPos;
-
-                        if (mSecondInPos == mFrameSize) {
-                            binauraliserNF_process(mSafSecondHBin,
-                                                   mSecondInBuffersPtrs.data(),
-                                                   mSecondOutBuffersPtrs.data(),
-                                                   mNumSpksForSecondSafHBin,
-                                                   mNumOutputs,
-                                                   mFrameSize);
-                            mSecondInPos = 0;
-                            mSecondOutPos = 0;
-                            mSecondAvailableOut = mFrameSize;
-                        }
-
-                        if (mSecondAvailableOut > 0) {
-                            for (int ch = 0; ch < mNumOutputs; ++ch)
-                                secondOutHost[ch][n] = mSecondOutBuffersPtrs[ch][mSecondOutPos];
-                            ++mSecondOutPos;
-                            --mSecondAvailableOut;
-                        } else {
-                            for (int ch = 0; ch < mNumOutputs; ++ch)
-                                secondOutHost[ch][n] = 0.0f;
-                        }
+                            secondOutHost[ch][n] = 0.0f;
                     }
                 }
             }
-            // Combine the first and second stereo buffers to stereo out buffer
-            for (int ch{}; ch < mFirstStereoBuffer.getNumChannels(); ++ch) {
-                stereoBuffer.copyFrom(ch, 0, mFirstStereoBuffer, ch, 0, mFirstStereoBuffer.getNumSamples());
-            }
-            if (mUseSecondSafHBin) {
-                for (int ch{}; ch < mSecondStereoBuffer.getNumChannels(); ++ch) {
-                    stereoBuffer.addFrom(ch, 0, mSecondStereoBuffer, ch, 0, mSecondStereoBuffer.getNumSamples());
-                }
-            }
-            if (std::isnan(stereoBuffer.getRMSLevel(0, 0, stereoBuffer.getNumSamples()))
-                || std::isnan(stereoBuffer.getRMSLevel(1, 0, stereoBuffer.getNumSamples()))) {
-                stereoBuffer.clear();
-                mSAFConfigureNeeded.set(true);
-            }
-            // Apply a gain reduction of -6dB
-            stereoBuffer.applyGain(0.5f);
         }
-    } else {
-        // libspatialaudio
-        if (!mAmbBinauralDecoderConfigured) {
-            return;
+        // Combine the first and second stereo buffers to stereo out buffer
+        for (int ch{}; ch < mFirstStereoBuffer.getNumChannels(); ++ch) {
+            stereoBuffer.copyFrom(ch, 0, mFirstStereoBuffer, ch, 0, mFirstStereoBuffer.getNumSamples());
         }
-        mBFormatMain.Reset();
-
-        for (auto const & speaker : mSpeakerSetup.speakers) {
-            // compute azimuth rotation 90 degrees counterclockwise
-            float azi = speaker.value->position.getPolar().azimuth.getAsRadians() - (PI.get() / 2);
-            while (azi <= -PI.get())
-                azi += TWO_PI.get();
-            while (azi > PI.get())
-                azi -= TWO_PI.get();
-
-            mPosition.azimuth = azi;
-            mPosition.elevation = speaker.value->position.getPolar().elevation.getAsRadians();
-            mPosition.distance = speaker.value->position.getPolar().length;
-            mAmbEncoder.SetPosition(mPosition);
-            mAmbEncoder.Reset();
-            mAmbEncoder.Refresh();
-
-            gris::output_patch_t speakerId{ speaker.key };
-            mAmbEncoder.ProcessAccumul(speakersBuffer[speakerId].getWritePointer(0),
-                                       sourcesBuffer.getNumSamples(),
-                                       &mBFormatMain);
+        if (mUseSecondSafHBin) {
+            for (int ch{}; ch < mSecondStereoBuffer.getNumChannels(); ++ch) {
+                stereoBuffer.addFrom(ch, 0, mSecondStereoBuffer, ch, 0, mSecondStereoBuffer.getNumSamples());
+            }
         }
-        mAmbDecoderBinaural.Process(&mBFormatMain,
-                                    const_cast<float **>(stereoBuffer.getArrayOfWritePointers()),
-                                    mBufferSize);
+        if (std::isnan(stereoBuffer.getRMSLevel(0, 0, stereoBuffer.getNumSamples()))
+            || std::isnan(stereoBuffer.getRMSLevel(1, 0, stereoBuffer.getNumSamples()))) {
+            stereoBuffer.clear();
+            mSAFConfigureNeeded.set(true);
+        }
+        // Apply a gain reduction of -6dB
+        stereoBuffer.applyGain(0.5f);
     }
 }
 
@@ -483,44 +441,6 @@ void HrtfSpatAlgorithm::reconfigureSAF()
 
     configureSAF();
     mSAFReconfigureAttempts++;
-}
-
-//==============================================================================
-void HrtfSpatAlgorithm::configureLibspatialaudio()
-{
-    JUCE_ASSERT_MESSAGE_THREAD
-
-    mBFormatMain.Configure(mNOrder, true, mBufferSize);
-    mBFormatMain.Reset();
-    // fadeTimeMilliSec of 0ms is OK because the speakers do not move and movement of source sound
-    // is handled in the InnerAlgorithm process.
-    [[maybe_unused]] auto encoderWorks{ mAmbEncoder.Configure(mNOrder, true, mSampleRate) };
-    jassert(encoderWorks);
-    mPosition.azimuth = 0;
-    mPosition.elevation = 0;
-    mPosition.distance = 1.f;
-    mAmbEncoder.SetPosition(mPosition);
-    mAmbEncoder.Reset();
-    unsigned int tailLength = 0;
-    // lowCpuMode : true means symmetric head (half left calculation + inverted phase for right
-    // false means full calculation
-    mAmbBinauralDecoderConfigured = mAmbDecoderBinaural.Configure(mNOrder,
-                                                                  true,
-                                                                  mSampleRate,
-                                                                  mBufferSize,
-                                                                  tailLength,
-                                                                  mSofaFile.getFullPathName().toStdString(),
-                                                                  mBinauralLowCpuMode);
-
-    if (!mAmbBinauralDecoderConfigured) {
-        if (mSofaFile.getFullPathName().compare("") == 0) {
-            auto msg{ juce::String("No SOFA file loaded.\nGo to File and Open SOFA file.") };
-            showErrorMessage(msg);
-        } else {
-            auto msg{ juce::String("Something is wrong with the selected file.\nPlease choose a valid SOFA file.") };
-            showErrorMessage(msg);
-        }
-    }
 }
 
 //==============================================================================
