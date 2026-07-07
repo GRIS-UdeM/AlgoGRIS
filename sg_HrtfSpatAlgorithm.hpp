@@ -44,6 +44,7 @@ namespace gris
 {
 //==============================================================================
 constexpr auto SAF_MAX_NUM_CHANNELS = MAX_NUM_CHANNELS;
+constexpr int SAF_MAX_RECONFIGURATION_ATTEMPTS = 5;
 //==============================================================================
 /** A head-related-transfer-function based stereo reduction algorithm.
  *
@@ -65,6 +66,7 @@ class HrtfSpatAlgorithm final
     // Spatial_Audio_Framework
     juce::Atomic<bool> mSAFConfigureNeeded{ true };
     int mSAFReconfigureAttempts{};
+    bool mSAFConfigurationChecksDone{ false };
 
     bool mUseDefaultHRIRs{};
     bool mEnableHRIRsDiffuseEQ{};

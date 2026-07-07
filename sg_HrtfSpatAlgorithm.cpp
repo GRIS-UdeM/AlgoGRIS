@@ -302,7 +302,7 @@ void HrtfSpatAlgorithm::configureSAF()
 {
     JUCE_ASSERT_MESSAGE_THREAD
 
-    if (mSAFReconfigureAttempts >= 5) {
+    if (mSAFReconfigureAttempts >= SAF_MAX_RECONFIGURATION_ATTEMPTS) {
         auto msg{ juce::String(juce::String("Unable to configure ") + mSofaFile.getFileName())
                   + juce::String(".\nPlease try another file.") };
         showErrorMessage(msg);
@@ -318,14 +318,14 @@ void HrtfSpatAlgorithm::configureSAF()
     binauraliser_setSofaFilePath(mSafFirstHBin, mSofaFile.getFullPathName().toStdString().c_str());
     binauraliser_setUseDefaultHRIRsflag(mSafFirstHBin, 0);
     binauraliser_setNumSources(mSafFirstHBin, mNumSpksForFirstSafHBin);
-    binauraliserNF_init(mSafFirstHBin, mSampleRate);
+    binauraliserNF_init(mSafFirstHBin, static_cast<int>(mSampleRate));
 
     if (mUseSecondSafHBin) {
         binauraliserNF_create(&mSafSecondHBin);
         binauraliser_setSofaFilePath(mSafSecondHBin, mSofaFile.getFullPathName().toStdString().c_str());
         binauraliser_setUseDefaultHRIRsflag(mSafSecondHBin, 0);
         binauraliser_setNumSources(mSafSecondHBin, mNumSpksForSecondSafHBin);
-        binauraliserNF_init(mSafSecondHBin, mSampleRate);
+        binauraliserNF_init(mSafSecondHBin, static_cast<int>(mSampleRate));
     }
 
     mFrameSize = binauraliser_getFrameSize();
@@ -403,13 +403,13 @@ void HrtfSpatAlgorithm::configureSAF()
             binauraliser_setSourceAzi_deg(mSafFirstHBin, spkChan2SAFIndex, azi);
             binauraliser_setSourceElev_deg(mSafFirstHBin, spkChan2SAFIndex, elev);
             binauraliserNF_setSourceDist_m(mSafFirstHBin, spkChan2SAFIndex, distance);
-            binauraliser_setSourceGain(mSafFirstHBin, spkChan2SAFIndex, gainAdjust);
+            binauraliser_setSourceGain(mSafFirstHBin, spkChan2SAFIndex, static_cast<float>(gainAdjust));
         } else {
             auto const index{ spkChan2SAFIndex - mNumSpksForFirstSafHBin };
             binauraliser_setSourceAzi_deg(mSafSecondHBin, index, azi);
             binauraliser_setSourceElev_deg(mSafSecondHBin, index, elev);
             binauraliserNF_setSourceDist_m(mSafSecondHBin, index, distance);
-            binauraliser_setSourceGain(mSafSecondHBin, index, gainAdjust);
+            binauraliser_setSourceGain(mSafSecondHBin, index, static_cast<float>(gainAdjust));
         }
         spkChan2SAFIndex++;
     }
@@ -446,12 +446,12 @@ void HrtfSpatAlgorithm::reconfigureSAF()
 //==============================================================================
 void HrtfSpatAlgorithm::timerCallback()
 {
-    /* reinitialise codec if needed. Thread safe (binauraliser_nf.h) */
+    /* reinitialise codec if needed. Thread-safe and safe to call multiple times (binauraliser_nf.h) */
     if (binauraliser_getCodecStatus(mSafFirstHBin) == CODEC_STATUS_NOT_INITIALISED) {
         try {
             std::thread threadInit(binauraliserNF_initCodec, mSafFirstHBin);
             threadInit.detach();
-        } catch (const std::exception & exception) {
+        } catch ([[maybe_unused]] const std::exception & exception) {
             jassertfalse;
         }
     }
@@ -459,8 +459,18 @@ void HrtfSpatAlgorithm::timerCallback()
         try {
             std::thread threadInit(binauraliserNF_initCodec, mSafSecondHBin);
             threadInit.detach();
-        } catch (const std::exception & exception) {
+        } catch ([[maybe_unused]] const std::exception & exception) {
             jassertfalse;
+        }
+    }
+    if (!mSAFConfigurationChecksDone) {
+        if (binauraliser_getCodecStatus(mSafFirstHBin) == CODEC_STATUS_INITIALISED) {
+            if (binauraliser_getNTriangles(mSafFirstHBin) == 0 || binauraliser_getNDirs(mSafFirstHBin) == 0) {
+                mSAFReconfigureAttempts = SAF_MAX_RECONFIGURATION_ATTEMPTS;
+                mSAFConfigureNeeded.set(true);
+            }
+            mSAFConfigurationChecksDone = true;
+            invokeCallback();
         }
     }
     if (mSAFConfigureNeeded.get()) {
