@@ -1,6 +1,17 @@
 #!/usr/bin/env bash
+# set -e
 
-cd "$(dirname "$0")"
+script_dir="$(cd -- "$(dirname -- "$0")" && pwd)"
+
+cd "$script_dir"
+
+# Reset SAF code
+echo "Resetting SAF code"
+cd "$script_dir/../submodules/Spatial_Audio_Framework"
+git checkout .
+
+cd "$script_dir"
+pwd
 
 TARGET_FILE_SAF_SH_C="../submodules/Spatial_Audio_Framework/framework/modules/saf_sh/saf_sh.c"
 TARGET_FILE_BINAURALISER_INTERNAL_C="../submodules/Spatial_Audio_Framework/examples/src/binauraliser/binauraliser_internal.c"
@@ -100,32 +111,25 @@ EOF
 echo "$NEW_BLOCK_SAF_SH_C" > temp_new_function.c
 
 # Execute the line replacement
-sed -i -e '1065,1148d' -e '1064r temp_new_function.c' "$TARGET_FILE_SAF_SH_C"
+if sed -i -e '1065,1148d' -e '1064r temp_new_function.c' "$TARGET_FILE_SAF_SH_C"; then
+    echo "Success: Replaced lines 1065 to 1148 with the new function calculateGridWeights."
+fi
 
 # Clean up the temporary file
 rm temp_new_function.c
 
-echo "Success: Replaced lines 1065 to 1148 with the new function."
-
-
-# The new line 379 in binauraliser_initHRTFsAndGainTables
-# read -r -d '' NEW_BLOCK_BINAURALISER_INTERNAL_C << 'EOF'
-			# free(hrir_dirs_rad);
-# EOF
-
 # echo "$NEW_BLOCK_BINAURALISER_INTERNAL_C" > temp_new_line1.c
 printf "\t\t\tfree(hrir_dirs_rad);\n" > temp_new_line1.c
-sed -i -e '379r temp_new_line1.c' "$TARGET_FILE_BINAURALISER_INTERNAL_C"
-rm temp_new_line1.c
-echo "Success: Adding new line 379 in binauraliser_initHRTFsAndGainTables."
+if sed -i -e '379r temp_new_line1.c' "$TARGET_FILE_BINAURALISER_INTERNAL_C"; then
+    echo "Success: Adding new line 379 in binauraliser_initHRTFsAndGainTables."
+fi
 
-# The new line 166 in binauraliserNF_destroy
-# read -r -d '' NEW_BLOCK_BINAURALISER_NF_C << 'EOF'
-		# free(pData->sofa_filepath);
-# EOF
+rm temp_new_line1.c
 
 # echo "$NEW_BLOCK_BINAURALISER_NF_C" > temp_new_line2.c
 printf "\t\tfree(pData->sofa_filepath);\n" > temp_new_line2.c
-sed -i -e '166r temp_new_line2.c' "$TARGET_FILE_BINAURALISER_NF_C"
+if sed -i -e '166r temp_new_line2.c' "$TARGET_FILE_BINAURALISER_NF_C"; then
+    echo "Success: Adding new line 166 in binauraliserNF_destroy."
+fi
+
 rm temp_new_line2.c
-echo "Success: Adding new line 166 in binauraliserNF_destroy."
