@@ -88,7 +88,7 @@ public:
 
     juce::Array<Triplet> getTriplets() const noexcept override { return mVbap->getTriplets(); }
 
-    bool hasTriplets() const noexcept override { return true; };
+    bool hasTriplets() const noexcept override { return true; }
     [[nodiscard]] tl::optional<Error> getError() const noexcept override
     {
         // It seems this always return nullopt...
