@@ -69,7 +69,7 @@ class HrtfSpatAlgorithm final
     bool mSAFConfigurationChecksDone{ false };
 
     bool mUseDefaultHRIRs{};
-    bool mEnableHRIRsDiffuseEQ{};
+    bool mEnableHRIRsDiffuseEQ{ true };
     int mNumSpksToConvert{ 0 };
     int mNumSpksForFirstSafHBin{ 0 };
     int mNumSpksForSecondSafHBin{ 0 };

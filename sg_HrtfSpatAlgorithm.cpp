@@ -56,8 +56,7 @@ HrtfSpatAlgorithm::HrtfSpatAlgorithm(SpeakerSetup const & speakerSetup,
     , mBufferSize(bufferSize)
     , mSampleRate(sampleRate)
     , mSofaFile(binauralSettings.lastSofaFile)
-    , mUseDefaultHRIRs(binauralSettings.useDefaultHRIRs)
-    , mEnableHRIRsDiffuseEQ(binauralSettings.enableHRIRsDiffuseEQ)
+    , mUseDefaultHRIRs(binauralSettings.useDefaultBinauralProfile)
 {
     JUCE_ASSERT_MESSAGE_THREAD;
 
@@ -468,9 +467,11 @@ void HrtfSpatAlgorithm::timerCallback()
             if (binauraliser_getNTriangles(mSafFirstHBin) == 0 || binauraliser_getNDirs(mSafFirstHBin) == 0) {
                 mSAFReconfigureAttempts = SAF_MAX_RECONFIGURATION_ATTEMPTS;
                 mSAFConfigureNeeded.set(true);
+                invokeCallback(1); // failed
+            } else {
+                mSAFConfigurationChecksDone = true;
+                invokeCallback(0); // success
             }
-            mSAFConfigurationChecksDone = true;
-            invokeCallback();
         }
     }
     if (mSAFConfigureNeeded.get()) {

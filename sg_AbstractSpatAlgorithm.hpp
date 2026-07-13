@@ -146,16 +146,18 @@ public:
                                                                      BinauralSettings & binauralSettings,
                                                                      bool useMulticoreDSP = false);
     //==============================================================================
-    void setCallback(std::function<void()> fn) { mCallback = fn; }
-    void invokeCallback()
+    void setCallback(std::function<void(int)> fn) { mCallback = fn; }
+    void invokeCallback(int value)
     {
+        JUCE_ASSERT_MESSAGE_THREAD;
+
         if (mCallback)
-            mCallback();
+            mCallback(value);
     }
 
 private:
     //==============================================================================
-    std::function<void()> mCallback;
+    std::function<void(int)> mCallback;
 
     //==============================================================================
     JUCE_LEAK_DETECTOR(AbstractSpatAlgorithm)
