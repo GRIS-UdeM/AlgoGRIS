@@ -17,6 +17,14 @@ TARGET_FILE_SAF_SH_C="../submodules/Spatial_Audio_Framework/framework/modules/sa
 TARGET_FILE_BINAURALISER_INTERNAL_C="../submodules/Spatial_Audio_Framework/examples/src/binauraliser/binauraliser_internal.c"
 TARGET_FILE_BINAURALISER_NF_C="../submodules/Spatial_Audio_Framework/examples/src/binauraliser_nf/binauraliser_nf.c"
 
+sed_inplace() {
+  if [ "$(uname -s)" = "Darwin" ]; then
+    /usr/bin/sed -i '' "$@"
+  else
+    sed -i "$@"
+  fi
+}
+
 # The new calculateGridWeights
 read -r -d '' NEW_BLOCK_SAF_SH_C << 'EOF'
 int calculateGridWeights
@@ -111,7 +119,7 @@ EOF
 echo "$NEW_BLOCK_SAF_SH_C" > temp_new_function.c
 
 # Execute the line replacement
-if sed -i -e '1065,1148d' -e '1064r temp_new_function.c' "$TARGET_FILE_SAF_SH_C"; then
+if sed_inplace -e '1065,1148d' -e '1064r temp_new_function.c' "$TARGET_FILE_SAF_SH_C"; then
     echo "Success: Replaced lines 1065 to 1148 with the new function calculateGridWeights."
 fi
 
@@ -120,7 +128,7 @@ rm temp_new_function.c
 
 # echo "$NEW_BLOCK_BINAURALISER_INTERNAL_C" > temp_new_line1.c
 printf "\t\t\tfree(hrir_dirs_rad);\n" > temp_new_line1.c
-if sed -i -e '379r temp_new_line1.c' "$TARGET_FILE_BINAURALISER_INTERNAL_C"; then
+if sed_inplace -e '379r temp_new_line1.c' "$TARGET_FILE_BINAURALISER_INTERNAL_C"; then
     echo "Success: Adding new line 379 in binauraliser_initHRTFsAndGainTables."
 fi
 
@@ -128,7 +136,7 @@ rm temp_new_line1.c
 
 # echo "$NEW_BLOCK_BINAURALISER_NF_C" > temp_new_line2.c
 printf "\t\tfree(pData->sofa_filepath);\n" > temp_new_line2.c
-if sed -i -e '166r temp_new_line2.c' "$TARGET_FILE_BINAURALISER_NF_C"; then
+if sed_inplace -e '166r temp_new_line2.c' "$TARGET_FILE_BINAURALISER_NF_C"; then
     echo "Success: Adding new line 166 in binauraliserNF_destroy."
 fi
 
