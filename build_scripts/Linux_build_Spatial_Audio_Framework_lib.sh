@@ -15,6 +15,8 @@ cmake -S . -B build/build-debug \
   -DCMAKE_CXX_STANDARD_REQUIRED=ON \
   -DCMAKE_CXX_EXTENSIONS=OFF \
   -DSAF_PERFORMANCE_LIB=SAF_USE_OPEN_BLAS_AND_LAPACKE \
+  -DSAF_USE_FFTW="1" \
+  -DSAF_ENABLE_SIMD="1" \
   -DSAF_ENABLE_SOFA_READER_MODULE="1"
 
 cmake --build build/build-debug
@@ -25,6 +27,8 @@ cmake -S . -B build/build-release \
   -DCMAKE_CXX_STANDARD_REQUIRED=ON \
   -DCMAKE_CXX_EXTENSIONS=OFF \
   -DSAF_PERFORMANCE_LIB=SAF_USE_OPEN_BLAS_AND_LAPACKE \
+  -DSAF_USE_FFTW="1" \
+  -DSAF_ENABLE_SIMD="1" \
   -DSAF_ENABLE_SOFA_READER_MODULE="1"
 
 cmake --build build/build-release
