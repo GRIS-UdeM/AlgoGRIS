@@ -5,7 +5,6 @@ echo "Fixing SAF memory leaks"
 ./_fix_saf_mem_leaks.sh
 
 export LIBSAF_PATH=`pwd`"/../submodules/Spatial_Audio_Framework"
-export LIBSAF_BUILD_PATH="$LIBSAF_PATH/build"
 
 cd $LIBSAF_PATH
 
