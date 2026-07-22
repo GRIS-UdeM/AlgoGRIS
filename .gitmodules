@@ -6,4 +6,5 @@
 	url = https://github.com/ashvardanian/fork_union.git
 [submodule "submodules/Spatial_Audio_Framework"]
 	path = submodules/Spatial_Audio_Framework
-	url = https://github.com/leomccormack/Spatial_Audio_Framework.git
+    url = https://github.com/leomccormack/Spatial_Audio_Framework.git
+    ignore = untracked
