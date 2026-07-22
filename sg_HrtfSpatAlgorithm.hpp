@@ -36,6 +36,11 @@
 #include <tl/optional.hpp>
 #include <array>
 #include <memory>
+#if SAF_USE_OPEN_BLAS_AND_LAPACKE
+    #include <complex>
+    #define lapack_complex_float std::complex<float>
+    #define lapack_complex_double std::complex<double>
+#endif
 #include "binauraliser_nf.h"
 #include "saf.h"
 #include "saf_externals.h"
