@@ -5,7 +5,16 @@ echo "Fixing SAF memory leaks"
 ./_fix_saf_mem_leaks.sh
 
 export LIBSAF_PATH=`pwd`"/../submodules/Spatial_Audio_Framework"
-export LIBSAFMKL_PATH=`pwd`"/../saf_custom_libs"
+
+CBLAS_H_PATH="$(find /usr -type f -name 'cblas.h' 2>/dev/null | head -n 1)"
+if [[ -z "$CBLAS_H_PATH" ]]; then
+  echo "Error: cblas.h not found under /usr"
+  exit 1
+fi
+
+CBLAS_INCLUDE_DIR="$(dirname "$CBLAS_H_PATH")"
+echo "Found cblas.h at: $CBLAS_H_PATH"
+echo "Using include dir: $CBLAS_INCLUDE_DIR"
 
 cd $LIBSAF_PATH
 
@@ -15,6 +24,7 @@ cmake -S . -B build/build-debug \
   -DCMAKE_CXX_STANDARD_REQUIRED=ON \
   -DCMAKE_CXX_EXTENSIONS=OFF \
   -DSAF_PERFORMANCE_LIB=SAF_USE_OPEN_BLAS_AND_LAPACKE \
+  -DOPENBLAS_HEADER_PATH="$CBLAS_INCLUDE_DIR" \
   -DSAF_USE_FFTW="1" \
   -DSAF_ENABLE_SIMD="1" \
   -DSAF_ENABLE_SOFA_READER_MODULE="1"
@@ -27,6 +37,7 @@ cmake -S . -B build/build-release \
   -DCMAKE_CXX_STANDARD_REQUIRED=ON \
   -DCMAKE_CXX_EXTENSIONS=OFF \
   -DSAF_PERFORMANCE_LIB=SAF_USE_OPEN_BLAS_AND_LAPACKE \
+  -DOPENBLAS_HEADER_PATH="$CBLAS_INCLUDE_DIR" \
   -DSAF_USE_FFTW="1" \
   -DSAF_ENABLE_SIMD="1" \
   -DSAF_ENABLE_SOFA_READER_MODULE="1"
