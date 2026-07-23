@@ -38,8 +38,21 @@
 #include <memory>
 #if SAF_USE_OPEN_BLAS_AND_LAPACKE
     #include <complex>
-    #define lapack_complex_float std::complex<float>
-    #define lapack_complex_double std::complex<double>
+
+    #if defined(_MSC_VER)
+struct _Fcomplex {
+    float _Val;
+};
+struct _Dcomplex {
+    double _Val;
+};
+        #define lapack_complex_float _Fcomplex
+        #define lapack_complex_double _Dcomplex
+    #else
+        // Linux
+        #define lapack_complex_float std::complex<float>
+        #define lapack_complex_double std::complex<double>
+    #endif
 #endif
 #include "binauraliser_nf.h"
 #include "saf.h"
