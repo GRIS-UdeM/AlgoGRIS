@@ -16,6 +16,7 @@ pwd
 TARGET_FILE_SAF_SH_C="../submodules/Spatial_Audio_Framework/framework/modules/saf_sh/saf_sh.c"
 TARGET_FILE_BINAURALISER_INTERNAL_C="../submodules/Spatial_Audio_Framework/examples/src/binauraliser/binauraliser_internal.c"
 TARGET_FILE_BINAURALISER_NF_C="../submodules/Spatial_Audio_Framework/examples/src/binauraliser_nf/binauraliser_nf.c"
+TARGET_FILE_AMBI_DEC_C="../submodules/Spatial_Audio_Framework/examples/src/ambi_dec/ambi_dec.c"
 
 sed_inplace() {
   if [ "$(uname -s)" = "Darwin" ]; then
@@ -141,3 +142,27 @@ if sed_inplace -e '166r temp_new_line2.c' "$TARGET_FILE_BINAURALISER_NF_C"; then
 fi
 
 rm temp_new_line2.c
+
+# echo "$NEW_BLOCK_AMBI_DEC_C" > temp_new_line3.c
+printf "\t\tfree(pars);\n" > temp_new_line3.c
+if sed_inplace -e '165r temp_new_line3.c' "$TARGET_FILE_AMBI_DEC_C"; then
+    echo "Success: Adding new line 165 in binauraliserNF_destroy."
+fi
+
+rm temp_new_line3.c
+
+# echo "$NEW_BLOCK_AMBI_DEC_C" > temp_new_line4.c
+printf "\t\tpData->pars = NULL;\n" > temp_new_line4.c
+if sed_inplace -e '166r temp_new_line4.c' "$TARGET_FILE_AMBI_DEC_C"; then
+    echo "Success: Adding new line 166 in binauraliserNF_destroy."
+fi
+
+rm temp_new_line4.c
+
+# echo "$NEW_BLOCK_AMBI_DEC_C" > temp_new_line5.c
+printf "\t\t\t\tfree(hrir_dirs_rad);\n" > temp_new_line5.c
+if sed_inplace -e '471r temp_new_line5.c' "$TARGET_FILE_AMBI_DEC_C"; then
+    echo "Success: Adding new line 471 in binauraliserNF_destroy."
+fi
+
+rm temp_new_line5.c
