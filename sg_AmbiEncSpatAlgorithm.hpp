@@ -36,33 +36,13 @@
 #include <tl/optional.hpp>
 #include <array>
 #include <memory>
-#if SAF_USE_OPEN_BLAS_AND_LAPACKE
-    #include <complex>
-
-    #if defined(_MSC_VER)
-struct _Fcomplex {
-    float _Val;
-};
-struct _Dcomplex {
-    double _Val;
-};
-        #define lapack_complex_float _Fcomplex
-        #define lapack_complex_double _Dcomplex
-    #else
-        // Linux
-        #define lapack_complex_float std::complex<float>
-        #define lapack_complex_double std::complex<double>
-    #endif
-#endif
+#include "sg_LapackComplexTypes.hpp"
 #include "ambi_enc.h"
 #include "saf.h"
 #include "saf_externals.h"
 
 namespace gris
 {
-//==============================================================================
-constexpr auto SAF_MAX_NUM_CHANNELS = MAX_NUM_CHANNELS;
-constexpr int SAF_MAX_RECONFIGURATION_ATTEMPTS = 5;
 //==============================================================================
 /** An ambisonic algorithm
  *
@@ -74,7 +54,6 @@ class AmbiEncSpatAlgorithm final
     : public AbstractSpatAlgorithm
     , juce::Timer
 {
-    //std::unique_ptr<AbstractSpatAlgorithm> mInnerAlgorithm{};
     const SpeakerSetup & mSpeakerSetup;
     int mBufferSize;
     double mSampleRate;
@@ -144,7 +123,10 @@ public:
     SG_DELETE_COPY_AND_MOVE(AmbiEncSpatAlgorithm)
     //==============================================================================
     // AmbiEncSpatAlgorithm uses audio that has already been processed. This function should not be executed.
-    void updateSpatData(source_index_t /*sourceIndex*/, SourceData const & /*sourceData*/) noexcept override { jassertfalse; }
+    void updateSpatData(source_index_t /*sourceIndex*/, SourceData const & /*sourceData*/) noexcept override
+    {
+        jassertfalse;
+    }
     void process(AudioConfig const & config,
                  SourceAudioBuffer & sourcesBuffer,
                  SpeakerAudioBuffer & speakersBuffer,

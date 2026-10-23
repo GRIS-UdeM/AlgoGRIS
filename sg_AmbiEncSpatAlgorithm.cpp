@@ -298,7 +298,7 @@ void AmbiEncSpatAlgorithm::configureSAF()
         mActiveChannels.push_back(channel.key);
     }
 
-    mNumSpksToConvert = static_cast<int>(mActiveChannels.size());//mSpeakerSetup.speakers.size();
+    mNumSpksToConvert = static_cast<int>(mActiveChannels.size());
     mNumDirectOutSpks = static_cast<int>(mDirectOutActiveChannels.size());
     mNumSpksForFirstSafHAmb = mNumSpksToConvert < SAF_MAX_NUM_CHANNELS ? mNumSpksToConvert : SAF_MAX_NUM_CHANNELS;
     mNumSpksForSecondSafHAmb = mNumSpksToConvert > SAF_MAX_NUM_CHANNELS ? mNumSpksToConvert - SAF_MAX_NUM_CHANNELS : 0;

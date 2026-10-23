@@ -20,6 +20,7 @@
 #pragma once
 
 #include "sg_AbstractSpatAlgorithm.hpp"
+#include "sg_LapackComplexTypes.hpp"
 #include "juce_audio_basics/juce_audio_basics.h"
 #include "juce_core/juce_core.h"
 #include "juce_dsp/juce_dsp.h"
@@ -36,24 +37,6 @@
 #include <tl/optional.hpp>
 #include <array>
 #include <memory>
-#if SAF_USE_OPEN_BLAS_AND_LAPACKE
-    #include <complex>
-
-    #if defined(_MSC_VER)
-struct _Fcomplex {
-    float _Val;
-};
-struct _Dcomplex {
-    double _Val;
-};
-        #define lapack_complex_float _Fcomplex
-        #define lapack_complex_double _Dcomplex
-    #else
-        // Linux
-        #define lapack_complex_float std::complex<float>
-        #define lapack_complex_double std::complex<double>
-    #endif
-#endif
 #include "binauraliser_nf.h"
 #include "saf.h"
 #include "saf_externals.h"
@@ -61,12 +44,9 @@ struct _Dcomplex {
 namespace gris
 {
 //==============================================================================
-constexpr auto SAF_MAX_NUM_CHANNELS = MAX_NUM_CHANNELS;
-constexpr int SAF_MAX_RECONFIGURATION_ATTEMPTS = 5;
-//==============================================================================
 /** A head-related-transfer-function based stereo reduction algorithm.
  *
- * This uses either libspatialaudio or Spatial_Audio_Framework internally to process SOFA files, converting
+ * This uses either Spatial_Audio_Framework internally to process SOFA files, converting
  * the audio output from SpatGRIS's spatialization algorithms into binaural
  * https://github.com/videolan/libspatialaudio
  * https://github.com/leomccormack/Spatial_Audio_Framework
