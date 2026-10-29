@@ -46,9 +46,8 @@ namespace gris
 //==============================================================================
 /** A head-related-transfer-function based stereo reduction algorithm.
  *
- * This uses either Spatial_Audio_Framework internally to process SOFA files, converting
+ * This uses Spatial_Audio_Framework internally to process SOFA files, converting
  * the audio output from SpatGRIS's spatialization algorithms into binaural
- * https://github.com/videolan/libspatialaudio
  * https://github.com/leomccormack/Spatial_Audio_Framework
  */
 class HrtfSpatAlgorithm final
