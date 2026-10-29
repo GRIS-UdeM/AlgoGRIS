@@ -118,10 +118,14 @@ void HrtfSpatAlgorithm::process(AudioConfig const & config,
     jassert(!altSpeakerConfig);
     jassert(stereoBuffer.getNumChannels() == 2);
 
-    speakersBuffer.silence();
+    // Audio is already processed if it comes from the Ambisonic Player, contained in speakersBuffer
+    if (config.playerMode != PlayerMode::ambisonic) {
+        speakersBuffer.silence();
 
-    if (mInnerAlgorithm)
-        mInnerAlgorithm->process(config, sourcesBuffer, speakersBuffer, stereoBuffer, sourcePeaks, altSpeakerConfig);
+        if (mInnerAlgorithm)
+            mInnerAlgorithm
+                ->process(config, sourcesBuffer, speakersBuffer, stereoBuffer, sourcePeaks, altSpeakerConfig);
+    }
 
     if (!mSAFConfigureNeeded.get() && binauraliser_getCodecStatus(mSafFirstHBin) == CODEC_STATUS_INITIALISED
         && (mUseSecondSafHBin ? binauraliser_getCodecStatus(mSafSecondHBin) == CODEC_STATUS_INITIALISED : true)) {

@@ -93,7 +93,9 @@ void StereoSpatAlgorithm::process(AudioConfig const & config,
     jassert(!altSpeakerConfig);
     jassert(stereoBuffer.getNumChannels() == 2);
 
-    mInnerAlgorithm->process(config, sourcesBuffer, speakersBuffer, stereoBuffer, sourcePeaks, altSpeakerConfig);
+    if (config.playerMode != PlayerMode::ambisonic) {
+        mInnerAlgorithm->process(config, sourcesBuffer, speakersBuffer, stereoBuffer, sourcePeaks, altSpeakerConfig);
+    }
 
     for (auto const & source : config.sourcesAudioConfig)
         processSource(config, source.key, sourcePeaks, sourcesBuffer, stereoBuffer);
@@ -111,8 +113,14 @@ inline void StereoSpatAlgorithm::processSource(const gris::AudioConfig & config,
                                                juce::AudioBuffer<float> & stereoBuffer)
 {
     auto const & source = config.sourcesAudioConfig[sourceId];
-    if (source.isMuted || source.directOut || sourcePeaks[sourceId] < SMALL_GAIN) {
-        return;
+    if (config.playerMode == PlayerMode::ambisonic) {
+        if (source.isMuted || sourcePeaks[sourceId] < SMALL_GAIN) {
+            return;
+        }
+    } else {
+        if (source.isMuted || source.directOut || sourcePeaks[sourceId] < SMALL_GAIN) {
+            return;
+        }
     }
 
     auto & data{ mData[sourceId] };
