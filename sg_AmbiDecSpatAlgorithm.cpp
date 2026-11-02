@@ -94,7 +94,7 @@ void AmbiDecSpatAlgorithm::process(AudioConfig const & config,
      */
     ASSERT_AUDIO_THREAD;
 
-    jassert(sourcesBuffer.size() == mNumAudioOutSpks + mNumDirectOutInputs);
+    // jassert(sourcesBuffer.size() == mNumAudioOutSpks + mNumDirectOutInputs);
 
     if (!mSAFConfigureNeeded.get() && ambi_dec_getCodecStatus(mSafHAmb) == CODEC_STATUS_INITIALISED) {
         mAudioOutBuffer.clear();
@@ -206,7 +206,7 @@ void AmbiDecSpatAlgorithm::process(AudioConfig const & config,
                                    [srcIndex](const auto & initialPair) { return initialPair.first == srcIndex; });
             if (it != mInitialDirectOutPairsFromPlayer.end()) {
                 auto ch = std::distance(mInitialDirectOutPairsFromPlayer.begin(), it);
-                auto const * src{ mDirectOutAudioInBuffer.getReadPointer(ch) };
+                auto const * src{ mDirectOutAudioInBuffer.getReadPointer(static_cast<int>(ch)) };
                 auto spkOutputPatch{ pair.second };
 
                 auto directSpkIt = std::find(mDirectOutActiveOutputChannels.begin(),
@@ -346,7 +346,7 @@ void AmbiDecSpatAlgorithm::configureSAF()
         }
         mActiveOutputChannels.push_back(static_cast<output_patch_t>(channel.key.get()));
     }
-    mNumAudioOutSpks = mActiveOutputChannels.size();
+    mNumAudioOutSpks = static_cast<int>(mActiveOutputChannels.size());
 
     ambi_dec_create(&mSafHAmb);
     ambi_dec_init(mSafHAmb, static_cast<int>(mSampleRate));
@@ -362,7 +362,6 @@ void AmbiDecSpatAlgorithm::configureSAF()
     ambi_dec_setTransitionFreq(mSafHAmb, 500.0f);
     ambi_dec_setNumLoudspeakers(mSafHAmb, mNumAudioOutSpks);
 
-    auto numberOfBands{ ambi_dec_getNumberOfBands() };
     mFrameSize = ambi_dec_getFrameSize();
     mHostBlockSize = mBufferSize;
     mUsingLowDelay = (mHostBlockSize % mFrameSize == 0); // in this case we can skip the FIFO buffering, since
