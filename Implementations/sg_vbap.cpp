@@ -69,11 +69,28 @@ static void computeGains(juce::Array<SpeakerSet> & sets,
                          Position const & position,
                          std::size_t const dim) noexcept
 {
+    using fast = juce::dsp::FastMathApproximations;
+
     float vec[3]{};
     /* Direction of the virtual source in cartesian coordinates. */
     vec[0] = position.getCartesian().x;
     vec[1] = position.getCartesian().y;
     vec[2] = position.getCartesian().z;
+
+    // 2D uses azimuth only. Normalize before calculating or comparing VBAP gains.
+    if (dim == 2) {
+        auto const horizontalLength = std::hypot(vec[0], vec[1]);
+        if (horizontalLength > 1.0e-6f) {
+            vec[0] /= horizontalLength;
+            vec[1] /= horizontalLength;
+        } else {
+            // Rebuild the horizontal direction from the stored azimuth when near the vertical axis
+            auto const azimuth = static_cast<float>(position.getPolar().azimuth.get());
+            vec[0] = fast::cos(azimuth);
+            vec[1] = fast::sin(azimuth);
+        }
+        vec[2] = 0.0f;
+    }
 
     for (auto & set : sets) {
         set.setGains[0] = 0.0f;
