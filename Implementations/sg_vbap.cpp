@@ -232,15 +232,20 @@ static bool linesIntersect(std::size_t const i,
     auto const distKnv3 = speakers[k].getCartesian().angleWith(negV3);
     auto const distLnv3 = negV3.angleWith(speakers[l].getCartesian());
 
+    constexpr float ARC_TOLERANCE = 0.001f;
+
     /*One of loudspeakers is close to crossing point, don't do anything.*/
-    if (std::abs(distIv3) <= 0.01f || std::abs(distJv3) <= 0.01f || std::abs(distKv3) <= 0.01f
-        || std::abs(distLv3) <= 0.01f || std::abs(distInv3) <= 0.01f || std::abs(distJnv3) <= 0.01f
-        || std::abs(distKnv3) <= 0.01f || std::abs(distLnv3) <= 0.01f) {
+    if (std::abs(distIv3) <= ARC_TOLERANCE || std::abs(distJv3) <= ARC_TOLERANCE || std::abs(distKv3) <= ARC_TOLERANCE
+        || std::abs(distLv3) <= ARC_TOLERANCE || std::abs(distInv3) <= ARC_TOLERANCE
+        || std::abs(distJnv3) <= ARC_TOLERANCE
+        || std::abs(distKnv3) <= ARC_TOLERANCE || std::abs(distLnv3) <= ARC_TOLERANCE) {
         return false;
     }
 
-    if ((std::abs(distIj - (distIv3 + distJv3)) <= 0.01f && std::abs(distKl - (distKv3 + distLv3)) <= 0.01f)
-        || (std::abs(distIj - (distInv3 + distJnv3)) <= 0.01f && std::abs(distKl - (distKnv3 + distLnv3)) <= 0.01f)) {
+    if ((std::abs(distIj - (distIv3 + distJv3)) <= ARC_TOLERANCE
+         && std::abs(distKl - (distKv3 + distLv3)) <= ARC_TOLERANCE)
+        || (std::abs(distIj - (distInv3 + distJnv3)) <= ARC_TOLERANCE
+            && std::abs(distKl - (distKnv3 + distLnv3)) <= ARC_TOLERANCE)) {
         return true;
     }
     return false;
