@@ -20,6 +20,7 @@
 #pragma once
 
 #include "sg_AbstractSpatAlgorithm.hpp"
+#include "sg_LapackComplexTypes.hpp"
 #include "juce_audio_basics/juce_audio_basics.h"
 #include "juce_core/juce_core.h"
 #include "juce_dsp/juce_dsp.h"
@@ -36,7 +37,6 @@
 #include <tl/optional.hpp>
 #include <array>
 #include <memory>
-#include "sg_LapackComplexTypes.hpp"
 #include "ambi_enc.h"
 #include "saf.h"
 #include "saf_externals.h"
@@ -106,17 +106,17 @@ class AmbiEncSpatAlgorithm final
 
 public:
     //==============================================================================
-    /** Note: You should never use this function directly. Use AmbiEncSpatAlgorithm::make() instead. 
-    * Also, because this algorithm is only used for ambisonic recording, and because the
-    * ambisonic order is only known at record time, configuration has to happen later. After
-    * AmbiEncSpatAlgorithm::make(), use AmbiEncSpatAlgorithm::configure()
-    */
+    /** Note: You should never use this function directly. Use AmbiEncSpatAlgorithm::make() instead.
+     * Also, because this algorithm is only used for ambisonic recording, and because the
+     * ambisonic order is only known at record time, configuration has to happen later. After
+     * AmbiEncSpatAlgorithm::make(), use AmbiEncSpatAlgorithm::configure()
+     */
     AmbiEncSpatAlgorithm(SpeakerSetup const & speakerSetup,
-                      SpatMode const & projectSpatMode,
-                      SourcesData const & sources,
-                      double sampleRate,
-                      int bufferSize,
-                      BinauralSettings & binauralSettings);
+                         SpatMode const & projectSpatMode,
+                         SourcesData const & sources,
+                         double sampleRate,
+                         int bufferSize,
+                         BinauralSettings & binauralSettings);
     //==============================================================================
     AmbiEncSpatAlgorithm() = delete;
     ~AmbiEncSpatAlgorithm() override;

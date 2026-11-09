@@ -237,8 +237,8 @@ static bool linesIntersect(std::size_t const i,
     /*One of loudspeakers is close to crossing point, don't do anything.*/
     if (std::abs(distIv3) <= ARC_TOLERANCE || std::abs(distJv3) <= ARC_TOLERANCE || std::abs(distKv3) <= ARC_TOLERANCE
         || std::abs(distLv3) <= ARC_TOLERANCE || std::abs(distInv3) <= ARC_TOLERANCE
-        || std::abs(distJnv3) <= ARC_TOLERANCE
-        || std::abs(distKnv3) <= ARC_TOLERANCE || std::abs(distLnv3) <= ARC_TOLERANCE) {
+        || std::abs(distJnv3) <= ARC_TOLERANCE || std::abs(distKnv3) <= ARC_TOLERANCE
+        || std::abs(distLnv3) <= ARC_TOLERANCE) {
         return false;
     }
 

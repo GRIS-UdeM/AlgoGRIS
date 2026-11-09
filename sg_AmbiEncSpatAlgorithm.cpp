@@ -40,11 +40,11 @@ namespace gris
 {
 //==============================================================================
 AmbiEncSpatAlgorithm::AmbiEncSpatAlgorithm(SpeakerSetup const & speakerSetup,
-                                     SpatMode const & /*projectSpatMode*/,
-                                     SourcesData const & /*sources*/,
-                                     double const sampleRate,
-                                     int const bufferSize,
-                                     BinauralSettings & /*binauralSettings*/)
+                                           SpatMode const & /*projectSpatMode*/,
+                                           SourcesData const & /*sources*/,
+                                           double const sampleRate,
+                                           int const bufferSize,
+                                           BinauralSettings & /*binauralSettings*/)
     : mSpeakerSetup(speakerSetup)
     , mBufferSize(bufferSize)
     , mSampleRate(sampleRate)
@@ -67,16 +67,17 @@ AmbiEncSpatAlgorithm::~AmbiEncSpatAlgorithm()
 
 //==============================================================================
 void AmbiEncSpatAlgorithm::process(AudioConfig const & /*config*/,
-                                SourceAudioBuffer & /*sourcesBuffer*/,
-                                SpeakerAudioBuffer & speakersBuffer,
-                                juce::AudioBuffer<float> & /*stereoBuffer*/,
-                                SourcePeaks const & /*sourcePeaks*/,
-                                [[maybe_unused]] SpeakersAudioConfig const * /*altSpeakerConfig*/) noexcept NONBLOCKING
+                                   SourceAudioBuffer & /*sourcesBuffer*/,
+                                   SpeakerAudioBuffer & speakersBuffer,
+                                   juce::AudioBuffer<float> & /*stereoBuffer*/,
+                                   SourcePeaks const & /*sourcePeaks*/,
+                                   [[maybe_unused]] SpeakersAudioConfig const * /*altSpeakerConfig*/) noexcept
+    NONBLOCKING
 {
     /** This algorithm is only used for ambisonic recording. All SG audio spatialization processing
-    * should already be done at this point, and speakersBuffer can be used as audio input to do the
-    * processing.
-    */
+     * should already be done at this point, and speakersBuffer can be used as audio input to do the
+     * processing.
+     */
     ASSERT_AUDIO_THREAD;
 
     if (!mSAFConfigureNeeded.get()) {
@@ -87,8 +88,7 @@ void AmbiEncSpatAlgorithm::process(AudioConfig const & /*config*/,
 
         const int numSamples = speakersBuffer.getNumSamples();
 
-        if (mUsingLowDelay)
-        {
+        if (mUsingLowDelay) {
             const int numFrames = numSamples / mFrameSize;
             auto bufferPtrs = speakersBuffer.getArrayOfWritePointers(mActiveChannels);
             float * const * bufferData = bufferPtrs.data();
@@ -142,7 +142,8 @@ void AmbiEncSpatAlgorithm::process(AudioConfig const & /*config*/,
             auto inHostVec = speakersBuffer.getArrayOfWritePointers(mActiveChannels);
             const float * const * inHost = inHostVec.data();
             float * const * firstOutHost = mFirstAmbAudioBuffer.getArrayOfWritePointers();
-            float * const * secondOutHost = mUseSecondSafAmb ? mSecondAmbAudioBuffer.getArrayOfWritePointers() : nullptr;
+            float * const * secondOutHost
+                = mUseSecondSafAmb ? mSecondAmbAudioBuffer.getArrayOfWritePointers() : nullptr;
 
             for (int n = 0; n < numSamples; ++n) {
                 for (int ch = 0; ch < mNumSpksForFirstSafHAmb; ++ch)
@@ -207,7 +208,7 @@ void AmbiEncSpatAlgorithm::process(AudioConfig const & /*config*/,
         for (int ch{}; ch < mDirectOutNumOutputs; ++ch) {
             mDirectOutAudioOutBuffer.copyFrom(ch, 0, directOutBufferPtrs[ch], speakersBuffer.getNumSamples());
         }
-  
+
         // Combine first and second buffers to output buffer
         for (int ch{}; ch < mFirstAmbAudioBuffer.getNumChannels(); ++ch) {
             mAmbAudioOutBuffer.copyFrom(ch, 0, mFirstAmbAudioBuffer, ch, 0, mFirstAmbAudioBuffer.getNumSamples());
@@ -217,8 +218,8 @@ void AmbiEncSpatAlgorithm::process(AudioConfig const & /*config*/,
                 mAmbAudioOutBuffer.addFrom(ch, 0, mSecondAmbAudioBuffer, ch, 0, mSecondAmbAudioBuffer.getNumSamples());
             }
         }
-        //const float gain = std::pow(10.0f, -10.8f / 20.0f);
-        //mAmbAudioOutBuffer.applyGain(gain);
+        // const float gain = std::pow(10.0f, -10.8f / 20.0f);
+        // mAmbAudioOutBuffer.applyGain(gain);
         for (int ch{}; ch < mAmbiNumOutputs; ++ch) {
             if (std::isnan(mAmbAudioOutBuffer.getRMSLevel(ch, 0, mAmbAudioOutBuffer.getNumSamples()))) {
                 mSAFConfigureNeeded.set(true);
@@ -257,19 +258,19 @@ void gris::AmbiEncSpatAlgorithm::copyAmbProcessedBuffer(juce::AudioBuffer<float>
 
 //==============================================================================
 std::unique_ptr<AbstractSpatAlgorithm> AmbiEncSpatAlgorithm::make(SpeakerSetup const & speakerSetup,
-                                                               SpatMode const & projectSpatMode,
-                                                               SourcesData const & sources,
-                                                               double const sampleRate,
-                                                               int const bufferSize,
-                                                               BinauralSettings & binauralSettings)
+                                                                  SpatMode const & projectSpatMode,
+                                                                  SourcesData const & sources,
+                                                                  double const sampleRate,
+                                                                  int const bufferSize,
+                                                                  BinauralSettings & binauralSettings)
 {
     JUCE_ASSERT_MESSAGE_THREAD;
     return std::make_unique<AmbiEncSpatAlgorithm>(speakerSetup,
-                                               projectSpatMode,
-                                               sources,
-                                               sampleRate,
-                                               bufferSize,
-                                               binauralSettings);
+                                                  projectSpatMode,
+                                                  sources,
+                                                  sampleRate,
+                                                  bufferSize,
+                                                  binauralSettings);
 }
 
 //==============================================================================
@@ -308,7 +309,7 @@ void AmbiEncSpatAlgorithm::configureSAF()
     ambi_enc_init(mSafFirstHAmb, static_cast<int>(mSampleRate));
     ambi_enc_setOutputOrder(mSafFirstHAmb, (SH_ORDERS)mAmbisonicOrder);
     ambi_enc_setNormType(mSafFirstHAmb, NORM_N3D);
-    //ambi_enc_setEnablePostScaling(mSafFirstHAmb, 0);
+    // ambi_enc_setEnablePostScaling(mSafFirstHAmb, 0);
     ambi_enc_setChOrder(mSafFirstHAmb, CH_ORDER::CH_ACN);
     ambi_enc_setNumSources(mSafFirstHAmb, mNumSpksForFirstSafHAmb);
 
@@ -399,17 +400,16 @@ void AmbiEncSpatAlgorithm::configureSAF()
         if (spkChan2SAFIndex < mNumSpksForFirstSafHAmb) {
             ambi_enc_setSourceAzi_deg(mSafFirstHAmb, spkChan2SAFIndex, azi);
             ambi_enc_setSourceElev_deg(mSafFirstHAmb, spkChan2SAFIndex, elev);
-            //ambi_enc_setSourceGain(mSafFirstHAmb, spkChan2SAFIndex, static_cast<float>(gainAdjust));
-        }
-        else {
+            // ambi_enc_setSourceGain(mSafFirstHAmb, spkChan2SAFIndex, static_cast<float>(gainAdjust));
+        } else {
             auto const index{ spkChan2SAFIndex - mNumSpksForFirstSafHAmb };
             ambi_enc_setSourceAzi_deg(mSafSecondHAmb, index, azi);
             ambi_enc_setSourceElev_deg(mSafSecondHAmb, index, elev);
-            //ambi_enc_setSourceGain(mSafSecondHAmb, index, static_cast<float>(gainAdjust));
+            // ambi_enc_setSourceGain(mSafSecondHAmb, index, static_cast<float>(gainAdjust));
         }
         spkChan2SAFIndex++;
     }
- 
+
     startTimer(80);
     mSAFConfigureNeeded.set(false);
 }
